@@ -344,7 +344,7 @@ scenes['extras'] = (4.0, """
 """ + exit_js('x', 3.66))
 
 # ---------------- S7 END ----------------
-scenes['endcard'] = (5.5, """
+scenes['endcard'] = (3 * (60 / 128) * 4, """
 #e-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #e-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,8,6,.9),rgba(11,8,6,.6) 45%,rgba(11,8,6,.95))}
 #e-mark{position:absolute;top:400px;left:0;right:0;text-align:center;direction:ltr}
@@ -373,18 +373,18 @@ scenes['endcard'] = (5.5, """
     </div>
 """, """
     tl.fromTo("#e-img", {scale:1.25}, {scale:1.1, duration:4.5, ease:"power2.out"}, 0);
-    tl.fromTo("#e-word", {opacity:0, scale:1.25, filter:"blur(12px)"}, {opacity:1, scale:1, filter:"blur(0px)", duration:.7, ease:"power4.out"}, .3);
-    tl.fromTo("#e-tag", {opacity:0, y:20}, {opacity:1, y:0, duration:.45, ease:"power3.out"}, .75);
-    tl.fromTo("#e-line", {scaleX:0}, {scaleX:1, duration:.5, ease:"power3.inOut"}, .85);
-    tl.fromTo("#e-h", {opacity:0, y:50}, {opacity:1, y:0, duration:.5, ease:"power3.out"}, 1.1);
-    tl.fromTo("#e-cta", {opacity:0, y:50, scale:.9}, {opacity:1, y:0, scale:1, duration:.5, ease:"back.out(1.6)"}, 1.4);
-    tl.fromTo("#e-ph", {opacity:0, y:30}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, 1.65);
+    tl.fromTo("#e-word", {opacity:0, scale:1.25, filter:"blur(12px)"}, {opacity:1, scale:1, filter:"blur(0px)", duration:.5, ease:"power4.out"}, .0);
+    tl.fromTo("#e-tag", {opacity:0, y:20}, {opacity:1, y:0, duration:.35, ease:"power3.out"}, .47);
+    tl.fromTo("#e-line", {scaleX:0}, {scaleX:1, duration:.4, ease:"power3.inOut"}, .47);
+    tl.fromTo("#e-h", {opacity:0, y:50}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, .94);
+    tl.fromTo("#e-cta", {opacity:0, y:50, scale:.9}, {opacity:1, y:0, scale:1, duration:.5, ease:"back.out(1.6)"}, 1.41);
+    tl.fromTo("#e-ph", {opacity:0, y:30}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, 1.64);
     tl.set("#e-fill", {scaleY:0}, 0);
-    tl.fromTo("#e-cur", {x:1100, y:1500}, {x:330, y:1040, duration:.55, ease:"power3.inOut"}, 1.95);
-    tl.to("#e-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 2.55);
-    tl.to("#e-cta", {scale:.96, duration:.08, yoyo:true, repeat:1}, 2.57);
-    tl.to("#e-fill", {scaleY:1, duration:.45, ease:"power3.out"}, 2.6);
-    tl.to("#e-cur", {x:1150, y:1700, opacity:0, duration:.5, ease:"power3.in"}, 3.0);
+    tl.fromTo("#e-cur", {x:1100, y:1500}, {x:330, y:980, duration:.5, ease:"power3.inOut"}, 1.85);
+    tl.to("#e-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 2.79);
+    tl.to("#e-cta", {scale:.96, duration:.08, yoyo:true, repeat:1}, 2.81);
+    tl.to("#e-fill", {scaleY:1, duration:.45, ease:"power3.out"}, 2.81);
+    tl.to("#e-cur", {x:1150, y:1700, opacity:0, duration:.5, ease:"power3.in"}, 3.3);
 """)
 
 
@@ -392,34 +392,29 @@ scenes['endcard'] = (5.5, """
 SW, SH = 560, 1212            # screen size (recording is 390x844 css px -> x1.4359)
 PX, PY = (W - SW) // 2, 360   # screen top-left in frame
 K = SW / 390
-SEGS = [  # start, dur, media-start, rate
-  (0.0, 3.5, 7.0, 1.1),
-  (3.5, 6.83, 10.85, 1.5),
-  (10.33, 10.44, 21.3, 1.6),
-  (20.77, 3.07, 44.6, 1.5),
-  (23.84, 4.0, 49.2, 1.6),
-  (27.84, 7.1, 55.7, 2.0),
+BEAT = 60 / 128; BAR = 4 * BEAT   # music grid: 128 BPM
+SEGS = [  # start, dur, media-start, rate  (deterministic 1x recording, actions placed on the beat)
+  (0.0, 22.5, 0.0, 1.0),
 ]
 CAPS = [  # start, kicker, line
-  (0.0, 'NAOR ROYAL TOURS · האתר החדש', 'תראו אותו <em>עובד.</em>'),
-  (3.5, 'לוחצים על סוג החופשה', 'המזוודה <em>מחליפה צבע.</em>'),
-  (10.33, 'גוללים ורואים מה לארוז', 'המזוודה <em>נארזת לבד.</em>'),
-  (17.6, 'קיץ או חורף?', 'הרשימה <em>מתחלפת.</em>'),
-  (20.77, '10 יעדים', 'כרטיס טיסה <em>לכל יעד.</em>'),
-  (23.84, 'ככה זה עובד', 'כשרות ושבת — <em>מראש.</em>'),
-  (27.84, 'יוצרים איתי קשר תוך דקה', 'ועכשיו: <em>הטופס החכם.</em>'),
+  (0.0, 'NAOR ROYAL TOURS', 'האתר <em>החדש.</em>'),
+  (BAR, '', 'בוחרים <em>חופשה.</em>'),
+  (4 * BAR, '', 'המזוודה <em>נארזת.</em>'),
+  (6 * BAR, '', 'קיץ? <em>חורף.</em>'),
+  (13.6, '', '10 <em>יעדים.</em>'),
+  (8.5 * BAR, '', 'טופס <em>אחד.</em>'),
+  (11 * BAR, '', 'ישר <em>לוואטסאפ.</em>'),
 ]
 TAPS = [  # film time, viewport x, y, callout (text, swatch) or None
-  (3.96, 109, 535, ('חופשה משפחתית', 'בז׳ שמנת', '#e2d0b0')),
-  (5.59, 282, 678, ('חופשה כשרה', 'שחור', '#15110e')),
-  (7.14, 109, 678, ('טיסה + מלון', 'לבן', '#f7f4ef')),
-  (8.74, 282, 535, ('חופשה זוגית', 'קרמל', '#b07a45')),
-  (12.33, 264, 140, None),
-  (18.09, 130, 140, None),
+  (1.88, 109, 535, ('משפחתית', 'בז׳ שמנת', '#e2d0b0')),
+  (3.75, 282, 678, ('כשרה', 'שחור', '#15110e')),
+  (5.63, 282, 535, ('זוגית', 'קרמל', '#b07a45')),
+  (8.20, 264, 140, None),
+  (11.25, 130, 140, None),
 ]
-vids = '\n'.join(f'''        <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover" src="assets/video/site-walkthrough.mp4" muted playsinline data-start="{a}" data-duration="{d}" data-media-start="{m}" data-playback-rate="{r}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m, r) in enumerate(SEGS))
+vids = '\n'.join(f'''        <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover" src="assets/video/site-tour-30.mp4" muted playsinline data-start="{a}" data-duration="{d}" data-media-start="{m}" data-playback-rate="{r}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m, r) in enumerate(SEGS))
 caps = ''.join(f'<div class="cap" id="ph-c{i}"><div class="ck">{k}</div><div class="cl">{l}</div></div>' for i, (_, k, l) in enumerate(CAPS))
-calls = ''.join(f'<div class="call" id="ph-o{i}"><span class="sw" style="background:{c[2]}"></span><span><b>{c[0]}</b><small>מזוודה בצבע {c[1]}</small></span></div>' for i, (_, _, _, c) in enumerate(TAPS) if c)
+calls = ''.join(f'<div class="call" id="ph-o{i}"><span class="sw" style="background:{c[2]}"></span><span><b>{c[0]}</b><small>{c[1]}</small></span></div>' for i, (_, _, _, c) in enumerate(TAPS) if c)
 taps = ''.join(f'<div class="tap" id="ph-t{i}" style="left:{round(x*K)}px;top:{round(y*K)}px"></div>' for i, (_, x, y, _) in enumerate(TAPS))
 cap_js = ''
 for i, (t, _, _) in enumerate(CAPS):
@@ -427,18 +422,18 @@ for i, (t, _, _) in enumerate(CAPS):
     if i + 1 < len(CAPS):
         cap_js += f'    tl.to("#ph-c{i}", {{opacity:0, y:-30, duration:.22, ease:"power2.in"}}, {CAPS[i+1][0] - .2:.2f});\n'
     else:
-        cap_js += f'    tl.to("#ph-c{i}", {{opacity:0, y:-30, duration:.25, ease:"power2.in"}}, 34.6);\n'
+        cap_js += f'    tl.to("#ph-c{i}", {{opacity:0, y:-30, duration:.25, ease:"power2.in"}}, 21.6);\n'
 tap_js = ''
 for i, (t, _, _, c) in enumerate(TAPS):
     tap_js += f'    tl.fromTo("#ph-t{i}", {{scale:.3, opacity:.95}}, {{scale:1.5, opacity:0, duration:.55, ease:"power2.out", immediateRender:false}}, {t - .06:.2f});\n'
 oi = 0
 for t, _, _, c in TAPS:
     if not c: continue
-    end = TAPS[oi + 1][0] - .1 if oi + 1 < 4 else 10.2
+    end = TAPS[oi + 1][0] - .1 if oi + 1 < 3 else 7.4
     tap_js += f'    tl.fromTo("#ph-o{oi}", {{opacity:0, x:-60, scale:.8}}, {{opacity:1, x:0, scale:1, duration:.35, ease:"back.out(1.8)"}}, {t + .45:.2f});\n'
     tap_js += f'    tl.to("#ph-o{oi}", {{opacity:0, x:-30, duration:.2}}, {end - .2:.2f});\n'
     oi += 1
-scenes['phone'] = (35.7, f"""
+scenes['phone'] = (22.5, f"""
 #ph-glow{{position:absolute;left:50%;top:960px;width:1300px;height:1300px;margin:-650px 0 0 -650px;border-radius:50%;background:radial-gradient(circle,rgba(232,198,144,.28),rgba(176,122,69,.10) 40%,rgba(0,0,0,0) 68%)}}
 #ph-shadow{{position:absolute;left:50%;top:1640px;width:560px;height:70px;margin-left:-280px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}}
 #ph-rig{{position:absolute;inset:0;perspective:2200px;z-index:1}}
@@ -453,13 +448,13 @@ scenes['phone'] = (35.7, f"""
 .tap{{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:5px solid rgba(255,252,247,.95);background:rgba(255,252,247,.25);z-index:6;opacity:0}}
 .cap{{position:absolute;top:178px;left:70px;right:70px;opacity:0}}
 .ck{{color:var(--gold);font-size:30px;font-weight:500;letter-spacing:.02em}}
-.cl{{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:76px;line-height:1.05;color:var(--white);margin-top:4px}}
+.cl{{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:96px;line-height:1.05;color:var(--white);margin-top:4px}}
 .cl em{{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}}
 .call{{position:absolute;left:40px;top:1060px;display:flex;align-items:center;gap:20px;padding:20px 30px 20px 22px;border-radius:30px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.5);opacity:0;z-index:20;direction:rtl}}
 .call .sw{{width:62px;height:62px;border-radius:18px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}}
 .call b{{display:block;font-size:36px;font-weight:800;line-height:1.15}}
 .call small{{display:block;font-size:28px;color:var(--muted)}}
-#ph-card{{position:absolute;left:70px;top:500px;width:940px;height:900px;border-radius:44px;background:var(--white);box-shadow:0 40px 90px rgba(0,0,0,.5);transform-origin:0 0;opacity:0;z-index:30}}
+#ph-card{{position:absolute;left:70px;top:500px;width:940px;height:790px;border-radius:44px;background:var(--white);box-shadow:0 40px 90px rgba(0,0,0,.5);transform-origin:0 0;opacity:0;z-index:30}}
 """, f"""
     <div id="ph-wrap" style="position:absolute;inset:0">
       <div id="ph-glow"></div>
@@ -486,11 +481,21 @@ scenes['phone'] = (35.7, f"""
     tl.fromTo("#ph-shadow", {{scaleX:.8, opacity:.6}}, {{scaleX:1.08, opacity:1, duration:3.0, ease:"sine.inOut", yoyo:true, repeat:10}}, 1.6);
 {cap_js}{tap_js}
     // the planning form comes out of the phone
-    tl.to("#ph-body", {{scale:.82, y:120, opacity:.25, duration:.7, ease:"power3.inOut", overwrite:"auto"}}, 34.75);
-    tl.to("#ph-shadow", {{opacity:0, duration:.4, overwrite:"auto"}}, 34.75);
-    tl.fromTo("#ph-card", {{opacity:1, x:{PX - 70}, y:{PY - 500}, scaleX:{SW / 940:.4f}, scaleY:{SH / 900:.4f}}}, {{opacity:1, x:0, y:0, scaleX:1, scaleY:1, duration:.8, ease:"power4.inOut", immediateRender:false}}, 34.85);
+    tl.to("#ph-body", {{scale:.82, y:120, opacity:.25, duration:.7, ease:"power3.inOut", overwrite:"auto"}}, 21.75);
+    tl.to("#ph-shadow", {{opacity:0, duration:.4, overwrite:"auto"}}, 21.75);
+    tl.fromTo("#ph-card", {{opacity:1, x:{PX - 70}, y:{PY - 500}, scaleX:{SW / 940:.4f}, scaleY:{SH / 790:.4f}}}, {{opacity:1, x:0, y:0, scaleX:1, scaleY:1, duration:.6, ease:"power4.inOut", immediateRender:false}}, 21.85);
 """)
-ORDER = ['phone', 'form', 'whatsapp', 'status', 'endcard']
+wd, wcss, wbody, wjs = scenes['whatsapp']
+wbody = wbody.replace(wbody[wbody.index('<div class="kick"'):wbody.index('<div id="w-chat">')], '')
+wbody = wbody.replace('<div class="k">כל פנייה מקבלת מספר מעקב</div>', '<div class="k">מספר פנייה</div>')
+scenes['wa2'] = (BAR, wcss.replace('#w-chat{position:absolute;top:500px', '#w-chat{position:absolute;top:500px').replace('#w-ticket{position:absolute;top:1095px', '#w-ticket{position:absolute;top:1110px'), wbody.replace('id="w-', 'id="w-'), """
+    tl.fromTo("#w-bub", {scale:.6, opacity:0}, {scale:1, opacity:1, duration:.25, ease:"back.out(1.6)"}, 0.0);
+    tl.fromTo("#w-bub .ml", {opacity:0, x:-24}, {opacity:1, x:0, duration:.12, ease:"power2.out", stagger:.06}, .05);
+    tl.fromTo("#w-meta", {opacity:0}, {opacity:1, duration:.1}, .55);
+    tl.to("#w-id", {backgroundColor:"rgba(232,198,144,1)", duration:.15}, .7);
+    tl.fromTo("#w-ticket", {opacity:0, y:-200, scale:.5}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(1.6)"}, BEAT * 2 - .05);
+""".replace('BEAT * 2', str(round(2 * BEAT, 3))))
+ORDER = ['phone', 'wa2', 'endcard']
 os.makedirs(f'{OUT}/compositions', exist_ok=True)
 starts, t = {}, 0.0
 for cid in ORDER:
@@ -504,27 +509,24 @@ TOTAL = round(t, 2)
 S = starts
 SFX = [  # id, file, abs time, volume
   ('sfx-in', 'whoosh-cinematic', S['phone'] + 0.0, .35),
-  ('sfx-t0', 'click-soft', S['phone'] + 3.95, .7),
-  ('sfx-t1', 'click-soft', S['phone'] + 5.58, .65),
-  ('sfx-t2', 'click-soft', S['phone'] + 7.13, .7),
-  ('sfx-t3', 'click-soft', S['phone'] + 8.73, .65),
-  ('sfx-t4', 'click-soft', S['phone'] + 12.32, .7),
-  ('sfx-t5', 'click-soft', S['phone'] + 18.08, .7),
-  ('sfx-cutD', 'whoosh-short', S['phone'] + 20.7, .35),
-  ('sfx-cutE', 'whoosh', S['phone'] + 23.78, .35),
-  ('sfx-sendp', 'click', S['phone'] + 33.7, .7),
-  ('sfx-out', 'whoosh', S['phone'] + 34.8, .6),
-  ('sfx-chip1', 'pop', S['form'] + 3.86, .5),
-  ('sfx-chip2', 'pop', S['form'] + 4.28, .45),
-  ('sfx-chip3', 'pop', S['form'] + 4.70, .5),
-  ('sfx-send', 'click', S['form'] + 5.34, .7),
-  ('sfx-msg', 'notification', S['whatsapp'] + .62, .55),
-  ('sfx-id', 'sparkle', S['whatsapp'] + 2.75, .5),
-  ('sfx-cut3', 'whoosh-short', S['status'] - .1, .5),
-  ('sfx-flip', 'pop', S['status'] + 2.8, .5),
-  ('sfx-riser', 'riser', S['endcard'] - 1.3, .45),
-  ('sfx-mark', 'impact-bass-1', S['endcard'] + .32, .6),
-  ('sfx-cta', 'click', S['endcard'] + 2.57, .7),
+  ('sfx-t0', 'click-soft', S['phone'] + 1.87, .7),
+  ('sfx-t1', 'click-soft', S['phone'] + 3.74, .65),
+  ('sfx-t2', 'click-soft', S['phone'] + 5.62, .7),
+  ('sfx-pk', 'whoosh-short', S['phone'] + 7.45, .4),
+  ('sfx-t3', 'click-soft', S['phone'] + 8.19, .7),
+  ('sfx-t4', 'click-soft', S['phone'] + 11.24, .7),
+  ('sfx-dst', 'whoosh', S['phone'] + 13.55, .35),
+  ('sfx-frm', 'whoosh-short', S['phone'] + 15.9, .4),
+  ('sfx-c1', 'pop', S['phone'] + 19.22, .45),
+  ('sfx-c2', 'pop', S['phone'] + 19.69, .4),
+  ('sfx-c3', 'pop', S['phone'] + 20.16, .45),
+  ('sfx-send', 'click', S['phone'] + 21.08, .7),
+  ('sfx-out', 'whoosh', S['phone'] + 21.8, .55),
+  ('sfx-msg', 'notification', S['wa2'] + .02, .5),
+  ('sfx-id', 'pop', S['wa2'] + .9, .5),
+  ('sfx-riser', 'riser', S['endcard'] - 1.62, .4),
+  ('sfx-mark', 'impact-bass-1', S['endcard'] + .0, .6),
+  ('sfx-cta', 'click', S['endcard'] + 2.80, .7),
 ]
 SFXFILE = {'click': 'click-soft'}
 import subprocess
@@ -532,6 +534,11 @@ DUR = {n[:-4]: round(float(subprocess.check_output(['ffprobe','-v','error','-sho
 DUR['riser'] = 2.4  # only bundled names we copied
 hosts = '\n'.join(f'''      <div id="{cid}" data-composition-id="{cid}" data-composition-src="compositions/{cid}.html" data-start="{S[cid]:.2f}" data-duration="{scenes[cid][0]}" data-track-index="1" data-track-kind="graphics" data-width="{W}" data-height="{H}"></div>''' for cid in ORDER)
 audio = '\n'.join(f'''      <audio id="{i}" class="clip" src="assets/sfx/{SFXFILE.get(f, f)}.mp3" data-start="{a:.2f}" data-duration="{DUR[SFXFILE.get(f, f)]}" data-track-index="{3 + n % 3}" data-volume="{v}"></audio>''' for n, (i, f, a, v) in enumerate(SFX))
+MUSIC = 'assets/music/summer-in-ibiza-instrumental.mp3'
+MUSIC_START = 67.5   # the track's hook; first downbeat of the cut sits on film 0
+if os.path.exists(f'{OUT}/{MUSIC}') and os.path.getsize(f'{OUT}/{MUSIC}') > 100000:
+    audio += f'''
+      <audio id="music" class="clip" src="{MUSIC}" data-start="0" data-duration="{TOTAL}" data-media-start="{MUSIC_START}" data-track-index="2" data-volume="0.85" data-fade-out="1.2"></audio>'''
 index = f"""<!doctype html>
 <html lang="he">
   <head>

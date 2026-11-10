@@ -35,7 +35,7 @@
 #e-ph .wa svg{width:38px;height:38px}
 #e-ph .n{font-family:'IBM Plex Mono',monospace;font-weight:600;direction:ltr;letter-spacing:.04em}
 </style>
-  <div id="root" data-composition-id="endcard" data-width="1080" data-height="1920" data-start="0" data-duration="5.5">
+  <div id="root" data-composition-id="endcard" data-width="1080" data-height="1920" data-start="0" data-duration="5.625">
 
     <div id="e-wrap" style="position:absolute;inset:0">
       <img id="e-img" src="assets/img/fco-tall.webp" alt="">
@@ -53,18 +53,18 @@
     const tl = gsap.timeline({ paused: true });
 
     tl.fromTo("#e-img", {scale:1.25}, {scale:1.1, duration:4.5, ease:"power2.out"}, 0);
-    tl.fromTo("#e-word", {opacity:0, scale:1.25, filter:"blur(12px)"}, {opacity:1, scale:1, filter:"blur(0px)", duration:.7, ease:"power4.out"}, .3);
-    tl.fromTo("#e-tag", {opacity:0, y:20}, {opacity:1, y:0, duration:.45, ease:"power3.out"}, .75);
-    tl.fromTo("#e-line", {scaleX:0}, {scaleX:1, duration:.5, ease:"power3.inOut"}, .85);
-    tl.fromTo("#e-h", {opacity:0, y:50}, {opacity:1, y:0, duration:.5, ease:"power3.out"}, 1.1);
-    tl.fromTo("#e-cta", {opacity:0, y:50, scale:.9}, {opacity:1, y:0, scale:1, duration:.5, ease:"back.out(1.6)"}, 1.4);
-    tl.fromTo("#e-ph", {opacity:0, y:30}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, 1.65);
+    tl.fromTo("#e-word", {opacity:0, scale:1.25, filter:"blur(12px)"}, {opacity:1, scale:1, filter:"blur(0px)", duration:.5, ease:"power4.out"}, .0);
+    tl.fromTo("#e-tag", {opacity:0, y:20}, {opacity:1, y:0, duration:.35, ease:"power3.out"}, .47);
+    tl.fromTo("#e-line", {scaleX:0}, {scaleX:1, duration:.4, ease:"power3.inOut"}, .47);
+    tl.fromTo("#e-h", {opacity:0, y:50}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, .94);
+    tl.fromTo("#e-cta", {opacity:0, y:50, scale:.9}, {opacity:1, y:0, scale:1, duration:.5, ease:"back.out(1.6)"}, 1.41);
+    tl.fromTo("#e-ph", {opacity:0, y:30}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, 1.64);
     tl.set("#e-fill", {scaleY:0}, 0);
-    tl.fromTo("#e-cur", {x:1100, y:1500}, {x:330, y:1040, duration:.55, ease:"power3.inOut"}, 1.95);
-    tl.to("#e-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 2.55);
-    tl.to("#e-cta", {scale:.96, duration:.08, yoyo:true, repeat:1}, 2.57);
-    tl.to("#e-fill", {scaleY:1, duration:.45, ease:"power3.out"}, 2.6);
-    tl.to("#e-cur", {x:1150, y:1700, opacity:0, duration:.5, ease:"power3.in"}, 3.0);
+    tl.fromTo("#e-cur", {x:1100, y:1500}, {x:330, y:980, duration:.5, ease:"power3.inOut"}, 1.85);
+    tl.to("#e-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 2.79);
+    tl.to("#e-cta", {scale:.96, duration:.08, yoyo:true, repeat:1}, 2.81);
+    tl.to("#e-fill", {scaleY:1, duration:.45, ease:"power3.out"}, 2.81);
+    tl.to("#e-cur", {x:1150, y:1700, opacity:0, duration:.5, ease:"power3.in"}, 3.3);
 
     window.__timelines["endcard"] = tl;
   </script>
