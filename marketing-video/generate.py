@@ -195,7 +195,7 @@ scenes['form'] = (6.0, """
 """ + exit_js('f', 5.66))
 
 # ---------------- S3 WHATSAPP ----------------
-LEAD = 'NRT-261110-4827'
+LEAD = 'NRT-261110-3441'   # same lead ID the real site produced in the recording
 MSG = ['היי נאור, אשמח לתכנן חופשה:', 'שם: דנה', 'יעד: רודוס', 'נוסעים: 2 מבוגרים + 2 ילדים',
        'תאריכים: 14/07/2027 עד 21/07/2027', 'חשוב לנו: משפחה, בטן־גב, כשרה', '', f'מספר פנייה: <b id="w-id">{LEAD}</b>']
 lines = ''.join(f'<div class="ml" id="w-l{i}">{t or "&nbsp;"}</div>' for i, t in enumerate(MSG))
@@ -489,8 +489,10 @@ wd, wcss, wbody, wjs = scenes['whatsapp']
 wbody = wbody.replace(wbody[wbody.index('<div class="kick"'):wbody.index('<div id="w-chat">')], '')
 wbody = wbody.replace('<div class="k">כל פנייה מקבלת מספר מעקב</div>', '<div class="k">מספר פנייה</div>')
 scenes['wa2'] = (BAR, wcss.replace('#w-chat{position:absolute;top:500px', '#w-chat{position:absolute;top:500px').replace('#w-ticket{position:absolute;top:1095px', '#w-ticket{position:absolute;top:1110px'), wbody.replace('id="w-', 'id="w-'), """
+    tl.fromTo("#w-wrap", {scale:1}, {scale:1.06, duration:1.875, ease:"none"}, 0.0);
     tl.fromTo("#w-bub", {scale:.6, opacity:0}, {scale:1, opacity:1, duration:.25, ease:"back.out(1.6)"}, 0.0);
     tl.fromTo("#w-bub .ml", {opacity:0, x:-24}, {opacity:1, x:0, duration:.12, ease:"power2.out", stagger:.06}, .05);
+    tl.fromTo("#w-ticket", {rotate:0}, {rotate:-3, duration:.9, ease:"sine.inOut"}, 1.2);
     tl.fromTo("#w-meta", {opacity:0}, {opacity:1, duration:.1}, .55);
     tl.to("#w-id", {backgroundColor:"rgba(232,198,144,1)", duration:.15}, .7);
     tl.fromTo("#w-ticket", {opacity:0, y:-200, scale:.5}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(1.6)"}, BEAT * 2 - .05);

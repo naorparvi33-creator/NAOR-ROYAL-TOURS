@@ -40,10 +40,10 @@
       <div id="w-chat">
         <div id="w-head"><div id="w-av">N</div><div id="w-name">נאור · NAOR ROYAL TOURS<small>זמין עכשיו</small></div></div>
         <div id="w-body">
-          <div id="w-bub"><div class="ml" id="w-l0">היי נאור, אשמח לתכנן חופשה:</div><div class="ml" id="w-l1">שם: דנה</div><div class="ml" id="w-l2">יעד: רודוס</div><div class="ml" id="w-l3">נוסעים: 2 מבוגרים + 2 ילדים</div><div class="ml" id="w-l4">תאריכים: 14/07/2027 עד 21/07/2027</div><div class="ml" id="w-l5">חשוב לנו: משפחה, בטן־גב, כשרה</div><div class="ml" id="w-l6">&nbsp;</div><div class="ml" id="w-l7">מספר פנייה: <b id="w-id">NRT-261110-4827</b></div><div id="w-meta">10:31 <span class="tk">✓✓</span></div></div>
+          <div id="w-bub"><div class="ml" id="w-l0">היי נאור, אשמח לתכנן חופשה:</div><div class="ml" id="w-l1">שם: דנה</div><div class="ml" id="w-l2">יעד: רודוס</div><div class="ml" id="w-l3">נוסעים: 2 מבוגרים + 2 ילדים</div><div class="ml" id="w-l4">תאריכים: 14/07/2027 עד 21/07/2027</div><div class="ml" id="w-l5">חשוב לנו: משפחה, בטן־גב, כשרה</div><div class="ml" id="w-l6">&nbsp;</div><div class="ml" id="w-l7">מספר פנייה: <b id="w-id">NRT-261110-3441</b></div><div id="w-meta">10:31 <span class="tk">✓✓</span></div></div>
         </div>
       </div>
-      <div id="w-ticket" data-layout-allow-overlap><div class="k">מספר פנייה</div><div class="v">NRT-261110-4827</div></div>
+      <div id="w-ticket" data-layout-allow-overlap><div class="k">מספר פנייה</div><div class="v">NRT-261110-3441</div></div>
     </div>
 
     <div class="grain" data-layout-ignore></div>
@@ -51,8 +51,10 @@
   <script>
     const tl = gsap.timeline({ paused: true });
 
+    tl.fromTo("#w-wrap", {scale:1}, {scale:1.06, duration:1.875, ease:"none"}, 0.0);
     tl.fromTo("#w-bub", {scale:.6, opacity:0}, {scale:1, opacity:1, duration:.25, ease:"back.out(1.6)"}, 0.0);
     tl.fromTo("#w-bub .ml", {opacity:0, x:-24}, {opacity:1, x:0, duration:.12, ease:"power2.out", stagger:.06}, .05);
+    tl.fromTo("#w-ticket", {rotate:0}, {rotate:-3, duration:.9, ease:"sine.inOut"}, 1.2);
     tl.fromTo("#w-meta", {opacity:0}, {opacity:1, duration:.1}, .55);
     tl.to("#w-id", {backgroundColor:"rgba(232,198,144,1)", duration:.15}, .7);
     tl.fromTo("#w-ticket", {opacity:0, y:-200, scale:.5}, {opacity:1, y:0, scale:1, duration:.35, ease:"back.out(1.6)"}, 0.938 - .05);
