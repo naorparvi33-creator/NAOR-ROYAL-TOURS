@@ -9,7 +9,7 @@ const FPS = 30, OUT = 'castw', PRE = 0.6, B = 60 / 128;
   const p = await ctx.newPage();
   await p.clock.install({ time: new Date('2026-11-10T10:30:00+02:00') });
   await p.addInitScript(() => {
-    document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '.hp{left:auto!important;right:0!important;clip-path:inset(50%)!important}'; document.head.appendChild(st); });
+    document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = 'html,body{scroll-behavior:auto!important}.hp{left:auto!important;right:0!important;clip-path:inset(50%)!important}'; document.head.appendChild(st); });
     window.__smooth = (y, ms) => { const s = scrollY, d = y - s, t0 = performance.now();
       const e = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
       (function f(){ const k = Math.min(1, (performance.now() - t0)/ms); scrollTo(0, Math.round(s + d*e(k))); if (k < 1) requestAnimationFrame(f); })(); };
@@ -19,6 +19,7 @@ const FPS = 30, OUT = 'castw', PRE = 0.6, B = 60 / 128;
     document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#send')) e.preventDefault(); });
   });
   await p.goto('http://localhost:8765/index.html', {waitUntil:'load'});
+  { const now = await p.evaluate(() => Date.now()); await p.clock.pauseAt(new Date(now + 500)); }
   for (let i = 0; i < 70; i++) await p.clock.runFor(100);
   const ev = (fn, arg) => p.evaluate(fn, arg);
   const packTop = await ev(() => __y('#pack')), packH = await ev(() => document.getElementById('pack').offsetHeight);
