@@ -195,7 +195,7 @@ scenes['form'] = (6.0, """
 """ + exit_js('f', 5.66))
 
 # ---------------- S3 WHATSAPP ----------------
-LEAD = 'NRT-261110-3441'   # same lead ID the real site produced in the recording
+LEAD = 'NRT-261110-3272'   # same lead ID the real site produced in the recording
 MSG = ['היי נאור, אשמח לתכנן חופשה:', 'שם: דנה', 'יעד: רודוס', 'נוסעים: 2 מבוגרים + 2 ילדים',
        'תאריכים: 14/07/2027 עד 21/07/2027', 'חשוב לנו: משפחה, בטן־גב, כשרה', '', f'מספר פנייה: <b id="w-id">{LEAD}</b>']
 lines = ''.join(f'<div class="ml" id="w-l{i}">{t or "&nbsp;"}</div>' for i, t in enumerate(MSG))
@@ -391,13 +391,18 @@ scenes['endcard'] = (2 * (60 / 128) * 4, """
 # ---------------- PHONE TOUR v4: still phone, hard cuts on the beat ----------------
 import json as _json
 BEAT = 60 / 128; BAR = 4 * BEAT
-SW, SH = 640, 1385
-PX, PY = (W - SW) // 2, 330
+SW = 620
+VH = round(SW * 844 / 390)   # site viewport on screen
+STATUS = 56                  # phone status bar above the site
+SH = VH + STATUS
+PX, PY = (W - SW) // 2, 312
 K = SW / 390
 _secs = {s['name']: s for s in _json.load(open(f'{OUT}/assets/video/sections.json'))}
 CUTS = [('hero', 0.0), ('types', BAR), ('pack', 4 * BAR), ('dest', 8 * BAR), ('form', 9.5 * BAR)]
 PHONE_END = 13 * BAR
-SEGS = [(t, round(_secs[n]['dur'], 4), round(_secs[n]['src'], 4)) for n, t in CUTS]
+SEGS = [(t, round(_secs[n]['dur'], 4), round(_secs[n]['src'], 4)) for n, t in CUTS if n != 'dest']
+DEST_T, DEST_D = 8 * BAR, round(_secs['dest']['dur'], 4)
+IMG_K = SW / 780   # 2x screenshots shown at screen width
 CAPS = [
   (0.0, 'NAOR ROYAL TOURS', 'האתר <em>החדש.</em>'),
   (BAR, '', 'בוחרים <em>חופשה.</em>'),
@@ -413,10 +418,10 @@ TAPS = [
   (BAR + 9 * BEAT, 282, 535, ('זוגית', 'קרמל', '#b07a45')),
   (6 * BAR, 130, 140, None),
 ]
-vids = '\n'.join(f'''            <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover" src="assets/video/site-tour-sections.mp4" muted playsinline data-start="{a:.4f}" data-duration="{d}" data-media-start="{m}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m) in enumerate(SEGS))
+vids = '\n'.join(f'''            <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:{STATUS}px;width:{SW}px;height:{VH}px;object-fit:cover" src="assets/video/site-tour-sections.mp4" muted playsinline data-start="{a:.4f}" data-duration="{d}" data-media-start="{m}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m) in enumerate(SEGS))
 caps = ''.join(f'<div class="cap" id="ph-c{i}">' + (f'<div class="ck">{k}</div>' if k else '') + f'<div class="cl">{l}</div></div>' for i, (_, k, l) in enumerate(CAPS))
 calls = ''.join(f'<div class="call" id="ph-o{i}"><span class="sw" style="background:{c[2]}"></span><span><b>{c[0]}</b><small>{c[1]}</small></span></div>' for i, (_, _, _, c) in enumerate(TAPS) if c)
-taps = ''.join(f'<div class="tap" id="ph-t{i}" style="left:{round(x*K)}px;top:{round(y*K)}px"></div>' for i, (_, x, y, _) in enumerate(TAPS))
+taps = ''.join(f'<div class="tap" id="ph-t{i}" style="left:{round(x*K)}px;top:{round(y*K) + STATUS}px"></div>' for i, (_, x, y, _) in enumerate(TAPS))
 js = ''
 for i, (t, _, _) in enumerate(CAPS):   # hard caption swaps on the beat
     js += f'    tl.fromTo("#ph-c{i}", {{opacity:0, y:26}}, {{opacity:1, y:0, duration:.16, ease:"power3.out", immediateRender:false}}, {t:.4f});\n'
@@ -435,21 +440,25 @@ for n, t in CUTS[1:]:                  # clear cut: punch + flash on the downbea
     js += f'    tl.fromTo("#ph-flash", {{opacity:.55}}, {{opacity:0, duration:.22, ease:"power2.out", immediateRender:false}}, {t:.4f});\n'
 scenes['phone'] = (PHONE_END, f"""
 #ph-glow{{position:absolute;left:50%;top:1000px;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;background:radial-gradient(circle,rgba(232,198,144,.26),rgba(176,122,69,.10) 40%,rgba(0,0,0,0) 68%)}}
-#ph-shadow{{position:absolute;left:50%;top:1770px;width:620px;height:70px;margin-left:-310px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}}
+#ph-shadow{{position:absolute;left:50%;top:1745px;width:620px;height:70px;margin-left:-310px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}}
 #ph-rig{{position:absolute;inset:0;perspective:2400px;z-index:1}}
 #ph-body{{position:absolute;left:{PX - 20}px;top:{PY - 20}px;width:{SW + 40}px;height:{SH + 40}px;border-radius:96px;background:linear-gradient(145deg,#3a332c,#0d0b09 30%,#1b1713 70%,#4a4037);padding:20px;box-shadow:0 60px 120px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,236,210,.18)}}
 #ph-body:before{{content:"";position:absolute;inset:7px;border-radius:90px;background:#050403}}
 #ph-btn1,#ph-btn2,#ph-btn3{{position:absolute;width:6px;border-radius:3px;background:#2a241f}}
 #ph-btn1{{left:-5px;top:260px;height:100px}}#ph-btn2{{left:-5px;top:380px;height:100px}}#ph-btn3{{right:-5px;top:320px;height:160px}}
 #ph-screen{{position:absolute;left:20px;top:20px;width:{SW}px;height:{SH}px;border-radius:76px;overflow:hidden;background:#100d0a}}
-#ph-island{{position:absolute;left:50%;top:22px;width:160px;height:46px;margin-left:-80px;border-radius:23px;background:#000;z-index:5}}
+#ph-status{{position:absolute;left:0;top:0;width:{SW}px;height:{STATUS}px;background:#0b0806;z-index:5;direction:ltr}}
+#ph-status .tm{{position:absolute;left:58px;top:14px;font-family:'Heebo',sans-serif;font-weight:700;font-size:26px;color:#fffcf7}}
+#ph-status .bt{{position:absolute;right:52px;top:18px;width:42px;height:20px;border-radius:6px;border:2px solid rgba(255,252,247,.8)}}
+#ph-status .bt i{{position:absolute;left:2px;top:2px;width:28px;height:12px;border-radius:3px;background:#fffcf7}}
+#ph-island{{position:absolute;left:50%;top:10px;width:150px;height:38px;margin-left:-75px;border-radius:19px;background:#000;z-index:6}}
 #ph-flash{{position:absolute;inset:0;background:#fffcf7;opacity:0;z-index:4}}
 .tap{{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:5px solid rgba(255,252,247,.95);background:rgba(255,252,247,.25);z-index:6;opacity:0}}
 .cap{{position:absolute;top:170px;left:60px;right:60px;opacity:0}}
 .ck{{color:var(--gold);font-family:'Bodoni Moda',serif;font-weight:700;font-size:30px;letter-spacing:.22em;direction:ltr;text-align:right}}
 .cl{{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:104px;line-height:1.0;color:var(--white)}}
 .cl em{{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}}
-.call{{position:absolute;left:30px;top:1150px;display:flex;align-items:center;gap:18px;padding:18px 28px 18px 20px;border-radius:28px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.5);opacity:0;z-index:20;direction:rtl}}
+.call{{position:absolute;left:24px;top:1170px;display:flex;align-items:center;gap:18px;padding:18px 28px 18px 20px;border-radius:28px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.5);opacity:0;z-index:20;direction:rtl}}
 .call .sw{{width:60px;height:60px;border-radius:16px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}}
 .call b{{display:block;font-size:38px;font-weight:800;line-height:1.15}}
 .call small{{display:block;font-size:28px;color:var(--muted)}}
@@ -463,6 +472,13 @@ scenes['phone'] = (PHONE_END, f"""
           <span id="ph-btn1"></span><span id="ph-btn2"></span><span id="ph-btn3"></span>
           <div id="ph-screen">
 {vids}
+            <div id="ph-dest" class="clip" data-start="{DEST_T:.4f}" data-duration="{DEST_D}" data-track-index="4" style="position:absolute;left:0;top:{STATUS}px;width:{SW}px;height:{VH}px;overflow:hidden;clip-path:inset(0);background:#f4ece0">
+              <img id="ph-dest-tall" src="assets/img/site-dest-tall.jpg" alt="" style="position:absolute;left:0;top:0;width:{SW}px;height:{round(3688 * IMG_K)}px">
+              <img src="assets/img/site-header.png" alt="" style="position:absolute;left:0;top:0;width:{SW}px;height:{round(128 * IMG_K)}px">
+              <img src="assets/img/site-fab-wa.png" alt="" style="position:absolute;left:{round(36 * IMG_K)}px;top:{round(1532 * IMG_K)}px;width:{round(120 * IMG_K)}px;height:{round(120 * IMG_K)}px">
+              <img src="assets/img/site-fab-a11y.png" alt="" style="position:absolute;left:{round(648 * IMG_K)}px;top:{round(1556 * IMG_K)}px;width:{round(96 * IMG_K)}px;height:{round(96 * IMG_K)}px">
+            </div>
+            <div id="ph-status"><span class="tm">10:30</span><span class="bt"><i></i></span></div>
             <div id="ph-island"></div>
             <div id="ph-flash"></div>
             {taps}
@@ -477,6 +493,8 @@ scenes['phone'] = (PHONE_END, f"""
     tl.fromTo("#ph-body", {{y:300, scale:.86, rotateX:16, opacity:0}}, {{y:0, scale:1, rotateX:0, opacity:1, duration:.75, ease:"power3.out"}}, 0);
     tl.fromTo("#ph-shadow", {{opacity:0}}, {{opacity:1, duration:.6}}, .1);
 {js}
+    // destinations: the real grid, scrolled smoothly (same 900 css px, same ease as the recorder)
+    tl.fromTo("#ph-dest-tall", {{y:0}}, {{y:{-round(900 * 2 * IMG_K)}, duration:2.65, ease:"power3.inOut", immediateRender:false}}, {DEST_T + .05:.4f});
     // the phone hands the request over: the screen becomes the WhatsApp card
     tl.to("#ph-body", {{scale:.84, y:120, opacity:.2, duration:.4, ease:"power3.in", overwrite:"auto"}}, {PHONE_END - .42:.4f});
     tl.to("#ph-shadow", {{opacity:0, duration:.3, overwrite:"auto"}}, {PHONE_END - .42:.4f});

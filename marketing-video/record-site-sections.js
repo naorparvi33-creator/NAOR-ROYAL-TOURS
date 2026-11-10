@@ -60,6 +60,7 @@ const FPS = 30, OUT = 'castw', PRE = 0.6, B = 60 / 128;
   for (const s of SECTIONS) {
     await s.jump();
     for (let w = 0; w < 4; w++) { await p.clock.runFor(1); await p.waitForTimeout(60); }
+    await p.evaluate(() => { for (const a of document.getAnimations()) { if (a.playState !== 'finished' && a.playState !== 'paused') a.pause(); } });
     ref = null;
     const start = f / FPS; const n = Math.round((PRE + s.dur) * FPS); let k = 0;
     const acts = s.acts.map(([t, fn]) => [t + PRE, fn]);
@@ -67,6 +68,7 @@ const FPS = 30, OUT = 'castw', PRE = 0.6, B = 60 / 128;
       const t = i / FPS;
       while (k < acts.length && acts[k][0] <= t + 1e-6) { await acts[k][1](); k++; }
       await p.clock.runFor(1000 / FPS);
+      await p.evaluate(ms => { for (const a of document.getAnimations()) { if (a.playState === 'finished') continue; if (a.playState !== 'paused') a.pause(); const end = a.effect ? a.effect.getComputedTiming().endTime : 0; const t = (a.currentTime || 0) + ms; if (isFinite(end) && t >= end) a.finish(); else a.currentTime = t; } }, 1000 / FPS);
       fs.writeFileSync(`${OUT}/f${String(f).padStart(5,'0')}.jpg`, await shoot()); f++;
       if (f % 60 === 0) console.log('frame', f, 'retries', retries, 'bad', bad);
     }
