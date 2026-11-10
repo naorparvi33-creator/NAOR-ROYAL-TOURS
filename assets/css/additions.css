@@ -1,0 +1,98 @@
+/* NAOR ROYAL TOURS · תוספות: סטטוס זמינות, טופס, שאלות נפוצות, תחתית */
+
+/* status */
+.status{display:inline-flex;align-items:center;gap:12px;margin-top:22px;padding:10px 16px 10px 14px;border-radius:16px;background:var(--cream);border:1px solid var(--line)}
+.status i{width:10px;height:10px;border-radius:50%;background:#9a8f82;flex:none;position:relative}
+.status.on i{background:var(--wa);box-shadow:0 0 0 4px rgba(37,211,102,.18)}
+.status.off i{background:#c99a4a}
+.status.shabbat i{background:var(--caramel);box-shadow:0 0 0 4px rgba(176,122,69,.18)}
+.status span{display:flex;flex-direction:column;line-height:1.3}
+.status b{font-size:.95rem}
+.status small{font-size:.8rem;color:var(--muted)}
+
+/* form additions */
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+.req{color:var(--caramel)}
+input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:#b3261e;background:#fff5f4}
+.check{grid-column:1/-1;display:flex;align-items:flex-start;gap:10px;font-size:.85rem;font-weight:400;color:var(--muted);cursor:pointer}
+.check input{width:20px;height:20px;min-width:20px;margin:1px 0 0;padding:0;accent-color:var(--caramel);cursor:pointer}
+.check input[aria-invalid="true"]{outline:2px solid #b3261e;outline-offset:2px}
+.inline-lnk{background:none;border:0;padding:0;color:var(--caramel);text-decoration:underline;cursor:pointer;font:inherit}
+.form-msg{grid-column:1/-1;font-size:.92rem;padding:12px 14px;border-radius:14px}
+.form-msg.err{background:#fff0ee;color:#8c1d16;border:1px solid rgba(179,38,30,.25)}
+.form-msg.ok{background:#eefaf2;color:#14532d;border:1px solid rgba(37,211,102,.35)}
+.form-msg.ok b{font-family:var(--f-mono);letter-spacing:.04em}
+.send{width:100%}
+.send[aria-disabled="true"]{opacity:.6;cursor:wait}
+
+/* FAQ */
+.faq-list{display:grid;gap:12px;max-width:860px}
+.faq details{background:var(--white);border-radius:20px;border:1px solid var(--line);box-shadow:0 10px 28px rgba(80,50,20,.05);transition:box-shadow .3s}
+.faq details[open]{box-shadow:0 20px 40px rgba(80,50,20,.10)}
+.faq summary{list-style:none;cursor:pointer;padding:20px 22px;font-weight:800;font-size:1.08rem;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--cream-2);color:var(--caramel);font-size:1.3rem;font-weight:500;transition:transform .35s var(--ease)}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 22px 20px;color:var(--muted);max-width:68ch}
+
+/* footer + dialogs */
+.foot-end{display:flex;flex-direction:column;gap:4px}
+.biz{font-size:.78rem;color:var(--muted-dk)}
+dialog.doc .upd{margin-top:12px}
+
+/* packing guide: season switch */
+.pk-season{display:inline-flex;align-self:flex-start;gap:4px;padding:5px;border-radius:999px;background:rgba(20,16,12,.6);border:1px solid var(--glass-b);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:auto;white-space:nowrap}
+.pk-season button{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 18px;background:transparent;color:var(--muted-dk);font:inherit;font-weight:700;font-size:.95rem;cursor:pointer;transition:background .3s,color .3s}
+.pk-season button:hover{color:var(--white)}
+.pk-season svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.pk-season button[aria-pressed="true"]{background:var(--gold);color:var(--ink)}
+.pk-season.float{position:absolute;transform:translateX(-50%);z-index:3;box-shadow:0 14px 34px rgba(0,0,0,.35)}
+.pack.static .pk-season{margin-top:6px}
+/* light / no-3D version: a clear checklist with a tip under each item */
+.pk-tip{display:none}
+.pack.static .pk-tip{display:block;font-weight:400;font-size:.84rem;line-height:1.45;color:var(--muted-dk);margin-top:2px;white-space:normal}
+.pack.static .pk-nm{white-space:normal;overflow:visible}
+.pack.static .pk-list li{align-items:start}
+@media (max-width:900px){
+  .pack.static .pk-ui{justify-content:flex-start;gap:18px;padding-block:96px 60px}
+  .pack.static .pk-list{grid-auto-flow:row!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-columns:auto!important;gap:8px!important;justify-content:stretch}
+  .pack.static .pk-list li{display:grid;grid-template-columns:38px minmax(0,1fr) 22px!important;gap:12px;padding:10px 12px!important;border:1px solid var(--glass-b)!important;background:var(--glass)!important;border-radius:14px;opacity:1}
+  .pack.static .pk-nm{position:static!important;width:auto!important;height:auto!important;clip:auto!important;font-size:.98rem}
+  .pack.static .pk-ck{position:static;opacity:1;transform:none;width:22px;height:22px;border:0}
+  .pack.static .pk-cta{position:static;justify-content:flex-start;margin-top:4px}
+  .pack.static .pk-cta .btn-ghost{display:inline-flex}
+  .pack.static .pk-bottom{align-items:stretch}
+}
+/* 7 items: keep the side column inside the screen on laptop heights */
+@media (min-width:901px){
+  .pk-ui{padding-block:84px 28px;gap:12px}
+  .pk-top{gap:8px}
+  .pk-top h2{font-size:clamp(2rem,3vw,3.2rem)}
+  .pk-cap{min-height:5.6em}
+  .pk-list li{padding:5px 10px}
+}
+@media (min-width:901px) and (max-height:820px){
+  .pk-ui{padding-block:92px 16px}
+  .pk-top .kicker,.pk-skip{display:none}
+  .pk-cap{min-height:4.9em;gap:2px}
+  .pk-cap p{font-size:.95rem}
+  .pk-list{gap:2px}
+  .pk-list li{padding:3px 10px}
+  .pk-ic{width:32px;height:32px;border-radius:9px}
+  .pk-ic svg{width:18px;height:18px}
+}
+@media (max-width:900px){
+  .pk-season{align-self:center}
+  .pk-season button{padding:9px 15px;font-size:.9rem}
+  .pk-list{grid-auto-columns:38px!important;gap:7px!important}
+  .pk-ic{width:38px!important;height:38px!important}
+  .pk-cta #pk-share{display:inline-flex;padding:10px 4px;font-size:.9rem}
+}
+
+/* never allow sideways scrolling on phones (keeps sticky sections working) */
+html{overflow-x:clip;max-width:100%}
+body{overflow-x:clip;max-width:100%}
+
+/* no-JS / failed JS: never hide content */
+html:not(.js) .site .rv,html:not(.js) .site .rise{opacity:1!important;transform:none!important;clip-path:none!important}
+@media (max-width:640px){.status{display:flex}}
