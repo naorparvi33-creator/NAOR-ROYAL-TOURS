@@ -344,7 +344,7 @@ scenes['extras'] = (4.0, """
 """ + exit_js('x', 3.66))
 
 # ---------------- S7 END ----------------
-scenes['endcard'] = (3 * (60 / 128) * 4, """
+scenes['endcard'] = (2 * (60 / 128) * 4, """
 #e-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #e-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,8,6,.9),rgba(11,8,6,.6) 45%,rgba(11,8,6,.95))}
 #e-mark{position:absolute;top:400px;left:0;right:0;text-align:center;direction:ltr}
@@ -388,71 +388,70 @@ scenes['endcard'] = (3 * (60 / 128) * 4, """
 """)
 
 
-# ---------------- PHONE TOUR (real site recording inside a floating phone) ----------------
-SW, SH = 560, 1212            # screen size (recording is 390x844 css px -> x1.4359)
-PX, PY = (W - SW) // 2, 360   # screen top-left in frame
+# ---------------- PHONE TOUR v4: still phone, hard cuts on the beat ----------------
+import json as _json
+BEAT = 60 / 128; BAR = 4 * BEAT
+SW, SH = 640, 1385
+PX, PY = (W - SW) // 2, 330
 K = SW / 390
-BEAT = 60 / 128; BAR = 4 * BEAT   # music grid: 128 BPM
-SEGS = [  # start, dur, media-start, rate  (deterministic 1x recording, actions placed on the beat)
-  (0.0, 22.5, 0.0, 1.0),
-]
-CAPS = [  # start, kicker, line
+_secs = {s['name']: s for s in _json.load(open(f'{OUT}/assets/video/sections.json'))}
+CUTS = [('hero', 0.0), ('types', BAR), ('pack', 4 * BAR), ('dest', 8 * BAR), ('form', 9.5 * BAR)]
+PHONE_END = 13 * BAR
+SEGS = [(t, round(_secs[n]['dur'], 4), round(_secs[n]['src'], 4)) for n, t in CUTS]
+CAPS = [
   (0.0, 'NAOR ROYAL TOURS', 'האתר <em>החדש.</em>'),
   (BAR, '', 'בוחרים <em>חופשה.</em>'),
   (4 * BAR, '', 'המזוודה <em>נארזת.</em>'),
   (6 * BAR, '', 'קיץ? <em>חורף.</em>'),
-  (13.6, '', '10 <em>יעדים.</em>'),
-  (8.5 * BAR, '', 'טופס <em>אחד.</em>'),
-  (11 * BAR, '', 'ישר <em>לוואטסאפ.</em>'),
+  (8 * BAR, '', '10 <em>יעדים.</em>'),
+  (9.5 * BAR, '', 'טופס <em>אחד.</em>'),
+  (12 * BAR, '', 'ישר <em>לוואטסאפ.</em>'),
 ]
-TAPS = [  # film time, viewport x, y, callout (text, swatch) or None
-  (1.88, 109, 535, ('משפחתית', 'בז׳ שמנת', '#e2d0b0')),
-  (3.75, 282, 678, ('כשרה', 'שחור', '#15110e')),
-  (5.63, 282, 535, ('זוגית', 'קרמל', '#b07a45')),
-  (8.20, 264, 140, None),
-  (11.25, 130, 140, None),
+TAPS = [
+  (BAR + 1 * BEAT, 109, 535, ('משפחתית', 'בז׳ שמנת', '#e2d0b0')),
+  (BAR + 5 * BEAT, 282, 678, ('כשרה', 'שחור', '#15110e')),
+  (BAR + 9 * BEAT, 282, 535, ('זוגית', 'קרמל', '#b07a45')),
+  (6 * BAR, 130, 140, None),
 ]
-vids = '\n'.join(f'''        <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover" src="assets/video/site-tour-30.mp4" muted playsinline data-start="{a}" data-duration="{d}" data-media-start="{m}" data-playback-rate="{r}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m, r) in enumerate(SEGS))
-caps = ''.join(f'<div class="cap" id="ph-c{i}"><div class="ck">{k}</div><div class="cl">{l}</div></div>' for i, (_, k, l) in enumerate(CAPS))
+vids = '\n'.join(f'''            <video id="ph-v{i}" class="clip scr" style="position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover" src="assets/video/site-tour-sections.mp4" muted playsinline data-start="{a:.4f}" data-duration="{d}" data-media-start="{m}" data-track-index="{2 + i % 2}"></video>''' for i, (a, d, m) in enumerate(SEGS))
+caps = ''.join(f'<div class="cap" id="ph-c{i}">' + (f'<div class="ck">{k}</div>' if k else '') + f'<div class="cl">{l}</div></div>' for i, (_, k, l) in enumerate(CAPS))
 calls = ''.join(f'<div class="call" id="ph-o{i}"><span class="sw" style="background:{c[2]}"></span><span><b>{c[0]}</b><small>{c[1]}</small></span></div>' for i, (_, _, _, c) in enumerate(TAPS) if c)
 taps = ''.join(f'<div class="tap" id="ph-t{i}" style="left:{round(x*K)}px;top:{round(y*K)}px"></div>' for i, (_, x, y, _) in enumerate(TAPS))
-cap_js = ''
-for i, (t, _, _) in enumerate(CAPS):
-    cap_js += f'    tl.fromTo("#ph-c{i}", {{opacity:0, y:40}}, {{opacity:1, y:0, duration:.4, ease:"power3.out"}}, {max(t, .0) + (.0 if i == 0 else .05):.2f});\n'
-    if i + 1 < len(CAPS):
-        cap_js += f'    tl.to("#ph-c{i}", {{opacity:0, y:-30, duration:.22, ease:"power2.in"}}, {CAPS[i+1][0] - .2:.2f});\n'
-    else:
-        cap_js += f'    tl.to("#ph-c{i}", {{opacity:0, y:-30, duration:.25, ease:"power2.in"}}, 21.6);\n'
-tap_js = ''
+js = ''
+for i, (t, _, _) in enumerate(CAPS):   # hard caption swaps on the beat
+    js += f'    tl.fromTo("#ph-c{i}", {{opacity:0, y:26}}, {{opacity:1, y:0, duration:.16, ease:"power3.out", immediateRender:false}}, {t:.4f});\n'
+    end = CAPS[i + 1][0] if i + 1 < len(CAPS) else PHONE_END - .45
+    js += f'    tl.set("#ph-c{i}", {{opacity:0}}, {end - .001:.4f});\n'
+js = js.replace('immediateRender:false}}, 0.0000)', 'immediateRender:false}}, 0.15)')
 for i, (t, _, _, c) in enumerate(TAPS):
-    tap_js += f'    tl.fromTo("#ph-t{i}", {{scale:.3, opacity:.95}}, {{scale:1.5, opacity:0, duration:.55, ease:"power2.out", immediateRender:false}}, {t - .06:.2f});\n'
-oi = 0
-for t, _, _, c in TAPS:
-    if not c: continue
-    end = TAPS[oi + 1][0] - .1 if oi + 1 < 3 else 7.4
-    tap_js += f'    tl.fromTo("#ph-o{oi}", {{opacity:0, x:-60, scale:.8}}, {{opacity:1, x:0, scale:1, duration:.35, ease:"back.out(1.8)"}}, {t + .45:.2f});\n'
-    tap_js += f'    tl.to("#ph-o{oi}", {{opacity:0, x:-30, duration:.2}}, {end - .2:.2f});\n'
-    oi += 1
-scenes['phone'] = (22.5, f"""
-#ph-glow{{position:absolute;left:50%;top:960px;width:1300px;height:1300px;margin:-650px 0 0 -650px;border-radius:50%;background:radial-gradient(circle,rgba(232,198,144,.28),rgba(176,122,69,.10) 40%,rgba(0,0,0,0) 68%)}}
-#ph-shadow{{position:absolute;left:50%;top:1640px;width:560px;height:70px;margin-left:-280px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}}
-#ph-rig{{position:absolute;inset:0;perspective:2200px;z-index:1}}
-#ph-body{{position:absolute;left:{PX - 20}px;top:{PY - 20}px;width:{SW + 40}px;height:{SH + 40}px;border-radius:92px;background:linear-gradient(145deg,#3a332c,#0d0b09 30%,#1b1713 70%,#4a4037);padding:20px;box-shadow:0 60px 120px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,236,210,.18);transform-style:preserve-3d}}
-#ph-body:before{{content:"";position:absolute;inset:7px;border-radius:86px;background:#050403}}
+    js += f'    tl.fromTo("#ph-t{i}", {{scale:.3, opacity:.95}}, {{scale:1.5, opacity:0, duration:.45, ease:"power2.out", immediateRender:false}}, {t - .04:.4f});\n'
+callouts = [(t, c) for t, _, _, c in TAPS if c]
+for i, (t, c) in enumerate(callouts):
+    end = callouts[i + 1][0] + .3 if i + 1 < len(callouts) else 4 * BAR - .35
+    js += f'    tl.fromTo("#ph-o{i}", {{opacity:0, x:-50}}, {{opacity:1, x:0, duration:.18, ease:"power3.out", immediateRender:false}}, {t + .55:.4f});\n'
+    js += f'    tl.set("#ph-o{i}", {{opacity:0}}, {end:.4f});\n'
+for n, t in CUTS[1:]:                  # clear cut: punch + flash on the downbeat
+    js += f'    tl.fromTo("#ph-body", {{scale:.955}}, {{scale:1, duration:.3, ease:"power3.out", immediateRender:false}}, {t:.4f});\n'
+    js += f'    tl.fromTo("#ph-flash", {{opacity:.55}}, {{opacity:0, duration:.22, ease:"power2.out", immediateRender:false}}, {t:.4f});\n'
+scenes['phone'] = (PHONE_END, f"""
+#ph-glow{{position:absolute;left:50%;top:1000px;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;background:radial-gradient(circle,rgba(232,198,144,.26),rgba(176,122,69,.10) 40%,rgba(0,0,0,0) 68%)}}
+#ph-shadow{{position:absolute;left:50%;top:1770px;width:620px;height:70px;margin-left:-310px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}}
+#ph-rig{{position:absolute;inset:0;perspective:2400px;z-index:1}}
+#ph-body{{position:absolute;left:{PX - 20}px;top:{PY - 20}px;width:{SW + 40}px;height:{SH + 40}px;border-radius:96px;background:linear-gradient(145deg,#3a332c,#0d0b09 30%,#1b1713 70%,#4a4037);padding:20px;box-shadow:0 60px 120px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,236,210,.18)}}
+#ph-body:before{{content:"";position:absolute;inset:7px;border-radius:90px;background:#050403}}
 #ph-btn1,#ph-btn2,#ph-btn3{{position:absolute;width:6px;border-radius:3px;background:#2a241f}}
-#ph-btn1{{left:-5px;top:240px;height:90px}}#ph-btn2{{left:-5px;top:350px;height:90px}}#ph-btn3{{right:-5px;top:300px;height:150px}}
-#ph-screen{{position:absolute;left:20px;top:20px;width:{SW}px;height:{SH}px;border-radius:72px;overflow:hidden;background:#100d0a}}
-.scr{{position:absolute;left:0;top:0;width:{SW}px;height:{SH}px;object-fit:cover}}
-#ph-island{{position:absolute;left:50%;top:22px;width:150px;height:44px;margin-left:-75px;border-radius:22px;background:#000;z-index:5}}
-#ph-gloss{{position:absolute;inset:0;border-radius:72px;background:linear-gradient(115deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 28%);z-index:4;pointer-events:none}}
-.tap{{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:5px solid rgba(255,252,247,.95);background:rgba(255,252,247,.25);z-index:6;opacity:0}}
-.cap{{position:absolute;top:178px;left:70px;right:70px;opacity:0}}
-.ck{{color:var(--gold);font-size:30px;font-weight:500;letter-spacing:.02em}}
-.cl{{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:96px;line-height:1.05;color:var(--white);margin-top:4px}}
+#ph-btn1{{left:-5px;top:260px;height:100px}}#ph-btn2{{left:-5px;top:380px;height:100px}}#ph-btn3{{right:-5px;top:320px;height:160px}}
+#ph-screen{{position:absolute;left:20px;top:20px;width:{SW}px;height:{SH}px;border-radius:76px;overflow:hidden;background:#100d0a}}
+#ph-island{{position:absolute;left:50%;top:22px;width:160px;height:46px;margin-left:-80px;border-radius:23px;background:#000;z-index:5}}
+#ph-flash{{position:absolute;inset:0;background:#fffcf7;opacity:0;z-index:4}}
+.tap{{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:5px solid rgba(255,252,247,.95);background:rgba(255,252,247,.25);z-index:6;opacity:0}}
+.cap{{position:absolute;top:170px;left:60px;right:60px;opacity:0}}
+.ck{{color:var(--gold);font-family:'Bodoni Moda',serif;font-weight:700;font-size:30px;letter-spacing:.22em;direction:ltr;text-align:right}}
+.cl{{font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:104px;line-height:1.0;color:var(--white)}}
 .cl em{{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}}
-.call{{position:absolute;left:40px;top:1060px;display:flex;align-items:center;gap:20px;padding:20px 30px 20px 22px;border-radius:30px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.5);opacity:0;z-index:20;direction:rtl}}
-.call .sw{{width:62px;height:62px;border-radius:18px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}}
-.call b{{display:block;font-size:36px;font-weight:800;line-height:1.15}}
+.call{{position:absolute;left:30px;top:1150px;display:flex;align-items:center;gap:18px;padding:18px 28px 18px 20px;border-radius:28px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.5);opacity:0;z-index:20;direction:rtl}}
+.call .sw{{width:60px;height:60px;border-radius:16px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}}
+.call b{{display:block;font-size:38px;font-weight:800;line-height:1.15}}
 .call small{{display:block;font-size:28px;color:var(--muted)}}
 #ph-card{{position:absolute;left:70px;top:500px;width:940px;height:790px;border-radius:44px;background:var(--white);box-shadow:0 40px 90px rgba(0,0,0,.5);transform-origin:0 0;opacity:0;z-index:30}}
 """, f"""
@@ -465,7 +464,7 @@ scenes['phone'] = (22.5, f"""
           <div id="ph-screen">
 {vids}
             <div id="ph-island"></div>
-            <div id="ph-gloss"></div>
+            <div id="ph-flash"></div>
             {taps}
           </div>
         </div>
@@ -475,16 +474,15 @@ scenes['phone'] = (22.5, f"""
       <div id="ph-card"></div>
     </div>
 """, f"""
-    // float: enters tilted, then breathes
-    tl.fromTo("#ph-body", {{rotateY:-24, rotateX:10, y:60, scale:.94}}, {{rotateY:6, rotateX:3, y:0, scale:1, duration:1.6, ease:"power3.out"}}, 0);
-    tl.to("#ph-body", {{rotateY:-5, rotateX:-2, y:-18, duration:3.0, ease:"sine.inOut", yoyo:true, repeat:10}}, 1.6);
-    tl.fromTo("#ph-shadow", {{scaleX:.8, opacity:.6}}, {{scaleX:1.08, opacity:1, duration:3.0, ease:"sine.inOut", yoyo:true, repeat:10}}, 1.6);
-{cap_js}{tap_js}
-    // the planning form comes out of the phone
-    tl.to("#ph-body", {{scale:.82, y:120, opacity:.25, duration:.7, ease:"power3.inOut", overwrite:"auto"}}, 21.75);
-    tl.to("#ph-shadow", {{opacity:0, duration:.4, overwrite:"auto"}}, 21.75);
-    tl.fromTo("#ph-card", {{opacity:1, x:{PX - 70}, y:{PY - 500}, scaleX:{SW / 940:.4f}, scaleY:{SH / 790:.4f}}}, {{opacity:1, x:0, y:0, scaleX:1, scaleY:1, duration:.6, ease:"power4.inOut", immediateRender:false}}, 21.85);
+    tl.fromTo("#ph-body", {{y:300, scale:.86, rotateX:16, opacity:0}}, {{y:0, scale:1, rotateX:0, opacity:1, duration:.75, ease:"power3.out"}}, 0);
+    tl.fromTo("#ph-shadow", {{opacity:0}}, {{opacity:1, duration:.6}}, .1);
+{js}
+    // the phone hands the request over: the screen becomes the WhatsApp card
+    tl.to("#ph-body", {{scale:.84, y:120, opacity:.2, duration:.4, ease:"power3.in", overwrite:"auto"}}, {PHONE_END - .42:.4f});
+    tl.to("#ph-shadow", {{opacity:0, duration:.3, overwrite:"auto"}}, {PHONE_END - .42:.4f});
+    tl.fromTo("#ph-card", {{opacity:1, x:{PX - 70}, y:{PY - 500}, scaleX:{SW / 940:.4f}, scaleY:{SH / 790:.4f}}}, {{opacity:1, x:0, y:0, scaleX:1, scaleY:1, duration:.38, ease:"power4.inOut", immediateRender:false}}, {PHONE_END - .4:.4f});
 """)
+
 wd, wcss, wbody, wjs = scenes['whatsapp']
 wbody = wbody.replace(wbody[wbody.index('<div class="kick"'):wbody.index('<div id="w-chat">')], '')
 wbody = wbody.replace('<div class="k">כל פנייה מקבלת מספר מעקב</div>', '<div class="k">מספר פנייה</div>')
@@ -509,21 +507,21 @@ for cid in ORDER:
 TOTAL = round(t, 2)
 
 S = starts
-SFX = [  # id, file, abs time, volume
-  ('sfx-in', 'whoosh-cinematic', S['phone'] + 0.0, .35),
-  ('sfx-t0', 'click-soft', S['phone'] + 1.87, .7),
-  ('sfx-t1', 'click-soft', S['phone'] + 3.74, .65),
-  ('sfx-t2', 'click-soft', S['phone'] + 5.62, .7),
-  ('sfx-pk', 'whoosh-short', S['phone'] + 7.45, .4),
-  ('sfx-t3', 'click-soft', S['phone'] + 8.19, .7),
-  ('sfx-t4', 'click-soft', S['phone'] + 11.24, .7),
-  ('sfx-dst', 'whoosh', S['phone'] + 13.55, .35),
-  ('sfx-frm', 'whoosh-short', S['phone'] + 15.9, .4),
-  ('sfx-c1', 'pop', S['phone'] + 19.22, .45),
-  ('sfx-c2', 'pop', S['phone'] + 19.69, .4),
-  ('sfx-c3', 'pop', S['phone'] + 20.16, .45),
-  ('sfx-send', 'click', S['phone'] + 21.08, .7),
-  ('sfx-out', 'whoosh', S['phone'] + 21.8, .55),
+SFX = [  # id, file, abs time, volume  (all on the 128 BPM grid)
+  ('sfx-in', 'whoosh-short', S['phone'] + 0.0, .45),
+  ('sfx-cut1', 'whoosh', S['phone'] + BAR - .05, .45),
+  ('sfx-t0', 'click-soft', S['phone'] + BAR + 1 * BEAT - .01, .7),
+  ('sfx-t1', 'click-soft', S['phone'] + BAR + 5 * BEAT - .01, .65),
+  ('sfx-t2', 'click-soft', S['phone'] + BAR + 9 * BEAT - .01, .7),
+  ('sfx-cut2', 'whoosh-short', S['phone'] + 4 * BAR - .05, .5),
+  ('sfx-t3', 'click-soft', S['phone'] + 6 * BAR - .01, .7),
+  ('sfx-cut3', 'whoosh', S['phone'] + 8 * BAR - .05, .45),
+  ('sfx-cut4', 'whoosh-short', S['phone'] + 9.5 * BAR - .05, .5),
+  ('sfx-c1', 'pop', S['phone'] + 9.5 * BAR + 6 * BEAT, .45),
+  ('sfx-c2', 'pop', S['phone'] + 9.5 * BAR + 7 * BEAT, .4),
+  ('sfx-c3', 'pop', S['phone'] + 9.5 * BAR + 8 * BEAT, .45),
+  ('sfx-send', 'click', S['phone'] + 9.5 * BAR + 10 * BEAT - .01, .7),
+  ('sfx-out', 'whoosh', S['phone'] + 13 * BAR - .45, .55),
   ('sfx-msg', 'notification', S['wa2'] + .02, .5),
   ('sfx-id', 'pop', S['wa2'] + .9, .5),
   ('sfx-riser', 'riser', S['endcard'] - 1.62, .4),
