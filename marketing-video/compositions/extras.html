@@ -1,0 +1,49 @@
+<template>
+  <style>
+@font-face{font-family:'Frank Ruhl Libre';font-weight:500 900;font-display:block;src:url('assets/fonts/frankruhllibre-500-hebrew.woff2') format('woff2')}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-hebrew.woff2') format('woff2');unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
+@font-face{font-family:'Bodoni Moda';font-weight:500 700;font-display:block;src:url('assets/fonts/bodonimoda-500-latin.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:600;font-display:block;src:url('assets/fonts/ibmplexmono-600-latin.woff2') format('woff2')}
+
+#root{position:absolute;inset:0;overflow:hidden;direction:rtl;font-family:'Heebo',sans-serif;color:var(--white);
+  --ink:#100d0a;--ink2:#1d1813;--cream:#f4ece0;--cream2:#e9dcc8;--white:#fffcf7;--caramel:#b07a45;--caramel-lt:#d8aa76;--gold:#e8c690;--muted:#6b5f52;--wa:#25d366;
+  background:radial-gradient(120% 70% at 50% 38%,#6a3f22 0%,#2b1a10 48%,#0b0806 100%)}
+.kick{position:absolute;top:220px;right:90px;left:90px;display:flex;gap:22px;align-items:center;color:var(--gold);font-size:32px;font-weight:500;letter-spacing:.02em}
+.kick .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;letter-spacing:.14em;direction:ltr;color:var(--caramel-lt)}
+.kick .bar{width:64px;height:2px;background:var(--gold);opacity:.7}
+.ttl{position:absolute;top:278px;right:90px;left:60px;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:90px;line-height:1.0;color:var(--white);letter-spacing:-.01em}
+.ttl em{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cursor{position:absolute;left:0;top:0;width:92px;height:92px;z-index:50;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.cursor svg{width:100%;height:100%}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:repeating-radial-gradient(circle at 30% 30%,#fff 0 1px,transparent 1px 3px)}
+
+#x-list{position:absolute;top:530px;left:70px;right:70px;display:flex;flex-direction:column;gap:26px}
+.xr{display:flex;align-items:center;gap:30px;padding:30px 34px;border-radius:34px;background:var(--white);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.xi{width:110px;height:110px;border-radius:30px;background:var(--ink);color:var(--gold);display:grid;place-items:center;flex:none}
+.xi svg{width:56px;height:56px}
+.xt b{display:block;font-size:42px;font-weight:800;line-height:1.2}
+.xt small{display:block;font-size:31px;font-weight:400;color:var(--muted);margin-top:4px}
+</style>
+  <div id="root" data-composition-id="extras" data-width="1080" data-height="1920" data-start="0" data-duration="4.0">
+
+    <div id="x-wrap" style="position:absolute;inset:0">
+      <div class="kick" id="x-kick"><span class="n">05 / 05</span><span class="bar"></span><span>מאחורי הקלעים</span></div>
+      <h1 class="ttl" id="x-ttl" style="perspective:800px"><span class="w" style="display:inline-block">ועוד</span> <span class="w" style="display:inline-block">קצת</span> <br><span class="w" style="display:inline-block"><em>קסם.</em></span> </h1>
+      <div id="x-list"><div class="xr" id="x-r0"><span class="xi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg></span><span class="xt"><b>נפתח מהר גם בלי קליטה</b><small>נשמר בטלפון כמו אפליקציה</small></span></div><div class="xr" id="x-r1"><span class="xi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></span><span class="xt"><b>בודק את הפרטים לפני שליחה</b><small>שם, טלפון ותאריכים — בלי טעויות</small></span></div><div class="xr" id="x-r2"><span class="xi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="xt"><b>חוסם בוטים וספאם</b><small>רק פניות אמיתיות מגיעות אליי</small></span></div><div class="xr" id="x-r3"><span class="xi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg></span><span class="xt"><b>תפריט נגישות מובנה</b><small>כל אחד יכול לתכנן חופשה</small></span></div></div>
+    </div>
+
+    <div class="grain" data-layout-ignore></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#x-kick", {opacity:0, x:40}, {opacity:1, x:0, duration:.45, ease:"power3.out"}, 0.05);
+    tl.fromTo("#x-ttl .w", {opacity:0, y:70, rotateX:-50}, {opacity:1, y:0, rotateX:0, duration:.6, ease:"power4.out", stagger:.07}, 0.12);
+
+    tl.fromTo("#x-list .xr", {opacity:0, x:200, rotate:-2}, {opacity:1, x:0, rotate:0, duration:.45, ease:"power4.out", stagger:.5}, .35);
+    tl.fromTo("#x-list .xi", {scale:.4}, {scale:1, duration:.4, ease:"back.out(2)", stagger:.5}, .45);
+    tl.to("#x-wrap", {opacity:0, y:-120, scale:.96, duration:.32, ease:"power3.in"}, 3.66);
+
+    window.__timelines["extras"] = tl;
+  </script>
+</template>

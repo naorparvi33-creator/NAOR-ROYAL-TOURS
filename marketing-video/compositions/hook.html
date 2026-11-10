@@ -1,0 +1,60 @@
+<template>
+  <style>
+@font-face{font-family:'Frank Ruhl Libre';font-weight:500 900;font-display:block;src:url('assets/fonts/frankruhllibre-500-hebrew.woff2') format('woff2')}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-hebrew.woff2') format('woff2');unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
+@font-face{font-family:'Bodoni Moda';font-weight:500 700;font-display:block;src:url('assets/fonts/bodonimoda-500-latin.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:600;font-display:block;src:url('assets/fonts/ibmplexmono-600-latin.woff2') format('woff2')}
+
+#root{position:absolute;inset:0;overflow:hidden;direction:rtl;font-family:'Heebo',sans-serif;color:var(--white);
+  --ink:#100d0a;--ink2:#1d1813;--cream:#f4ece0;--cream2:#e9dcc8;--white:#fffcf7;--caramel:#b07a45;--caramel-lt:#d8aa76;--gold:#e8c690;--muted:#6b5f52;--wa:#25d366;
+  background:radial-gradient(120% 70% at 50% 38%,#6a3f22 0%,#2b1a10 48%,#0b0806 100%)}
+.kick{position:absolute;top:220px;right:90px;left:90px;display:flex;gap:22px;align-items:center;color:var(--gold);font-size:32px;font-weight:500;letter-spacing:.02em}
+.kick .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;letter-spacing:.14em;direction:ltr;color:var(--caramel-lt)}
+.kick .bar{width:64px;height:2px;background:var(--gold);opacity:.7}
+.ttl{position:absolute;top:278px;right:90px;left:60px;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:90px;line-height:1.0;color:var(--white);letter-spacing:-.01em}
+.ttl em{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cursor{position:absolute;left:0;top:0;width:92px;height:92px;z-index:50;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.cursor svg{width:100%;height:100%}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:repeating-radial-gradient(circle at 30% 30%,#fff 0 1px,transparent 1px 3px)}
+
+#h-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 60%}
+#h-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,8,6,.82) 0%,rgba(11,8,6,.35) 38%,rgba(11,8,6,.25) 55%,rgba(11,8,6,.92) 100%)}
+#h-top{position:absolute;top:250px;right:90px;left:90px;color:var(--gold);font-size:34px;font-weight:500;display:flex;align-items:center;gap:20px}
+#h-top .mark{font-family:'Bodoni Moda',serif;font-weight:700;letter-spacing:.18em;font-size:30px;direction:ltr}
+#h-top .bar{width:70px;height:2px;background:var(--gold)}
+#h-h{position:absolute;top:340px;right:84px;left:60px;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:168px;line-height:1.0;color:var(--white);text-shadow:0 8px 40px rgba(0,0,0,.45)}
+#h-h .l{display:block}
+#h-h em{font-style:normal;background:linear-gradient(100deg,#f8e6c4,#e8c690 45%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}
+#h-sub{position:absolute;top:1010px;right:90px;left:90px;font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:96px;line-height:1.05;color:var(--white)}
+#h-sub .dash{color:var(--gold)}
+#h-sub2{position:absolute;top:1140px;right:92px;left:90px;font-size:40px;font-weight:400;color:rgba(255,248,238,.85)}
+</style>
+  <div id="root" data-composition-id="hook" data-width="1080" data-height="1920" data-start="0" data-duration="3.5">
+
+    <div id="h-wrap" style="position:absolute;inset:0">
+      <img id="h-img" src="assets/img/rho-tall.webp" alt="">
+      <div id="h-shade"></div>
+      <div id="h-top"><span class="bar"></span><span>האתר החדש של</span><span class="mark">NAOR ROYAL TOURS</span></div>
+      <h1 id="h-h"><span class="l" id="h-l1">אתם רק</span><span class="l" id="h-l2">אורזים <em>מזוודה.</em></span></h1>
+      <div id="h-sub" data-layout-allow-overflow><span id="h-s1" style="display:inline-block">כל השאר</span> <span class="dash" id="h-s2" style="display:inline-block">— אוטומטי.</span></div>
+      <div id="h-sub2">5 אוטומציות · 24/7</div>
+    </div>
+
+    <div class="grain" data-layout-ignore></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#h-img", {scale:1.12}, {scale:1.22, duration:3.5, ease:"none"}, 0);
+    tl.fromTo("#h-l1", {y:18}, {y:0, duration:.9, ease:"power3.out"}, 0);
+    tl.fromTo("#h-l2", {y:30}, {y:0, duration:1.0, ease:"power3.out"}, 0);
+    tl.fromTo("#h-top", {opacity:.0, x:30}, {opacity:1, x:0, duration:.5, ease:"power3.out"}, .25);
+    tl.fromTo("#h-s1", {opacity:0, y:60, filter:"blur(10px)"}, {opacity:1, y:0, filter:"blur(0px)", duration:.45, ease:"power4.out"}, 1.25);
+    tl.fromTo("#h-s2", {opacity:0, y:60, filter:"blur(10px)"}, {opacity:1, y:0, filter:"blur(0px)", duration:.45, ease:"power4.out"}, 1.55);
+    tl.fromTo("#h-sub2", {opacity:0, y:20}, {opacity:1, y:0, duration:.4, ease:"power3.out"}, 1.7);
+    tl.to("#h-wrap", {opacity:0, y:-120, scale:.96, duration:.32, ease:"power3.in"}, 3.15);
+
+    window.__timelines["hook"] = tl;
+  </script>
+</template>

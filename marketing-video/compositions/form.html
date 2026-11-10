@@ -1,0 +1,111 @@
+<template>
+  <style>
+@font-face{font-family:'Frank Ruhl Libre';font-weight:500 900;font-display:block;src:url('assets/fonts/frankruhllibre-500-hebrew.woff2') format('woff2')}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-hebrew.woff2') format('woff2');unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
+@font-face{font-family:'Bodoni Moda';font-weight:500 700;font-display:block;src:url('assets/fonts/bodonimoda-500-latin.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:600;font-display:block;src:url('assets/fonts/ibmplexmono-600-latin.woff2') format('woff2')}
+
+#root{position:absolute;inset:0;overflow:hidden;direction:rtl;font-family:'Heebo',sans-serif;color:var(--white);
+  --ink:#100d0a;--ink2:#1d1813;--cream:#f4ece0;--cream2:#e9dcc8;--white:#fffcf7;--caramel:#b07a45;--caramel-lt:#d8aa76;--gold:#e8c690;--muted:#6b5f52;--wa:#25d366;
+  background:radial-gradient(120% 70% at 50% 38%,#6a3f22 0%,#2b1a10 48%,#0b0806 100%)}
+.kick{position:absolute;top:220px;right:90px;left:90px;display:flex;gap:22px;align-items:center;color:var(--gold);font-size:32px;font-weight:500;letter-spacing:.02em}
+.kick .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;letter-spacing:.14em;direction:ltr;color:var(--caramel-lt)}
+.kick .bar{width:64px;height:2px;background:var(--gold);opacity:.7}
+.ttl{position:absolute;top:278px;right:90px;left:60px;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:90px;line-height:1.0;color:var(--white);letter-spacing:-.01em}
+.ttl em{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cursor{position:absolute;left:0;top:0;width:92px;height:92px;z-index:50;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.cursor svg{width:100%;height:100%}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:repeating-radial-gradient(circle at 30% 30%,#fff 0 1px,transparent 1px 3px)}
+
+#f-card{position:absolute;top:500px;left:70px;right:70px;background:var(--white);border-radius:44px;padding:44px 44px 40px;color:var(--ink);box-shadow:0 40px 90px rgba(0,0,0,.5)}
+.row{display:flex;gap:22px;margin-bottom:22px}
+.fld{flex:1}
+.lbl{font-size:28px;font-weight:700;color:var(--ink);margin-bottom:10px}
+.inp{height:86px;border-radius:22px;background:#f1e9dd;border:2px solid transparent;display:flex;align-items:center;padding:0 26px;font-size:38px;font-weight:500;color:var(--ink);position:relative}
+.inp.ltr .txt{direction:ltr}
+.caret{width:3px;height:42px;background:var(--caramel);margin-right:4px;opacity:0}
+.c{opacity:0}
+.chips-l{font-size:28px;font-weight:700;margin:6px 0 14px}
+.chips{display:flex;flex-wrap:wrap;gap:14px}
+.chip{position:relative;overflow:hidden;border:2px solid #d9cdbb;border-radius:999px;padding:12px 26px;font-size:30px;font-weight:500;color:var(--ink)}
+.chip .fill{position:absolute;inset:0;background:var(--ink);border-radius:999px;transform:scale(0);opacity:1}
+.chip .t{position:relative}
+#f-send{margin-top:30px;height:110px;border-radius:999px;background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 40px;color:var(--white);font-size:38px;font-weight:700;position:relative;overflow:hidden}
+#f-send .wa{width:80px;height:80px;border-radius:50%;background:var(--wa);display:grid;place-items:center;color:#fff}
+#f-send .wa svg{width:46px;height:46px}
+#f-send .t{margin-right:14px}
+#f-ripple{position:absolute;left:58px;top:55px;width:60px;height:60px;margin:-30px;border-radius:50%;background:var(--wa)}
+</style>
+  <div id="root" data-composition-id="form" data-width="1080" data-height="1920" data-start="0" data-duration="6.0">
+
+    <div id="f-wrap" style="position:absolute;inset:0">
+      <div class="kick" id="f-kick"><span class="n">01 / 05</span><span class="bar"></span><span>טופס תכנון חכם</span></div>
+      <h1 class="ttl" id="f-ttl" style="perspective:800px"><span class="w" style="display:inline-block">ממלאים</span> <span class="w" style="display:inline-block">פעם</span> <br><span class="w" style="display:inline-block"><em>אחת.</em></span> </h1>
+      <div id="f-card">
+        <div class="row"><div class="fld "><div class="lbl">איך קוראים לכם?</div><div class="inp" id="f-name"><span class="txt"><span class="c">ד</span><span class="c">נ</span><span class="c">ה</span></span><span class="caret"></span></div></div><div class="fld "><div class="lbl">לאן?</div><div class="inp" id="f-dest"><span class="txt"><span class="c">ר</span><span class="c">ו</span><span class="c">ד</span><span class="c">ו</span><span class="c">ס</span></span><span class="caret"></span></div></div></div>
+        <div class="row"><div class="fld "><div class="lbl">כמה נוסעים?</div><div class="inp" id="f-people"><span class="txt"><span class="c">2</span><span class="c">&nbsp;</span><span class="c">מ</span><span class="c">ב</span><span class="c">ו</span><span class="c">ג</span><span class="c">ר</span><span class="c">י</span><span class="c">ם</span><span class="c">&nbsp;</span><span class="c">+</span><span class="c">&nbsp;</span><span class="c">2</span><span class="c">&nbsp;</span><span class="c">י</span><span class="c">ל</span><span class="c">ד</span><span class="c">י</span><span class="c">ם</span></span><span class="caret"></span></div></div></div>
+        <div class="row"><div class="fld ltr"><div class="lbl">יציאה</div><div class="inp" id="f-from"><span class="txt"><span class="c">1</span><span class="c">4</span><span class="c">/</span><span class="c">0</span><span class="c">7</span><span class="c">/</span><span class="c">2</span><span class="c">0</span><span class="c">2</span><span class="c">7</span></span><span class="caret"></span></div></div><div class="fld ltr"><div class="lbl">חזרה</div><div class="inp" id="f-to"><span class="txt"><span class="c">2</span><span class="c">1</span><span class="c">/</span><span class="c">0</span><span class="c">7</span><span class="c">/</span><span class="c">2</span><span class="c">0</span><span class="c">2</span><span class="c">7</span></span><span class="caret"></span></div></div></div>
+        <div class="chips-l">מה חשוב לכם?</div>
+        <div class="chips"><div class="chip" id="f-chip0"><span class="fill"></span><span class="t">זוגית</span></div><div class="chip" id="f-chip1"><span class="fill"></span><span class="t">משפחה</span></div><div class="chip" id="f-chip2"><span class="fill"></span><span class="t">שופינג</span></div><div class="chip" id="f-chip3"><span class="fill"></span><span class="t">בטן־גב</span></div><div class="chip" id="f-chip4"><span class="fill"></span><span class="t">טיולים</span></div><div class="chip" id="f-chip5"><span class="fill"></span><span class="t">כשרה</span></div><div class="chip" id="f-chip6"><span class="fill"></span><span class="t">שבת</span></div><div class="chip" id="f-chip7"><span class="fill"></span><span class="t">יוקרה</span></div><div class="chip" id="f-chip8"><span class="fill"></span><span class="t">חיי לילה</span></div></div>
+        <div id="f-send"><span class="t">שלחו לי בוואטסאפ</span><span class="wa"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg></span><span id="f-ripple"></span></div>
+      </div>
+      <div class="cursor" id="f-cur"><svg viewBox="0 0 32 32"><path d="M6 3l19 12.5-8.3 1.6 4.9 9.3-3.7 1.9-4.9-9.4L6 25z" fill="#fffcf7" stroke="#100d0a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <div class="grain" data-layout-ignore></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#f-kick", {opacity:0, x:40}, {opacity:1, x:0, duration:.45, ease:"power3.out"}, 0.05);
+    tl.fromTo("#f-ttl .w", {opacity:0, y:70, rotateX:-50}, {opacity:1, y:0, rotateX:0, duration:.6, ease:"power4.out", stagger:.07}, 0.12);
+
+    tl.fromTo("#f-card", {opacity:0, y:160}, {opacity:1, y:0, duration:.6, ease:"power4.out"}, .25);
+    tl.set("#f-ripple", {scale:0, opacity:0}, 0);
+    // cursor path (absolute frame coords)
+    tl.fromTo("#f-cur", {x:1100, y:1500}, {x:700, y:650, duration:.55, ease:"power3.inOut"}, .75);
+    const at = (sel) => { let e = document.querySelector(sel), x = 0, y = 0; const w0 = e.offsetWidth, h0 = e.offsetHeight; const wrap = document.querySelector('#f-wrap'); while (e && e !== wrap) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return {cx: x + w0 / 2, cy: y + h0 / 2}; };
+    const typeIn = (id, t0, dur) => {
+      const box = "#f-" + id, n = document.querySelectorAll(box + " .c").length;
+      tl.to(box, {borderColor:"#b07a45", duration:.12}, t0 - .05);
+      tl.fromTo(box + " .caret", {opacity:0}, {opacity:1, duration:.05}, t0 - .05);
+      tl.fromTo(box + " .c", {opacity:0}, {opacity:1, duration:.01, stagger: dur / n}, t0);
+      tl.to(box, {borderColor:"rgba(0,0,0,0)", duration:.12}, t0 + dur + .1);
+      tl.to(box + " .caret", {opacity:0, duration:.05}, t0 + dur + .1);
+    };
+    tl.to("#f-cur", {scale:.85, duration:.08, yoyo:true, repeat:1}, 1.3);
+    typeIn('name', 1.4, .3);
+    tl.to("#f-cur", {x:260, y:650, duration:.35, ease:"power3.inOut"}, 1.55);
+    typeIn('dest', 1.95, .35);
+    tl.to("#f-cur", {x:620, y:860, duration:.3, ease:"power3.inOut"}, 2.25);
+    typeIn('people', 2.5, .55);
+    typeIn('from', 3.05, .3);
+    typeIn('to', 3.25, .3);
+
+    tl.to("#f-cur", {x:() => at('#f-chip1').cx - 14, y:() => at('#f-chip1').cy - 8, duration:.28, ease:"power3.inOut"}, 3.55);
+    tl.to("#f-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 3.83);
+    tl.fromTo("#f-chip1 .fill", {scale:0}, {scale:1.2, duration:.25, ease:"power3.out"}, 3.86);
+    tl.to("#f-chip1 .t", {color:"#fffcf7", duration:.1}, 3.88);
+    tl.to("#f-chip1", {borderColor:"#100d0a", duration:.1}, 3.86);
+
+    tl.to("#f-cur", {x:() => at('#f-chip3').cx - 14, y:() => at('#f-chip3').cy - 8, duration:.28, ease:"power3.inOut"}, 3.97);
+    tl.to("#f-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 4.25);
+    tl.fromTo("#f-chip3 .fill", {scale:0}, {scale:1.2, duration:.25, ease:"power3.out"}, 4.28);
+    tl.to("#f-chip3 .t", {color:"#fffcf7", duration:.1}, 4.30);
+    tl.to("#f-chip3", {borderColor:"#100d0a", duration:.1}, 4.28);
+
+    tl.to("#f-cur", {x:() => at('#f-chip5').cx - 14, y:() => at('#f-chip5').cy - 8, duration:.28, ease:"power3.inOut"}, 4.39);
+    tl.to("#f-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 4.67);
+    tl.fromTo("#f-chip5 .fill", {scale:0}, {scale:1.2, duration:.25, ease:"power3.out"}, 4.70);
+    tl.to("#f-chip5 .t", {color:"#fffcf7", duration:.1}, 4.72);
+    tl.to("#f-chip5", {borderColor:"#100d0a", duration:.1}, 4.70);
+
+    tl.to("#f-cur", {x:() => at('#f-send .wa').cx - 14, y:() => at('#f-send').cy - 8, duration:.35, ease:"power3.inOut"}, 4.95);
+    tl.to("#f-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 5.32);
+    tl.to("#f-send", {scale:.96, duration:.08, yoyo:true, repeat:1}, 5.34);
+    tl.to("#f-ripple", {scale:24, opacity:.9, duration:.4, ease:"power2.out"}, 5.36);
+    tl.to("#f-wrap", {opacity:0, y:-120, scale:.96, duration:.32, ease:"power3.in"}, 5.66);
+
+    window.__timelines["form"] = tl;
+  </script>
+</template>

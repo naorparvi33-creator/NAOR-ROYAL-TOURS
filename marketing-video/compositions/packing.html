@@ -1,0 +1,67 @@
+<template>
+  <style>
+@font-face{font-family:'Frank Ruhl Libre';font-weight:500 900;font-display:block;src:url('assets/fonts/frankruhllibre-500-hebrew.woff2') format('woff2')}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-hebrew.woff2') format('woff2');unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:'Heebo';font-weight:300 900;font-display:block;src:url('assets/fonts/heebo-300-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
+@font-face{font-family:'Bodoni Moda';font-weight:500 700;font-display:block;src:url('assets/fonts/bodonimoda-500-latin.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:600;font-display:block;src:url('assets/fonts/ibmplexmono-600-latin.woff2') format('woff2')}
+
+#root{position:absolute;inset:0;overflow:hidden;direction:rtl;font-family:'Heebo',sans-serif;color:var(--white);
+  --ink:#100d0a;--ink2:#1d1813;--cream:#f4ece0;--cream2:#e9dcc8;--white:#fffcf7;--caramel:#b07a45;--caramel-lt:#d8aa76;--gold:#e8c690;--muted:#6b5f52;--wa:#25d366;
+  background:radial-gradient(120% 70% at 50% 38%,#6a3f22 0%,#2b1a10 48%,#0b0806 100%)}
+.kick{position:absolute;top:220px;right:90px;left:90px;display:flex;gap:22px;align-items:center;color:var(--gold);font-size:32px;font-weight:500;letter-spacing:.02em}
+.kick .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;letter-spacing:.14em;direction:ltr;color:var(--caramel-lt)}
+.kick .bar{width:64px;height:2px;background:var(--gold);opacity:.7}
+.ttl{position:absolute;top:278px;right:90px;left:60px;font-family:'Frank Ruhl Libre',serif;font-weight:900;font-size:90px;line-height:1.0;color:var(--white);letter-spacing:-.01em}
+.ttl em{font-style:normal;background:linear-gradient(100deg,#f6e2bd,#d8aa76 60%,#b07a45);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cursor{position:absolute;left:0;top:0;width:92px;height:92px;z-index:50;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.cursor svg{width:100%;height:100%}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:repeating-radial-gradient(circle at 30% 30%,#fff 0 1px,transparent 1px 3px)}
+
+#p-tog{position:absolute;top:510px;left:150px;right:150px;height:104px;border-radius:999px;background:rgba(0,0,0,.35);border:2px solid rgba(255,236,210,.18);display:flex;align-items:center}
+#p-knob{position:absolute;top:8px;right:8px;width:calc(50% - 8px);height:84px;border-radius:999px;background:var(--gold)}
+#p-tog .o{position:relative;flex:1;text-align:center;font-size:36px;font-weight:700}
+#p-o1{color:var(--ink)}#p-o2{color:rgba(255,248,238,.75)}
+#p-box{position:absolute;top:660px;left:70px;right:70px;height:640px}
+.list{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px}
+.it{height:82px;display:flex;align-items:center;gap:26px;padding:0 26px;border-radius:24px;background:rgba(255,246,232,.07);border:1.5px solid rgba(255,236,210,.14)}
+.ib{width:60px;height:60px;border-radius:50%;border:2px solid rgba(232,198,144,.5);display:grid;place-items:center;color:var(--gold);flex:none}
+.ic{width:34px;height:34px}
+.tx{flex:1;font-size:36px;font-weight:500;color:var(--white)}
+.ck{width:46px;height:46px;border-radius:50%;background:var(--gold);color:var(--ink);display:grid;place-items:center;font-size:28px;font-weight:900}
+</style>
+  <div id="root" data-composition-id="packing" data-width="1080" data-height="1920" data-start="0" data-duration="5.0">
+
+    <div id="p-wrap" style="position:absolute;inset:0">
+      <div class="kick" id="p-kick"><span class="n">04 / 05</span><span class="bar"></span><span>מדריך אריזה חכם</span></div>
+      <h1 class="ttl" id="p-ttl" style="perspective:800px"><span class="w" style="display:inline-block">מה</span> <span class="w" style="display:inline-block">לארוז?</span> <br><span class="w" style="display:inline-block">לפי</span> <span class="w" style="display:inline-block"><em>העונה.</em></span> </h1>
+      <div id="p-tog"><span id="p-knob"></span><span class="o" id="p-o1">☀ קיץ</span><span class="o" id="p-o2">❄ חורף</span></div>
+      <div id="p-box"><div class="list" id="p-sum"><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="2.5" width="13" height="19" rx="2"/><circle cx="12" cy="10" r="3.2"/><path d="M8.8 10h6.4M12 6.8c1.3 1.6 1.3 4.8 0 6.4M12 6.8c-1.3 1.6-1.3 4.8 0 6.4M9 17h6"/></svg></span><span class="tx">דרכון וביטוח נסיעות</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 8h6v12a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 20z"/><path d="M10 8V5h4v3M10.5 3h3M11 13h2M11 16h2"/></svg></span><span class="tx">קרם הגנה SPF 30+</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15.5c2.5 2 16.5 2 19 0"/><path d="M6.5 15.5c0-4.5 2.5-8 5.5-8s5.5 3.5 5.5 8"/><path d="M7 13.2h10"/></svg></span><span class="tx">כובע ומשקפי שמש</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v3.5c0 2 2 3.5 5 3.5s5-1.5 5-3.5V3"/><path d="M5 12.5h14l-2.5 7.5h-3L12 16l-1.5 4h-3z"/></svg></span><span class="tx">בגד ים</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8M12 11.5v5M9.5 14h5"/></svg></span><span class="tx">טואלטיקה ותרופות</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5v4.5M15 2.5v4.5"/><path d="M6.5 7h11v4a5.5 5.5 0 0 1-11 0z"/><path d="M12 16.5v5"/></svg></span><span class="tx">מטען ומתאם חשמל</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4v2.5h-4z"/><path d="M9 5h6l1 3v12a1.8 1.8 0 0 1-1.8 1.8H9.8A1.8 1.8 0 0 1 8 20V8z"/><path d="M8.3 12h7.4"/></svg></span><span class="tx">בקבוק מים רב־פעמי</span><span class="ck">✓</span></div></div><div class="list" id="p-win"><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="2.5" width="13" height="19" rx="2"/><circle cx="12" cy="10" r="3.2"/><path d="M8.8 10h6.4M12 6.8c1.3 1.6 1.3 4.8 0 6.4M12 6.8c-1.3 1.6-1.3 4.8 0 6.4M9 17h6"/></svg></span><span class="tx">דרכון וביטוח נסיעות</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l4 3 4-3 4 3v15H4V6z"/><path d="M12 6v15M10 11h.01M10 15h.01"/></svg></span><span class="tx">מעיל חם ועמיד למים</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 8 12 13l9.5-5z"/><path d="M2.5 12.3 12 17.3l9.5-5"/><path d="M2.5 16.5 12 21.5l9.5-5"/></svg></span><span class="tx">ביגוד תרמי</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15a7 7 0 0 1 14 0"/><rect x="4" y="15" width="16" height="4.5" rx="1.5"/><circle cx="12" cy="5.2" r="1.8"/></svg></span><span class="tx">כובע צמר, כפפות וצעיף</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h6v9.5l6.2 2.8a2 2 0 0 1 1.3 1.9V20H4v-3.5l2.5-2z"/><path d="M4 18h16"/></svg></span><span class="tx">נעליים אטומות למים</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8M12 11.5v5M9.5 14h5"/></svg></span><span class="tx">טואלטיקה ותרופות</span><span class="ck">✓</span></div><div class="it"><span class="ib"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12.6 7.5 10 12.3h4l-2.6 4.7"/></svg></span><span class="tx">מטען וסוללה ניידת</span><span class="ck">✓</span></div></div></div>
+      <div class="cursor" id="p-cur"><svg viewBox="0 0 32 32"><path d="M6 3l19 12.5-8.3 1.6 4.9 9.3-3.7 1.9-4.9-9.4L6 25z" fill="#fffcf7" stroke="#100d0a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <div class="grain" data-layout-ignore></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#p-kick", {opacity:0, x:40}, {opacity:1, x:0, duration:.45, ease:"power3.out"}, 0.05);
+    tl.fromTo("#p-ttl .w", {opacity:0, y:70, rotateX:-50}, {opacity:1, y:0, rotateX:0, duration:.6, ease:"power4.out", stagger:.07}, 0.12);
+
+    tl.fromTo("#p-tog", {opacity:0, y:60}, {opacity:1, y:0, duration:.45, ease:"power3.out"}, .2);
+    tl.set("#p-win .it", {opacity:0, x:-120}, 0);
+    tl.fromTo("#p-sum .it", {opacity:0, x:120}, {opacity:1, x:0, duration:.35, ease:"power3.out", stagger:.13}, .45);
+    tl.fromTo("#p-sum .ck", {scale:0}, {scale:1, duration:.25, ease:"back.out(2.5)", stagger:.13}, .7);
+    tl.fromTo("#p-cur", {x:1100, y:1500}, {x:260, y:540, duration:.5, ease:"power3.inOut"}, 1.9);
+    tl.to("#p-cur", {scale:.85, duration:.07, yoyo:true, repeat:1}, 2.45);
+    tl.to("#p-knob", {x:-382, duration:.4, ease:"power3.inOut"}, 2.5);
+    tl.to("#p-o1", {color:"rgba(255,248,238,.75)", duration:.2}, 2.6);
+    tl.to("#p-o2", {color:"#100d0a", duration:.2}, 2.6);
+    tl.to("#p-cur", {x:1150, y:1700, duration:.5, ease:"power3.in"}, 2.75);
+    tl.to("#p-sum .it", {opacity:0, x:-120, duration:.25, ease:"power3.in", stagger:.05}, 2.55);
+    tl.to("#p-win .it", {opacity:1, x:0, duration:.35, ease:"power3.out", stagger:.11}, 2.95);
+    tl.fromTo("#p-win .ck", {scale:0}, {scale:1, duration:.25, ease:"back.out(2.5)", stagger:.11}, 3.15);
+    tl.to("#p-wrap", {opacity:0, y:-120, scale:.96, duration:.32, ease:"power3.in"}, 4.66);
+
+    window.__timelines["packing"] = tl;
+  </script>
+</template>
