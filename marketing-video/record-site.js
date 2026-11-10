@@ -1,0 +1,60 @@
+const { chromium, devices } = require('playwright');
+const fs = require('fs');
+(async () => {
+  const b = await chromium.launch({args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist','--force-device-scale-factor=2']});
+  const ctx = await b.newContext({ userAgent: devices['iPhone 13'].userAgent, viewport:{width:390,height:844}, hasTouch:true, isMobile:false, deviceScaleFactor:2, locale:'he-IL', timezoneId:'Asia/Jerusalem' });
+  const p = await ctx.newPage();
+  fs.mkdirSync('cast', {recursive:true});
+  const cdp = await ctx.newCDPSession(p); const frames = [];
+  cdp.on('Page.screencastFrame', async f => { const n = frames.length; fs.writeFileSync(`cast/f${String(n).padStart(5,'0')}.jpg`, Buffer.from(f.data, 'base64')); frames.push(f.metadata.timestamp); cdp.send('Page.screencastFrameAck', {sessionId:f.sessionId}).catch(()=>{}); });
+  await cdp.send('Page.startScreencast', {format:'jpeg', quality:92, maxWidth:780, maxHeight:1688, everyNthFrame:1});
+  const T0 = Date.now(); const marks = []; const W0 = Date.now()/1000;
+  const mark = n => { marks.push([n, (Date.now()-T0)/1000]); console.log(n, ((Date.now()-T0)/1000).toFixed(2)); };
+  const wait = ms => p.waitForTimeout(ms);
+  await p.addInitScript(() => {
+    window.__smooth = (y, ms) => new Promise(r => { const s = scrollY, d = y - s, t0 = performance.now();
+      const e = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+      (function f(now){ const k = Math.min(1, (now - t0)/ms); scrollTo(0, s + d*e(k)); k < 1 ? requestAnimationFrame(f) : r(); })(t0); });
+    window.__y = sel => { const el = document.querySelector(sel); return el.getBoundingClientRect().top + scrollY; };
+  });
+  await p.goto('http://localhost:8765/index.html', {waitUntil:'load'});
+  mark('loaded');
+  await wait(4200); mark('hero-settled');
+  await p.evaluate(() => __smooth(__y('.types') - 470, 1400)); await wait(600); mark('types-in-view');
+  for (const t of ['family','kosher','flight','couple']) {
+    await p.evaluate(t => document.querySelector(`.type[data-type="${t}"]`).click(), t); mark('type-'+t);
+    await wait(2300);
+  }
+  const packTop = await p.evaluate(() => __y('#pack')); const packH = await p.evaluate(() => document.getElementById('pack').offsetHeight);
+  console.log('pack', packTop, packH);
+  await p.evaluate(y => __smooth(y, 1500), packTop); mark('pack-top'); await wait(1600);
+  await p.evaluate(() => document.querySelector('[data-season="summer"]').click()); mark('season-summer'); await wait(900);
+  await p.evaluate(([y,h]) => __smooth(y + h*0.5, 3800), [packTop, packH]); mark('pack-mid'); await wait(3900);
+  await p.evaluate(() => document.querySelector('[data-season="winter"]').click()); mark('season-winter'); await wait(1300);
+  await p.evaluate(([y,h]) => __smooth(y + h - 844, 2600), [packTop, packH]); mark('pack-end'); await wait(2800);
+  await p.evaluate(() => __smooth(__y('#destinations') - 40, 1300)); mark('dest'); await wait(1500);
+  await p.evaluate(() => __smooth(scrollY + 900, 1800)); await wait(1900); mark('dest-tickets');
+  await p.evaluate(() => __smooth(__y('#process') - 40, 1300)); mark('process'); await wait(2000);
+  await p.evaluate(() => __smooth(__y('#kosher') - 40, 1200)); mark('kosher'); await wait(1800);
+  await p.evaluate(() => __smooth(__y('#plan') - 20, 1500)); mark('plan'); await wait(1800);
+  await p.evaluate(() => __smooth(__y('#plan-form') - 60, 900)); await wait(1000); mark('form');
+  const type = async (sel, txt) => { for (let i = 1; i <= txt.length; i++) { await p.evaluate(([s, v]) => { const el = document.querySelector(s); el.value = v; el.dispatchEvent(new Event('input', {bubbles:true})); }, [sel, txt.slice(0, i)]); await wait(75); } await wait(200); };
+  await type('#f-name', 'דנה'); mark('typed-name');
+  await type('#f-dest', 'רודוס');
+  await type('#f-people', '2 מבוגרים + 2 ילדים'); mark('typed-people');
+  await p.evaluate(() => { document.getElementById('f-from').value = '2027-07-14'; document.getElementById('f-to').value = '2027-07-21'; });
+  await p.evaluate(() => __smooth(__y('#chips') - 300, 800)); await wait(900);
+  for (const i of [1,3,5]) { await p.evaluate(i => document.getElementById('chip-'+i).click(), i); await wait(450); }
+  mark('chips');
+  await p.evaluate(() => __smooth(__y('#send') - 420, 800)); await wait(1000);
+  const [pop] = await Promise.all([ctx.waitForEvent('page', {timeout:3000}).catch(()=>null), p.evaluate(() => document.getElementById('send').click())]);
+  mark('sent'); if (pop) await pop.close().catch(()=>{});
+  await p.bringToFront(); await wait(2500); mark('end');
+  const okText = await p.evaluate(() => document.getElementById('form-ok').innerText);
+  console.log('OK:', okText);
+  await cdp.send('Page.stopScreencast');
+  fs.writeFileSync('cast/marks.json', JSON.stringify(marks));
+  fs.writeFileSync('cast/ts.json', JSON.stringify({W0, frames}));
+  console.log('frames', frames.length, 'first ts offset', frames[0] - W0, 'last', frames[frames.length-1] - W0);
+  await ctx.close(); await b.close();
+})();

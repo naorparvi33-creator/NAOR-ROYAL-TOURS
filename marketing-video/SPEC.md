@@ -18,3 +18,8 @@
 | 7 | 28.5–33 | Lockup + TRAVEL LIKE ROYALTY + CTA button clicked + 053-623-3816 | — |
 
 Sound: bundled Pixabay SFX on visible actions only (whoosh on cuts, clicks on cursor taps, pops on chips/badges, riser→impact on the mark). No music bed yet.
+
+## v2 — floating phone tour (57.7 s)
+- 0–35.7: the real site, recorded on a 390×844 phone viewport at 2× (record-site.js, CDP screencast), plays inside a floating phone:
+  suitcase colour switching (4 holiday types) → 3D packing suitcase (summer → winter) → destination tickets → how it works + kosher → planning form filled and sent, with the site's own lead-ID confirmation.
+- 34.85: the planning form comes out of the phone, then STEP 1/3 form → STEP 2/3 WhatsApp message + lead ID → STEP 3/3 replies (hours / Shabbat) → end card.
