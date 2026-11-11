@@ -487,17 +487,14 @@ function enterScene(){
   gsap.to(passes.map(p => p.st), {ix:0, iy:0, sc:1, op:1, duration:1.1, ease:'back.out(1.6)', delay:1.2, stagger:.08});
 }
 function intro(done){
-  if (reduce || typeof gsap === 'undefined'){ done(); return; }
-  const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('aria-hidden','true');
-  el.innerHTML = `<div class="half top"></div><div class="half bot"></div><div class="mark"><div class="word">${'NAOR ROYAL TOURS'.split('').map(c => `<span>${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</div><div class="bar"></div><div class="sub">TLV → WORLD</div></div>`;
-  site.appendChild(el);
-  const letters = el.querySelectorAll('.word span');
+  const el = site.querySelector('.intro');
+  if (reduce || typeof gsap === 'undefined'){ if (el) el.remove(); done(); return; }
+  if (!el){ done(); return; }
+  // the curtain is already on screen with the logo (from index.html): draw the line, then open it
   gsap.timeline({onComplete:() => el.remove()})
-    // short and sharp (about 1.5s instead of 2.6s): visitors see the site sooner
-    .to(letters, {y:0, duration:.5, ease:'power4.out', stagger:.02})
-    .to(el.querySelector('.bar'), {scaleX:1, duration:.5, ease:'power2.inOut'}, '-=.3')
+    .to(el.querySelector('.bar'), {scaleX:1, duration:.55, ease:'power2.inOut'}, .1)
     .to(el.querySelector('.sub'), {opacity:1, duration:.3}, '-=.25')
-    .to(el.querySelector('.mark'), {opacity:0, y:-20, duration:.3, ease:'power2.in'}, '+=.1')
+    .to(el.querySelector('.mark'), {opacity:0, y:-20, duration:.3, ease:'power2.in'}, '+=.15')
     .add(done, '-=.05')
     .to(el.querySelector('.top'), {yPercent:-100, duration:.8, ease:'expo.inOut'}, '<')
     .to(el.querySelector('.bot'), {yPercent:100, duration:.8, ease:'expo.inOut'}, '<');

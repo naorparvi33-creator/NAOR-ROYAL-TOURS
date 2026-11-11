@@ -118,3 +118,8 @@ html:not(.js) .site .rv,html:not(.js) .site .rise{opacity:1!important;transform:
   .pk-next{align-self:center;padding:12px 12px 12px 22px;font-size:.95rem}
   .pack.done .pk-cta{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 }
+
+/* opening screen: part of the page from the very first paint, so the site never shows and then hides again.
+   The logo is already in place; the animation only draws the line and opens the curtain. */
+.intro .word span{transform:none}
+html:not(.js) .intro,html.lite .intro{display:none}
