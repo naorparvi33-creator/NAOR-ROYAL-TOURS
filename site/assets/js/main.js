@@ -185,16 +185,16 @@ function slab(w,h,d,r,bevel,mat){ const g = new THREE.ExtrudeGeometry(roundedRec
 function initHero3D(){
   if (webgl || typeof THREE === 'undefined' || document.documentElement.classList.contains('lite')) return;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); } catch(e){ return; }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, innerWidth < 900 ? 1.5 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = .97;
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(30, 1, .1, 100); camera.position.set(0,0,10);
   const pmrem = new THREE.PMREMGenerator(renderer), env = new THREE.Scene();
   env.add(new THREE.Mesh(new THREE.SphereGeometry(20,32,16), new THREE.MeshBasicMaterial({color:lin('#2a2016'), side:THREE.BackSide})));
   const soft = (c,w,h,x,y,z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide})); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m); };
-  soft(new THREE.Color(4,3.8,3.5),10,3,0,9,5); soft(new THREE.Color(3,2.2,1.4),4,10,-11,2,3); soft(new THREE.Color(2.6,2.6,2.6),3,9,11,1,-2); soft(new THREE.Color(1.4,1,.6),12,2,0,-9,6);
+  soft(new THREE.Color(3,2.9,2.7),12,4,0,9,5); soft(new THREE.Color(2.1,1.6,1.1),5,10,-11,2,3); soft(new THREE.Color(1.7,1.7,1.75),4,9,11,1,-2); soft(new THREE.Color(.8,.6,.4),12,2,0,-9,6);
   scene.environment = pmrem.fromScene(env, .035).texture;
   const key = new THREE.DirectionalLight(0xffffff,1.5); key.position.set(4,6,7); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffc68a,1.4); rim.position.set(-6,3,-5); scene.add(rim);
@@ -204,7 +204,7 @@ function initHero3D(){
   spinner = new THREE.Group(); rig.add(spinner);
   const bag = new THREE.Group(); bag.position.y = -.28; spinner.add(bag);
   const W = 1.5, H = 2.1, D = .6;
-  bodyMat = new THREE.MeshPhysicalMaterial({color:lin(COLORS[heroColor].body), roughness:.34, metalness:.05, clearcoat:1, clearcoatRoughness:.14});
+  bodyMat = new THREE.MeshPhysicalMaterial({color:lin(COLORS[heroColor].body), roughness:.44, metalness:.02, clearcoat:.45, clearcoatRoughness:.26});
   bandMat = new THREE.MeshStandardMaterial({color:lin(COLORS[heroColor].band), roughness:.55, metalness:.2});
   const metal = new THREE.MeshStandardMaterial({color:lin('#d9d2c6'), roughness:.22, metalness:1});
   const gold = new THREE.MeshStandardMaterial({color:lin('#e2bd84'), roughness:.25, metalness:1});
