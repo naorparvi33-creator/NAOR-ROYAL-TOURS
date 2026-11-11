@@ -40,7 +40,7 @@
     var t0 = Date.now();
     (function wait(){
       var s = document.getElementById('site');
-      if ((s && s.classList.contains('ready')) || Date.now() - t0 > 8000){ if ('requestIdleCallback' in window) requestIdleCallback(three, {timeout:2000}); else setTimeout(three, 300); }
+      if ((s && s.classList.contains('ready') && !document.querySelector('.intro')) || Date.now() - t0 > 8000){ if ('requestIdleCallback' in window) requestIdleCallback(three, {timeout:2000}); else setTimeout(three, 300); }
       else setTimeout(wait, 250);
     })();
   }
