@@ -2,7 +2,7 @@
    אחרי הכניסה הראשונה, קבצי האתר נשמרים בדפדפן. בכניסה הבאה האתר נפתח מיד,
    וגם בלי קליטה. הדף עצמו תמיד נבדק קודם מול השרת, כך שעדכונים מגיעים מיד.
    בכל העלאה של גרסה חדשה מעדכנים את VERSION (סקריפט הבנייה עושה את זה לבד). */
-const VERSION = 'nrt-2026-11-11-intro1';
+const VERSION = 'nrt-2026-11-11-sw2';
 const CORE = [
   './', 'index.html', '404.html', 'favicon.svg', 'site.webmanifest',
   'assets/css/fonts.css', 'assets/css/site.css', 'assets/css/additions.css',
@@ -29,12 +29,19 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
-  // pages: network first (fresh content), cached copy when offline
+  // pages: fresh from the server, but never wait more than 2.5 seconds. On a stuck or weak
+  // connection the saved copy opens right away (and is refreshed in the background).
   if (req.mode === 'navigate'){
-    e.respondWith(
-      fetch(req).then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return res; })
-        .catch(() => caches.match('index.html').then(r => r || caches.match('404.html')))
-    );
+    const net = fetch(req).then(res => {
+      if (res.ok){ const copy = res.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); }
+      return res;
+    });
+    e.waitUntil(net.catch(() => {}));
+    e.respondWith(caches.match('index.html').then(saved => {
+      if (!saved) return net.catch(() => caches.match('404.html'));
+      const wait = new Promise(r => setTimeout(() => r(saved), 2500));
+      return Promise.race([net.catch(() => saved), wait]);
+    }));
     return;
   }
 
