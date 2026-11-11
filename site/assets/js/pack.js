@@ -144,7 +144,7 @@ if (!isLite()){ arm(); addEventListener('nrt-three', arm); }
 
 function init(){
 let R = null;
-try { R = new THREE.WebGLRenderer({canvas, antialias:(window.devicePixelRatio || 1) < 2, alpha:false, powerPreference:'high-performance'}); } catch(e){ R = null; }
+try { R = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, powerPreference:'high-performance'}); } catch(e){ R = null; }
 if (!R) throw new Error('no webgl');
 
 /* ---------- helpers ---------- */
@@ -190,19 +190,19 @@ const M = (geo, mat) => new THREE.Mesh(geo, mat);
 const FONT = {he:'"Heebo","Assistant",Arial,sans-serif', serif:'"Bodoni Moda",Didot,Georgia,serif', mono:'"IBM Plex Mono",Menlo,monospace'};
 
 /* ---------- renderer / scene ---------- */
-// sharp, but capped at 1.5x: a full-screen canvas at 2x is 78% more pixels for almost no visible gain
-let dpr = Math.min(window.devicePixelRatio || 1, 1.5); R.setPixelRatio(dpr);
+// full sharpness (up to 2x). The scene is drawn only while something moves, so this costs little
+let dpr = Math.min(window.devicePixelRatio || 1, 2); R.setPixelRatio(dpr);
 R.outputEncoding = THREE.sRGBEncoding;
 R.toneMapping = THREE.ACESFilmicToneMapping;
-R.toneMappingExposure = 1.08;
+R.toneMappingExposure = .96;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(28, 1, .1, 60);
 
 const pmrem = new THREE.PMREMGenerator(R), envScene = new THREE.Scene();
 envScene.add(M(new THREE.SphereGeometry(20, 32, 16), new THREE.MeshBasicMaterial({color:lin('#1d1610'), side:THREE.BackSide})));
 const soft = (c, w, h, x, y, z) => { const m = M(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide})); m.position.set(x, y, z); m.lookAt(0, 0, 0); envScene.add(m); };
-soft(new THREE.Color(5, 4.7, 4.3), 12, 4, 0, 10, 4); soft(new THREE.Color(3.2, 2.3, 1.5), 4, 12, -11, 2, 4);
-soft(new THREE.Color(2.4, 2.4, 2.5), 3, 10, 11, 2, -1); soft(new THREE.Color(1.2, .9, .6), 14, 2, 0, -9, 7);
+soft(new THREE.Color(3.6, 3.45, 3.25), 14, 5, 0, 10, 4); soft(new THREE.Color(2.2, 1.7, 1.2), 5, 12, -11, 2, 4);
+soft(new THREE.Color(1.7, 1.7, 1.8), 4, 10, 11, 2, -1); soft(new THREE.Color(.7, .55, .4), 14, 2, 0, -9, 7);
 scene.environment = pmrem.fromScene(envScene, .04).texture;
 const key = new THREE.DirectionalLight(0xfff1df, 1.5); key.position.set(2.5, 6, 4); scene.add(key);
 const rim = new THREE.DirectionalLight(0xffc68a, 1.1); rim.position.set(-5, 3, -6); scene.add(rim);
@@ -230,7 +230,8 @@ const bgMat = new THREE.ShaderMaterial({
 const bg = M(new THREE.PlaneGeometry(2, 2), bgMat); bg.frustumCulled = false; bg.renderOrder = -10; scene.add(bg);
 
 /* ---------- materials ---------- */
-const bodyMat = new THREE.MeshPhysicalMaterial({color:lin('#b07a45'), roughness:.3, metalness:.04, clearcoat:1, clearcoatRoughness:.1});
+const grain = tex(256, 256, (g, w, h) => { const d = g.createImageData(w, h); for (let i = 0; i < d.data.length; i += 4){ const v = 118 + Math.random() * 20; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0); }, {repeat:[5, 5]});
+const bodyMat = new THREE.MeshPhysicalMaterial({color:lin('#9c6a3d'), roughness:.46, metalness:.02, clearcoat:.45, clearcoatRoughness:.28, bumpMap:grain, bumpScale:.0025, sheen:0});
 const bandMat = new THREE.MeshStandardMaterial({color:lin('#2a1d13'), roughness:.5, metalness:.25});
 const metal = new THREE.MeshStandardMaterial({color:lin('#dcd6cc'), roughness:.18, metalness:1});
 const rubber = new THREE.MeshStandardMaterial({color:lin('#141110'), roughness:.8});
@@ -269,7 +270,7 @@ body.add(M(slabGeo(W, D, .04, RAD), bodyMat));
 const rimB = M(shellGeo(W + .02, D + .02, .05, T + .01, RAD + .01, .01), bandMat); rimB.position.y = Hb - .05; body.add(rimB);
 const floor = M(new THREE.PlaneGeometry(W - 2 * T, D - 2 * T), floorMat); floor.rotation.x = -Math.PI / 2; floor.position.y = Y0; body.add(floor);
 const wallB = M(shellGeo(W - 2 * T - .004, D - 2 * T - .004, Hb - .06, .01, RAD - T, 0), wallMat); wallB.position.y = .04; body.add(wallB);
-const ribGeo = new THREE.CylinderGeometry(.016, .016, W * .7, 10); ribGeo.rotateZ(Math.PI / 2);
+const ribGeo = new THREE.CylinderGeometry(.011, .011, W * .7, 16); ribGeo.rotateZ(Math.PI / 2);
 for (let z = -.54; z <= .55; z += .18){ const r = M(ribGeo, bodyMat); r.position.set(-.06, -.002, z); r.scale.y = .6; body.add(r); }
 const carry = M(new THREE.TorusGeometry(.19, .036, 14, 40, Math.PI), rubber); carry.rotation.x = Math.PI / 2; carry.position.set(0, Hb * .52, D / 2 + .012); body.add(carry);
 function wheels(parent, y, z){
@@ -501,7 +502,7 @@ function buildSet(list){
     const hh = hh0 * ISC, base = topAt(x), slot = new THREE.Vector3(x, base + hh, z), side = x < 0 ? -1 : 1;
     const sh = blob(fw * ISC * 1.25, fd * ISC * 1.35, 0); sh.rotation.z = r; sh.position.set(x, base + .003, z); body.add(sh);
     const start = new THREE.Vector3(x + side * .55, slot.y + 1.75, z + .5);
-    const spin = new THREE.Vector3((i % 2 ? .9 : -.8), side * 1.3, (i % 3 - 1) * .6);
+    const spin = new THREE.Vector3((i % 2 ? .25 : -.22), side * .45, (i % 3 - 1) * .15);
     const a = A0 + i * STEP;
     return {...it, obj, slot, start, spin, rest:r, a, land:a + DUR, sh};
   });
@@ -564,8 +565,8 @@ const colT = {body:lin('#b07a45'), band:lin('#2a1d13')};
 addEventListener('nrt-color', e => { if (e.detail){ colT.body = lin(e.detail.body); colT.band = lin(e.detail.band); } });
 
 /* ---------- stage colors for the background (sRGB) ---------- */
-const BG_IN = ['#5c3a22', '#1f3456', '#4f1f2d', '#5e4a22', '#33402a', '#6a3820', '#3a2846', '#2c4a4f', '#4a3020', '#7a5a2c'].map(h => new THREE.Color(h));
-const BG_OUT = ['#0d0907', '#05080f', '#0c0507', '#0c0905', '#070906', '#0e0704', '#09060c', '#050b0c', '#0a0705', '#120c06'].map(h => new THREE.Color(h));
+const BG_IN = ['#4e3220', '#50331f', '#523420', '#543521', '#563722', '#583822', '#5a3a23', '#5c3b24', '#4a3020', '#6a4c2a'].map(h => new THREE.Color(h));
+const BG_OUT = ['#0b0806', '#0b0806', '#0b0806', '#0b0806', '#0b0806', '#0b0806', '#0b0806', '#0b0806', '#0a0705', '#0f0a06'].map(h => new THREE.Color(h));
 
 /* ---------- layout: where the suitcase sits on screen ---------- */
 let VW = 1, VH = 1, region = {cx:.5, cy:.5, w:1, h:1};
@@ -676,12 +677,11 @@ function render(now){
       const e = eo(q);
       it.obj.position.set(mix(it.start.x, it.slot.x, e), mix(it.start.y, it.slot.y, eo5(q)), mix(it.start.z, it.slot.z, e));
       it.obj.rotation.set(it.spin.x * (1 - e), it.rest + it.spin.y * (1 - e), it.spin.z * (1 - e));
-      const s = mix(.75, 1, eo(Math.min(1, q * 2.5)));
-      const sq = q > .8 ? Math.sin(Math.PI * (q - .8) / .2) * .1 : 0;
+      const s = mix(.94, 1, eo(Math.min(1, q * 2.5)));
+      const sq = 0;
       it.obj.scale.set(ISC * s * (1 + sq * .5), ISC * s * (1 - sq), ISC * s * (1 + sq * .5));
     }
     it.sh.material.opacity = .5 * Math.pow(q, 3);
-    it.fx.set(it.slot, seg(p, it.land - .006, it.land + .035), .42);
   });
 
   const bk = seg(p, .76, .78);
@@ -691,9 +691,9 @@ function render(now){
     st.buckle.visible = bk > 0; st.buckle.scale.setScalar(bk > 0 ? Math.max(.001, back(bk, 2.2)) : .001);
   });
 
-  slamFx.set(SLAM_C, seg(p, .843, .885), 1.5);
+
   const z = seg(p, .85, .9);
-  glow.visible = z > 0 && z < 1;
+  glow.visible = false;
   if (glow.visible){
     const per = 2 * (W + D), d = z * per, hw = W / 2 + .012, hd = D / 2 + .012;
     let x, zz;
@@ -711,7 +711,7 @@ function render(now){
   const floorY = mix(-Hc, -W / 2 - .24, s);
   floorBlob.position.set(0, floorY + .003, mix(-.05, 0, s));
   floorBlob.scale.set(mix(3.2, 2.1, s), mix(2.4, 1.3, s), 1);
-  finalFx.set(FINAL_C, seg(p, .95, 1), 2.1);
+
 
   const tg = seg(p, .955, .99);
   tag.visible = tg > 0;
@@ -732,9 +732,16 @@ function render(now){
 // adaptive resolution, but only ONCE and only on a device that is clearly struggling
 // (avg frame > 34ms over 90 frames). No repeated resolution jumps while scrolling.
 let avg = 16, frames = 0, downgraded = false;
+// draw only while something is moving (packing, pointer, colour change, resize); a still picture costs nothing
+let awakeUntil = 0, lastW = 0, lastH = 0, lastItems = null;
 function loop(now){
   requestAnimationFrame(loop);
   if (!visible || document.hidden){ last = now; loop.prev = 0; return; }
+  const moving = Math.abs(pT - pC) > 1e-5 || Math.abs(mouse.x - cm.x) + Math.abs(mouse.y - cm.y) > .002 || tag.visible ||
+    Math.abs(bodyMat.color.r - colT.body.r) + Math.abs(bodyMat.color.g - colT.body.g) > .002 || VW !== lastW || VH !== lastH || items !== lastItems;
+  lastW = VW; lastH = VH; lastItems = items;
+  if (moving) awakeUntil = now + 1200;
+  if (now > awakeUntil){ last = now; loop.prev = 0; return; }
   render(now);
   if (loop.prev){ avg = avg * .97 + (now - loop.prev) * .03; frames++; }
   if (!downgraded && frames > 90 && avg > 34 && dpr > 1.25){ downgraded = true; dpr = 1.25; R.setPixelRatio(dpr); layout(); }
