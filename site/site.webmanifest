@@ -1,0 +1,11 @@
+{
+  "name": "NAOR ROYAL TOURS",
+  "short_name": "NAOR ROYAL",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#100d0a",
+  "theme_color": "#100d0a",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
