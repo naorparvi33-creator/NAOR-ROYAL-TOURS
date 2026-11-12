@@ -2,7 +2,7 @@
    אחרי הכניסה הראשונה, קבצי האתר נשמרים בדפדפן. בכניסה הבאה האתר נפתח מיד,
    וגם בלי קליטה. הדף עצמו תמיד נבדק קודם מול השרת, כך שעדכונים מגיעים מיד.
    בכל העלאה של גרסה חדשה מעדכנים את VERSION (סקריפט הבנייה עושה את זה לבד). */
-const VERSION = 'nrt-2026-11-11-intro1';
+const VERSION = 'nrt-2026-11-12-vercel1';
 const CORE = [
   './', 'index.html', '404.html', 'favicon.svg', 'site.webmanifest',
   'assets/css/fonts.css', 'assets/css/site.css', 'assets/css/additions.css',
