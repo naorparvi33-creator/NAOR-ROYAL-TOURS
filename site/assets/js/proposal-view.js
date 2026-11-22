@@ -114,8 +114,11 @@ async function start(){
   const token = location.hash.slice(1);
   if (!token) return fail('empty');
   if (!P.ok) return fail('browser');
-  try { render(await P.unpack(token)); }
-  catch(e){ fail(e && e.message === 'browser' ? 'browser' : 'bad'); }
+  let d;
+  try { d = await P.unpack(token); }
+  catch(e){ return fail(e && e.message === 'browser' ? 'browser' : 'bad'); }
+  if (d.tp === 't'){ location.replace('trip.html#' + token); return; }
+  render(d);
 }
 start();
 addEventListener('hashchange', () => location.reload());
