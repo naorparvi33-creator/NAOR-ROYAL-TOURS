@@ -35,5 +35,5 @@ window.NRT_CONFIG = {
   // הצעה חיה: המפתחות הציבוריים שמאמתים שהצעה באמת נשלחה מהעסק.
   // דף ההצעה מציג רק הצעות שנחתמו במכשיר שהופעל עם קוד ההפעלה התואם.
   // המפתח הקודם הוסר כי קוד ההפעלה שלו נחשף. מוסיפים כאן את המפתח הציבורי החדש מדף הבנייה.
-  proposalKeys: []
+  proposalKeys: ['BOqOLn2Ev_UGnD0ldnzYf_4BtMI63890_kX722w47Zl7FKVr-dKFUHXNhHjT1Mt3Y0rXyuO-l0esgyIpjxCvqXc']
 };
