@@ -132,6 +132,27 @@ summary{cursor:pointer;font-weight:700;color:var(--caramel-dk)}
 .b-mini{font:inherit;font-size:.86rem;font-weight:500;background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:38px}
 .b-mini:hover{background:var(--cream-2)}
 
+/* ---------- ניווט בין הכלים ---------- */
+.b-nav{display:flex;justify-content:center;gap:6px;padding:10px 16px;background:var(--ink-2)}
+.b-nav a{color:rgba(255,248,238,.75);text-decoration:none;font-weight:500;font-size:.92rem;padding:7px 16px;border-radius:999px}
+.b-nav a[aria-current]{background:var(--gold);color:var(--ink);font-weight:700}
+.b-small{font-size:.9rem;margin:14px 0 0}
+
+/* ---------- תיק נסיעה ---------- */
+.t-count{display:inline-block;background:var(--gold);color:var(--ink);font-weight:700;border-radius:999px;padding:6px 16px;margin:-6px 0 16px}
+.t-count:empty{display:none}
+.t-hint{color:var(--muted);font-size:.92rem;margin-top:14px}
+.t-hint-top{margin:-6px 0 10px}
+.t-acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+.t-cal{margin-top:16px}
+.t-nav{margin-top:12px}
+a.b-mini{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+.t-sos{background:var(--bad);color:#fff}
+.t-sos:hover{background:#8a1f15}
+.t-emerg{margin-top:16px;font-size:.92rem;color:var(--muted)}
+.p-wrap .t-help{border-bottom:0}
+.t-chk .b-check{border-bottom:1px solid var(--line)}
+
 @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
 @media print{
   body.p-page{background:#fff;padding:0}

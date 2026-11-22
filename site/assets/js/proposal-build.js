@@ -144,6 +144,7 @@ function startApp(key){
     if (!d.can) return ['חסרים תנאי הביטול. הצעת מחיר חייבת לכלול אותם.', 'b-cancel'];
     return null;
   }
+  const sendTo = (msg, phone) => phone ? P.waLink(msg, phone) : 'https://wa.me/?text=' + encodeURIComponent(msg);
   function phoneIntl(s){
     let p = String(s || '').replace(/[^\d]/g, '');
     if (!p) return '';
@@ -169,7 +170,7 @@ function startApp(key){
     $('b-link').value = link;
     $('b-open').href = link;
     const msg = 'היי ' + d.c + ', ההצעה שלך ל' + d.d + ' מוכנה. כל הפרטים כאן:\n' + link;
-    $('b-send').href = P.waLink(msg, phone != null ? phone : phoneIntl($('b-phone').value));
+    $('b-send').href = sendTo(msg, phone != null ? phone : phoneIntl($('b-phone').value));
     $('b-out').hidden = false;
     $('b-out').scrollIntoView({behavior: 'smooth', block: 'start'});
   }

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<title>תיק הנסיעה שלך · NAOR ROYAL TOURS</title>
+<meta name="theme-color" content="#100d0a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="NAOR ROYAL TOURS">
+<meta property="og:title" content="תיק הנסיעה שלך · NAOR ROYAL TOURS">
+<meta property="og:description" content="כל מה שצריך לטיול במקום אחד: טיסות, מלון, כשרות ושבת, ונאור בלחיצה אחת.">
+<meta property="og:image" content="https://naor-royal-tours.vercel.app/img/og.jpg">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/fonts.css">
+<link rel="stylesheet" href="../assets/css/proposal.css">
+</head>
+<body class="p-page t-page">
+<a class="p-skip" href="#p-main">דילוג לתוכן</a>
+<header class="p-top">
+  <a class="p-logo" href="../" aria-label="NAOR ROYAL TOURS, לאתר"><b>NAOR ROYAL TOURS</b><small>תיק הנסיעה שלך</small></a>
+</header>
+
+<main id="p-main">
+  <p class="p-loading" id="p-loading" role="status">טוען את תיק הנסיעה…</p>
+
+  <section class="p-fail" id="p-fail" hidden>
+    <h1 id="p-fail-t"></h1>
+    <p id="p-fail-s"></p>
+    <a class="p-btn p-btn-wa" id="p-fail-wa" href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>לדבר עם נאור בוואטסאפ</span></a>
+  </section>
+
+  <div id="p-body" hidden>
+    <section class="p-hero" id="p-hero">
+      <img id="p-img" hidden width="900" height="1200" decoding="async">
+      <div class="p-hero-in">
+        <p class="p-eyebrow">תיק נסיעה · <span id="t-id" dir="ltr"></span></p>
+        <p class="p-hello" id="t-hello"></p>
+        <h1 id="t-dest"></h1>
+        <p class="t-count" id="t-count"></p>
+        <div class="p-meta" id="t-meta"></div>
+      </div>
+    </section>
+
+    <div class="p-wrap">
+      <section class="p-note" id="t-note-box" hidden>
+        <p id="t-note"></p>
+        <p class="p-sign">נאור</p>
+      </section>
+
+      <section id="t-sec-back" hidden>
+        <h2>ברוכים השבים!</h2>
+        <p class="p-text">מקווה שהיה מושלם. אשמח לשמוע איך היה, ואם נהניתם, הכי גדול בשבילי זה שתמליצו עליי לחברים.</p>
+        <div class="t-acts">
+          <a class="p-btn p-btn-main" id="t-tell" href="#" target="_blank" rel="noopener noreferrer"><span>לספר לנאור איך היה</span></a>
+          <a class="p-btn p-btn-ghost" id="t-refer" href="#" target="_blank" rel="noopener noreferrer"><span>להמליץ לחבר</span></a>
+        </div>
+      </section>
+
+      <section id="t-sec-flights" hidden>
+        <h2>טיסות</h2>
+        <div class="p-grid" id="t-flights"></div>
+        <p class="t-hint">הצ'ק־אין אונליין נפתח בדרך כלל 24 עד 48 שעות לפני הטיסה, באתר או באפליקציה של חברת התעופה. בטיסות מישראל כדאי להגיע לשדה 3 שעות לפני ההמראה.</p>
+        <button class="p-btn p-btn-ghost t-cal" id="t-cal" type="button" hidden><span>הוספת הטיסות ליומן בטלפון</span></button>
+      </section>
+
+      <section id="t-sec-hotels" hidden>
+        <h2>מלון</h2>
+        <div class="p-grid" id="t-hotels"></div>
+      </section>
+
+      <section id="t-sec-tr" hidden>
+        <h2>העברות</h2>
+        <p class="p-text" id="t-tr"></p>
+      </section>
+
+      <section id="t-sec-kosher" hidden>
+        <h2>כשרות ושבת</h2>
+        <p class="p-text" id="t-kosher" hidden></p>
+        <div id="t-shabbat-box" hidden>
+          <h3>זמני שבת ב<span id="t-city"></span> (שעון מקומי)</h3>
+          <div class="p-grid" id="t-shabbat"></div>
+          <p class="t-hint">הזמנים מחושבים לפי מיקום העיר ועשויים להשתנות בכמה דקות. לפני שבת כדאי לבדוק מול בית חב״ד המקומי.</p>
+        </div>
+      </section>
+
+      <section id="t-sec-notes" hidden>
+        <h2>חשוב לדעת</h2>
+        <p class="p-text" id="t-notes"></p>
+      </section>
+
+      <section id="t-sec-chk" hidden>
+        <h2>לפני שטסים</h2>
+        <p class="t-hint t-hint-top">מסמנים מה כבר מוכן. הסימונים נשמרים בטלפון שלכם.</p>
+        <div class="b-checks t-chk" id="t-chk"></div>
+      </section>
+
+      <section class="t-help">
+        <h2>צריכים עזרה?</h2>
+        <p class="p-text">אני איתכם עד שחוזרים הביתה. בכל בעיה, בכל שעה, כותבים או מתקשרים.</p>
+        <div class="t-acts">
+          <a class="p-btn t-sos" id="t-sos" href="#" target="_blank" rel="noopener noreferrer"><span>נאור, אני צריך/ה עזרה</span></a>
+          <a class="p-btn p-btn-ghost" id="t-call" href="tel:+972536233816"><span>להתקשר לנאור</span></a>
+        </div>
+        <p class="t-emerg" id="t-emerg" hidden></p>
+      </section>
+
+      <footer class="p-foot">
+        <p id="t-created"></p>
+        <p>NAOR ROYAL TOURS · וואטסאפ <span data-phone dir="ltr"></span></p>
+      </footer>
+    </div>
+  </div>
+</main>
+
+<div class="p-bar" id="p-bar" hidden>
+  <a class="p-btn p-btn-main" id="t-bar-wa" href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>הודעה לנאור</span></a>
+  <a class="p-btn p-btn-ghost" href="tel:+972536233816"><span>שיחה</span></a>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/proposal-core.js"></script>
+<script src="../assets/js/trip-view.js"></script>
+</body>
+</html>
