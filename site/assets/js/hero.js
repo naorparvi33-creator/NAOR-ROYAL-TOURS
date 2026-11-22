@@ -56,6 +56,14 @@ passes.forEach((p,i) => setPass(p, TYPES.couple.dests[i]));
 // opens fast; the suitcase then appears with a spin. In the light version it is never downloaded.
 let webgl = false, renderer, scene, camera, rig, spinner, bodyMat, bandMat, tag, shadow, heroColor = 'caramel';
 const lin = hex => NRT.lin(hex);
+let glW = 0, glH = 0;
+let build3DQueued = false;
+// build the suitcase in a quiet moment, never in the middle of a scroll
+function queueHero3D(){
+  if (webgl || build3DQueued || typeof THREE === 'undefined') return;
+  build3DQueued = true;
+  NRT.whenCalm(() => { build3DQueued = false; initHero3D(); });
+}
 function initHero3D(){
   if (webgl || typeof THREE === 'undefined' || document.documentElement.classList.contains('lite') || !NRT.buildHeroSuitcase) return;
   let parts = null;
@@ -75,7 +83,9 @@ function layout(){
   anchorScroll = Math.max(0, Math.round(sr.top + scrollY + sr.height/2 + (small ? 26 : 10) - innerHeight/2));
   slotC = {x:sr.left - hr.left + sr.width/2, y:sr.top - hr.top + sr.height/2, w:sr.width, h:sr.height};
   if (webgl){
-    renderer.setSize(W, H, false); camera.aspect = W/H; camera.updateProjectionMatrix();
+    // resizing the canvas clears it and reallocates memory: only when the size really changed
+    // (phones fire "resize" every time the address bar slides in or out)
+    if (W !== glW || H !== glH){ glW = W; glH = H; renderer.setSize(W, H, false); camera.aspect = W/H; camera.updateProjectionMatrix(); }
     const visH = 2*camera.position.z*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), visW = visH*camera.aspect;
     rigBase.x = (slotC.x/W - .5)*visW; rigBase.y = -(slotC.y/H - .5)*visH;
     rigScale = (Math.min(sr.height, sr.width*1.5)/H*visH)/3.5;
@@ -188,13 +198,30 @@ NRT.goDest = goDest; // used by the destination tickets (destinations.js)
 
 /* ---------------- Loop ---------------- */
 let heroVisible = true;
+/* Adaptive quality: if this device cannot keep the hero smooth, lower the 3D resolution step by step,
+   and as a last step switch off the live blur effects (class "perf-low"). Strong devices never notice. */
+let qPrev = 0, qAvg = 16, qN = 0, qStep = 0;
+function watchQuality(now){
+  if (!webgl){ qPrev = 0; return; }
+  const d = qPrev ? now - qPrev : 0; qPrev = now;
+  if (!d || d > 250) return; // first frame, or the tab was in the background
+  qAvg = qAvg*.95 + d*.05;
+  if (++qN < 120 || qAvg < 36 || qStep >= 3) return; // 36ms = clearly below 30 frames a second
+  qStep++; qN = 0; qAvg = 16;
+  const pr = renderer.getPixelRatio();
+  if (qStep === 1 && pr > 1.5) renderer.setPixelRatio(1.5);
+  else if (qStep <= 2 && pr > 1){ qStep = 2; renderer.setPixelRatio(1); }
+  else { qStep = 3; site.classList.add('perf-low'); return; }
+  glW = glH = 0; layout();
+}
 new IntersectionObserver(es => { heroVisible = es[es.length - 1].isIntersecting; }, {threshold:0}).observe(hero);
 function frame(now){
   requestAnimationFrame(frame);
-  if (document.hidden) return;
+  if (document.hidden){ qPrev = 0; return; }
   const t = now*.001;
   if (fine){ cx += (mouse.px - cx)*.2; cy += (mouse.py - cy)*.2; cur.style.transform = `translate3d(${cx}px,${cy}px,0)`; }
-  if (!heroVisible) return;
+  if (!heroVisible){ qPrev = 0; return; }
+  watchQuality(now);
   if (now - lastMove > 2500){ mouse.x = Math.sin(t*.4)*.25; mouse.y = Math.cos(t*.3)*.12; }
   cm.x += (mouse.x - cm.x)*.05; cm.y += (mouse.y - cm.y)*.05;
   const hr = hero.getBoundingClientRect(), scrollP = Math.min(Math.max((scrollY - anchorScroll)/hr.height, 0), 1);
@@ -253,7 +280,7 @@ if (hasG) gsap.set(phShade, {yPercent:-101});
 let entered = false;
 const enterOnce = () => { if (entered) return; entered = true; try { enterScene(); } catch(e){ site.classList.add('ready'); } };
 layout(); requestAnimationFrame(frame);
-initHero3D(); addEventListener('nrt-three', initHero3D);
+queueHero3D(); addEventListener('nrt-three', queueHero3D);
 try { intro(enterOnce); } catch(e){ enterOnce(); }
 // failsafe: never leave the page hidden, even on a slow or blocked network
 setTimeout(() => {

@@ -64,6 +64,21 @@ document.addEventListener('click', e => {
 
 const fine = matchMedia('(pointer:fine)').matches;
 
+/* ---------------- Heavy work only while the visitor is not scrolling ---------------- */
+// Building the 3D scenes takes a moment. Doing it in the middle of a scroll or a touch is what makes a
+// page feel stuck, so whenCalm waits for a quiet moment (or at most maxWait ms) and then runs the job.
+let lastBusy = 0;
+['scroll', 'wheel', 'touchstart', 'touchmove'].forEach(t => addEventListener(t, () => { lastBusy = performance.now(); }, {passive:true, capture:true}));
+function whenCalm(fn, maxWait = 6000){
+  const t0 = performance.now();
+  (function wait(){
+    const now = performance.now();
+    if (now - lastBusy > 280 || now - t0 > maxWait){
+      if ('requestIdleCallback' in window) requestIdleCallback(() => fn(), {timeout:500}); else setTimeout(fn, 0);
+    } else setTimeout(wait, 100);
+  })();
+}
+
 // failsafe: if the hero file never arrives (bad network), show the page anyway
 setTimeout(() => {
   if (site.classList.contains('ready')) return;
@@ -74,7 +89,7 @@ setTimeout(() => {
 return {
   site, waLink, hasG, store, fine,
   CITY, COLORS, TYPES, DEST, ORDER,
-  arrowSvg, photoTag, armPhotos, openDlg,
+  arrowSvg, photoTag, armPhotos, openDlg, whenCalm,
   // one shared flag: true when animations should stay still (system setting, accessibility menu, or no animation library)
   get reduce(){ return reduce; },
   set reduce(v){ reduce = v; }

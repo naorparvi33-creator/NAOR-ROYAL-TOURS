@@ -123,3 +123,9 @@ html:not(.js) .site .rv,html:not(.js) .site .rise{opacity:1!important;transform:
    The logo is already in place; the animation only draws the line and opens the curtain. */
 .intro .word span{transform:none}
 html:not(.js) .intro,html.lite .intro{display:none}
+
+/* devices that cannot keep the hero smooth (class added by hero.js): no live blur behind glass, lighter shadows */
+.perf-low .type,.perf-low .bag-chip,.perf-low .nav,.perf-low .btn-wa,.perf-low .header.solid{backdrop-filter:none;-webkit-backdrop-filter:none}
+.perf-low .bag-chip,.perf-low .nav{background:rgba(16,13,10,.86)}
+.perf-low .pass.bg-pass .pass-in{filter:none;opacity:.82}
+.perf-low .pass-in{box-shadow:0 10px 22px rgba(0,0,0,.3)}
