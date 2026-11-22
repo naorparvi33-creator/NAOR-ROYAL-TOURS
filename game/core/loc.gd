@@ -1,0 +1,146 @@
+extends Node
+## Tiny localisation table. Hebrew is the default language; English is secondary.
+## Use Loc.t("key") everywhere instead of hard-coded strings.
+
+signal language_changed
+
+var lang := "he"
+
+const STRINGS := {
+	"he": {
+		"settings": "הגדרות",
+		"resume": "חזרה למשחק",
+		"tab_graphics": "גרפיקה",
+		"tab_controls": "שליטה",
+		"tab_general": "כללי",
+		"fps_cap": "מגבלת FPS",
+		"battery_saver": "חיסכון בסוללה (30 FPS)",
+		"dynamic_res": "רזולוציה דינמית",
+		"render_scale_max": "רזולוציית רינדור מקסימלית",
+		"shadows": "צל שמש",
+		"draw_distance": "מרחק ציור (מטר)",
+		"show_perf": "הצג מונה FPS ועומס",
+		"layout": "פריסת כפתורים",
+		"layout_2": "שתי אצבעות",
+		"layout_4": "4 אצבעות",
+		"sens_look": "רגישות מצלמה",
+		"sens_ads": "רגישות כוונת",
+		"sens_scope": "רגישות סקופ",
+		"invert_y": "היפוך ציר אנכי",
+		"gyro": "ג'ירו",
+		"gyro_off": "כבוי",
+		"gyro_ads": "רק בכוונת",
+		"gyro_always": "תמיד",
+		"gyro_sens": "רגישות ג'ירו",
+		"auto_fire": "ירי אוטומטי",
+		"aim_assist": "סיוע כיוון",
+		"btn_size": "גודל כפתורים",
+		"btn_opacity": "שקיפות כפתורים",
+		"edit_layout": "סידור כפתורים",
+		"reset_layout": "איפוס פריסה",
+		"edit_hint": "גרור כפתורים למקום חדש. כפתור נבחר: החלק למטה לשינוי גודל.",
+		"done": "סיום",
+		"selected_size": "גודל הכפתור הנבחר",
+		"language": "שפה",
+		"save_now": "שמור עכשיו",
+		"saved": "נשמר",
+		"reset_position": "חזרה לנקודת ההתחלה",
+		"ctx_pickup": "אסוף",
+		"collected": "ארגזים",
+		"thermal": "חום",
+		"thermal_na": "לא זמין",
+		"thermal_0": "תקין",
+		"thermal_1": "חמים",
+		"thermal_2": "חם",
+		"thermal_3": "חם מאוד",
+		"thermal_4": "קריטי",
+		"run_lock": "נעילת ריצה",
+		"fire": "ירי",
+		"fire2": "ירי",
+		"ads": "כוונת",
+		"jump": "קפיצה",
+		"crouch": "כריעה",
+		"swap": "נשק",
+		"menu": "תפריט",
+		"weapon_rifle": "רובה סער",
+		"weapon_pistol": "אקדח",
+		"on": "פעיל",
+		"off": "כבוי",
+	},
+	"en": {
+		"settings": "Settings",
+		"resume": "Resume",
+		"tab_graphics": "Graphics",
+		"tab_controls": "Controls",
+		"tab_general": "General",
+		"fps_cap": "FPS limit",
+		"battery_saver": "Battery saver (30 FPS)",
+		"dynamic_res": "Dynamic resolution",
+		"render_scale_max": "Max render scale",
+		"shadows": "Sun shadow",
+		"draw_distance": "Draw distance (m)",
+		"show_perf": "Show FPS & load counter",
+		"layout": "Button layout",
+		"layout_2": "Two thumbs",
+		"layout_4": "4 fingers",
+		"sens_look": "Camera sensitivity",
+		"sens_ads": "ADS sensitivity",
+		"sens_scope": "Scope sensitivity",
+		"invert_y": "Invert vertical axis",
+		"gyro": "Gyroscope",
+		"gyro_off": "Off",
+		"gyro_ads": "ADS only",
+		"gyro_always": "Always",
+		"gyro_sens": "Gyro sensitivity",
+		"auto_fire": "Auto fire",
+		"aim_assist": "Aim assist",
+		"btn_size": "Button size",
+		"btn_opacity": "Button opacity",
+		"edit_layout": "Arrange buttons",
+		"reset_layout": "Reset layout",
+		"edit_hint": "Drag buttons to move them. Use the slider to resize the selected one.",
+		"done": "Done",
+		"selected_size": "Selected button size",
+		"language": "Language",
+		"save_now": "Save now",
+		"saved": "Saved",
+		"reset_position": "Back to start point",
+		"ctx_pickup": "Pick up",
+		"collected": "Crates",
+		"thermal": "Heat",
+		"thermal_na": "n/a",
+		"thermal_0": "OK",
+		"thermal_1": "Warm",
+		"thermal_2": "Hot",
+		"thermal_3": "Very hot",
+		"thermal_4": "Critical",
+		"run_lock": "Run lock",
+		"fire": "FIRE",
+		"fire2": "FIRE",
+		"ads": "AIM",
+		"jump": "JUMP",
+		"crouch": "CROUCH",
+		"swap": "WEAPON",
+		"menu": "Menu",
+		"weapon_rifle": "Assault rifle",
+		"weapon_pistol": "Pistol",
+		"on": "On",
+		"off": "Off",
+	},
+}
+
+
+func t(key: String) -> String:
+	var table: Dictionary = STRINGS.get(lang, STRINGS["he"])
+	return table.get(key, key)
+
+
+func is_rtl() -> bool:
+	return lang == "he"
+
+
+func set_language(new_lang: String) -> void:
+	if new_lang == lang or not STRINGS.has(new_lang):
+		return
+	lang = new_lang
+	language_changed.emit()
