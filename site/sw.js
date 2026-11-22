@@ -2,7 +2,7 @@
    אחרי הכניסה הראשונה, קבצי האתר נשמרים בדפדפן. בכניסה הבאה האתר נפתח מיד,
    וגם בלי קליטה. הדף עצמו תמיד נבדק קודם מול השרת, כך שעדכונים מגיעים מיד.
    בכל העלאה של גרסה חדשה מעדכנים את VERSION (סקריפט הבנייה עושה את זה לבד). */
-const VERSION = 'nrt-2026-11-12-vercel1';
+const VERSION = 'nrt-2026-11-22-proposal1';
 const CORE = [
   './', 'index.html', '404.html', 'favicon.svg', 'site.webmanifest',
   'assets/css/fonts.css', 'assets/css/site.css', 'assets/css/additions.css',
@@ -11,6 +11,9 @@ const CORE = [
   'assets/fonts/heebo-300-hebrew.woff2', 'assets/fonts/frankruhllibre-500-hebrew.woff2',
   'img/naor.webp'
 ];
+
+const ROOT = new URL('./', self.location).pathname;
+const HOME = new RegExp('^' + ROOT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(index\\.html)?$');
 
 self.addEventListener('install', e => {
   // cache:'reload' = take the files fresh from the server, never an older copy
@@ -32,7 +35,11 @@ self.addEventListener('fetch', e => {
   // pages: network first (fresh content), cached copy when offline
   if (req.mode === 'navigate'){
     e.respondWith(
-      fetch(req).then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return res; })
+      fetch(req).then(res => {
+        // only the home page is kept as the offline copy; other pages (such as /h/) must not replace it
+        if (res.ok && HOME.test(url.pathname)){ const copy = res.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); }
+        return res;
+      })
         .catch(() => caches.match('index.html').then(r => r || caches.match('404.html')))
     );
     return;

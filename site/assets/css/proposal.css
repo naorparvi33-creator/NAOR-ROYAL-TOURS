@@ -1,0 +1,138 @@
+/* NAOR ROYAL TOURS · הצעה חיה: דף ההצעה ללקוח ודף הבנייה */
+:root{
+  --ink:#100d0a; --ink-2:#1d1813; --ink-3:#2a231c;
+  --cream:#f4ece0; --cream-2:#e9dcc8; --white:#fffcf7;
+  --caramel:#b07a45; --caramel-dk:#8a5a2c; --gold:#e8c690;
+  --muted:#6b5f52; --line:rgba(16,13,10,.12);
+  --wa:#1f9d55; --bad:#a3271b;
+  --f-display:'Frank Ruhl Libre','David Libre',Georgia,serif;
+  --f-body:'Heebo','Assistant',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --f-latin:'Bodoni Moda',Didot,Georgia,serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--ink);scroll-behavior:smooth}
+body.p-page{margin:0;background:var(--cream);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.b-page{padding-bottom:60px}
+h1,h2,h3,p,ul{margin:0}
+h1,h2,h3{text-wrap:balance}
+a{color:inherit}
+img{max-width:100%;display:block}
+:focus-visible{outline:2px solid var(--caramel);outline-offset:3px;border-radius:10px}
+.p-skip{position:fixed;top:-60px;right:16px;z-index:50;background:var(--gold);color:var(--ink);padding:10px 16px;border-radius:10px;font-weight:700;text-decoration:none}
+.p-skip:focus{top:10px}
+
+/* ---------- כותרת עליונה ---------- */
+.p-top{background:var(--ink);color:var(--white);padding:calc(14px + env(safe-area-inset-top,0px)) 20px 14px;text-align:center}
+.p-logo{text-decoration:none;display:inline-flex;flex-direction:column;gap:2px}
+.p-logo b{font-family:var(--f-latin);font-weight:700;letter-spacing:.2em;font-size:1rem;direction:ltr}
+.p-logo small{font-size:.74rem;color:rgba(255,248,238,.7)}
+
+.p-wrap{max-width:760px;margin-inline:auto;padding:0 20px}
+.p-loading{text-align:center;padding:90px 20px;color:var(--muted)}
+
+/* ---------- הודעת שגיאה ---------- */
+.p-fail{max-width:520px;margin:70px auto;padding:0 20px;text-align:center}
+.p-fail h1{font-family:var(--f-display);font-size:1.9rem;margin-bottom:12px}
+.p-fail p{color:var(--muted);margin-bottom:26px}
+
+/* ---------- פתיח ---------- */
+.p-hero{position:relative;background:linear-gradient(160deg,#7a4a2a,#2b1a10 60%,#0b0806);color:var(--white);overflow:hidden}
+.p-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.p-hero.has-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(16,13,10,.35),rgba(16,13,10,.86))}
+.p-hero-in{position:relative;z-index:1;max-width:760px;margin-inline:auto;padding:76px 20px 40px}
+.p-hero.has-img .p-hero-in{padding-top:170px}
+.p-eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.06em;color:var(--gold);margin-bottom:18px}
+.p-hello{font-size:1.15rem;color:rgba(255,248,238,.86)}
+.p-hero h1{font-family:var(--f-display);font-weight:500;font-size:clamp(2.2rem,8vw,3.6rem);line-height:1.12;margin:4px 0 20px}
+.p-meta{display:flex;flex-wrap:wrap;gap:8px}
+.p-pill{border:1px solid rgba(255,236,210,.3);background:rgba(255,246,232,.08);border-radius:999px;padding:5px 14px;font-size:.9rem}
+
+/* ---------- תוכן ---------- */
+.p-wrap section{padding:34px 0;border-bottom:1px solid var(--line)}
+.p-wrap h2{font-family:var(--f-display);font-weight:500;font-size:1.55rem;margin-bottom:16px}
+.p-wrap h3{font-size:1rem;margin:20px 0 6px;color:var(--muted)}
+.p-text{white-space:pre-line}
+.p-note{font-size:1.1rem}
+.p-note p{white-space:pre-line}
+.p-sign{font-family:var(--f-display);font-size:1.3rem;color:var(--caramel-dk);margin-top:10px}
+.p-grid{display:grid;gap:14px}
+.p-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.p-tag{display:inline-block;font-size:.76rem;font-weight:700;background:var(--ink);color:var(--gold);border-radius:999px;padding:2px 12px;margin-bottom:10px}
+.p-route,.p-hname{font-family:var(--f-display);font-size:1.3rem;margin-bottom:8px}
+.p-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-top:1px solid var(--line);font-size:.96rem}
+.p-k{color:var(--muted);flex:none}
+.p-v{text-align:left;overflow-wrap:anywhere}
+.p-list{list-style:none;padding:0;display:grid;gap:8px}
+.p-list li{position:relative;padding-inline-start:28px}
+.p-list li::before{content:"";position:absolute;inset-inline-start:2px;top:.5em;width:14px;height:8px;border:solid var(--caramel);border-width:0 0 2.5px 2.5px;transform:rotate(-45deg)}
+
+/* ---------- מחיר ---------- */
+.p-wrap .p-pricebox{background:var(--ink);color:var(--white);border-radius:24px;padding:30px 24px;margin:34px 0;border-bottom:0;text-align:center}
+.p-pricebox h2{color:var(--gold);font-size:1.1rem;font-family:var(--f-body);font-weight:700;margin-bottom:4px}
+.p-price{font-family:var(--f-display);font-size:clamp(2.6rem,11vw,4rem);line-height:1.1}
+.p-pp{color:rgba(255,248,238,.75)}
+.p-pricebox .p-text{color:rgba(255,248,238,.86);margin-top:14px;font-size:.96rem}
+.p-valid{margin-top:14px;font-size:.92rem;color:var(--gold)}
+.p-valid.late{color:#ffb4a8;font-weight:700}
+.p-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px}
+
+/* ---------- כפתורים ---------- */
+.p-btn{display:inline-flex;align-items:center;justify-content:center;border:0;cursor:pointer;text-decoration:none;font-family:var(--f-body);font-weight:700;font-size:1rem;border-radius:999px;padding:14px 26px;min-height:50px;transition:background .25s,color .25s}
+.p-btn-main{background:var(--gold);color:var(--ink)}
+.p-btn-main:hover{background:#f3d7a8}
+.p-btn-ghost{background:transparent;color:inherit;border:1.5px solid currentColor}
+.p-btn-wa{background:var(--wa);color:#fff}
+
+/* ---------- פס קבוע בתחתית ---------- */
+.p-bar{position:fixed;inset:auto 0 0;z-index:40;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(16,13,10,.94);color:var(--white);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.p-bar .p-btn-main{flex:1}
+.p-foot{padding:26px 0 10px;color:var(--muted);font-size:.86rem;display:grid;gap:8px}
+
+/* ---------- דף הבנייה ---------- */
+.b-wrap{padding-top:30px}
+.b-wrap h1{font-family:var(--f-display);font-weight:500;font-size:2rem;margin-bottom:8px}
+.b-lead{color:var(--muted);margin-bottom:22px}
+.b-gate{max-width:480px;margin:40px auto;padding:0!important;border:0!important}
+.b-gate p{color:var(--muted);margin:10px 0 18px}
+.b-gate .p-btn{margin-top:14px;width:100%}
+fieldset{border:1px solid var(--line);background:var(--white);border-radius:18px;padding:18px 18px 20px;margin:0 0 18px;min-width:0}
+legend{font-family:var(--f-display);font-size:1.25rem;padding:0 8px}
+label{display:block;font-size:.9rem;font-weight:500;margin:12px 0 5px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:11px 13px;min-height:46px}
+textarea{resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--caramel);outline-offset:1px}
+.b-2,.b-3{display:grid;gap:0 14px}
+@media (min-width:640px){ .b-2{grid-template-columns:1fr 1fr} .b-3{grid-template-columns:1fr 1fr 1fr} }
+.b-checks{display:grid;gap:4px}
+.b-check{display:flex;align-items:center;gap:10px;margin:0;padding:8px 0;font-size:1rem;font-weight:400;cursor:pointer}
+.b-check input{width:22px;height:22px;min-height:0;flex:none;accent-color:var(--caramel)}
+details{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:700;color:var(--caramel-dk)}
+.b-err{color:var(--bad);font-weight:700;margin:6px 0 12px}
+.b-go{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 10px}
+.b-page .p-btn-main{background:var(--ink);color:var(--white)}
+.b-page .p-btn-main:hover{background:var(--ink-3)}
+.b-wrap .b-out{background:var(--white);border:2px solid var(--caramel);border-radius:18px;padding:22px 18px;margin:26px 0}
+.b-out textarea{font-family:var(--f-mono);font-size:13px;word-break:break-all}
+.b-wrap .b-hist{border-bottom:0}
+.b-hist ul{list-style:none;padding:0;display:grid;gap:12px}
+.b-hist li{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.b-hist-t{font-weight:700;overflow-wrap:anywhere}
+.b-hist-s{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);margin:2px 0 10px}
+.b-hist-a{display:flex;flex-wrap:wrap;gap:8px}
+.b-mini{font:inherit;font-size:.86rem;font-weight:500;background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:38px}
+.b-mini:hover{background:var(--cream-2)}
+
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
+@media print{
+  body.p-page{background:#fff;padding:0}
+  .p-bar,.p-actions,.p-skip{display:none!important}
+  .p-hero,.p-top,.p-wrap .p-pricebox{background:#fff!important;color:#000!important}
+  .p-hero img,.p-hero::after{display:none!important}
+  .p-hero-in,.p-hero.has-img .p-hero-in{padding:20px}
+  .p-eyebrow,.p-pricebox h2,.p-valid{color:#000!important}
+  .p-pill{border-color:#999}
+}

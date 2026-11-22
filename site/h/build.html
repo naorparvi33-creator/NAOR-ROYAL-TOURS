@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<title>בניית הצעה · NAOR ROYAL TOURS</title>
+<meta name="theme-color" content="#100d0a">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/fonts.css">
+<link rel="stylesheet" href="../assets/css/proposal.css">
+</head>
+<body class="p-page b-page">
+<header class="p-top">
+  <a class="p-logo" href="../" aria-label="NAOR ROYAL TOURS, לאתר"><b>NAOR ROYAL TOURS</b><small>בניית הצעה ללקוח</small></a>
+</header>
+
+<main class="p-wrap b-wrap">
+
+  <!-- שער הפעלה: מוצג רק במכשיר שעוד לא הופעל -->
+  <section class="b-gate" id="b-gate" hidden>
+    <h1>הכלי עוד לא הופעל במכשיר הזה</h1>
+    <p>פתחו את קישור ההפעלה שקיבלתם, או הדביקו כאן את קוד ההפעלה. עושים את זה פעם אחת בכל מכשיר.</p>
+    <label for="b-key">קוד הפעלה</label>
+    <input id="b-key" type="password" autocomplete="off" dir="ltr">
+    <button class="p-btn p-btn-main" id="b-key-go" type="button"><span>הפעלה</span></button>
+    <p class="b-err" id="b-key-err" role="alert" hidden></p>
+  </section>
+
+  <div id="b-app" hidden>
+    <h1>הצעה חדשה</h1>
+    <p class="b-lead">ממלאים, לוחצים "יצירת קישור" ושולחים ללקוח. שדות עם כוכבית הם חובה. הטיוטה נשמרת במכשיר הזה תוך כדי כתיבה.</p>
+
+    <form id="b-form" novalidate>
+      <fieldset>
+        <legend>הלקוח והטיול</legend>
+        <div class="b-2">
+          <div><label for="b-client">שם הלקוח *</label><input id="b-client" data-f maxlength="40" autocomplete="off"></div>
+          <div><label for="b-phone">טלפון הלקוח (לשליחה בוואטסאפ)</label><input id="b-phone" data-f type="tel" dir="ltr" maxlength="20" autocomplete="off"></div>
+        </div>
+        <div class="b-2">
+          <div><label for="b-dest">יעד / כותרת ההצעה *</label><input id="b-dest" data-f maxlength="60" placeholder="לדוגמה: אתונה, חופשה זוגית"></div>
+          <div><label for="b-img">תמונת רקע</label>
+            <select id="b-img" data-f><option value="">בלי תמונה</option></select></div>
+        </div>
+        <div class="b-3">
+          <div><label for="b-from">יציאה</label><input id="b-from" data-f type="date"></div>
+          <div><label for="b-to">חזרה</label><input id="b-to" data-f type="date"></div>
+          <div><label for="b-people">נוסעים</label><input id="b-people" data-f maxlength="40" placeholder="2 מבוגרים + ילד"></div>
+        </div>
+        <label for="b-note">כמה מילים אישיות ללקוח</label>
+        <textarea id="b-note" data-f rows="3" maxlength="500" placeholder="לדוגמה: בחרתי לכם מלון במרחק הליכה מהים, עם ארוחת בוקר מעולה."></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>טיסת הלוך</legend>
+        <div class="b-2">
+          <div><label for="fo-a">חברה ומספר טיסה</label><input id="fo-a" data-f maxlength="40" placeholder="אל על LY541"></div>
+          <div><label for="fo-r">מסלול</label><input id="fo-r" data-f maxlength="60" placeholder="תל אביב ← אתונה"></div>
+        </div>
+        <div class="b-3">
+          <div><label for="fo-dp">המראה</label><input id="fo-dp" data-f type="datetime-local"></div>
+          <div><label for="fo-ar">נחיתה</label><input id="fo-ar" data-f type="time"></div>
+          <div><label for="fo-b">כבודה</label><input id="fo-b" data-f maxlength="60" placeholder="טרולי 8 ק״ג + מזוודה 23 ק״ג"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>טיסת חזור</legend>
+        <div class="b-2">
+          <div><label for="fr-a">חברה ומספר טיסה</label><input id="fr-a" data-f maxlength="40"></div>
+          <div><label for="fr-r">מסלול</label><input id="fr-r" data-f maxlength="60" placeholder="אתונה ← תל אביב"></div>
+        </div>
+        <div class="b-3">
+          <div><label for="fr-dp">המראה</label><input id="fr-dp" data-f type="datetime-local"></div>
+          <div><label for="fr-ar">נחיתה</label><input id="fr-ar" data-f type="time"></div>
+          <div><label for="fr-b">כבודה</label><input id="fr-b" data-f maxlength="60"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>מלון</legend>
+        <div class="b-2">
+          <div><label for="h1-nm">שם המלון</label><input id="h1-nm" data-f maxlength="60"></div>
+          <div><label for="h1-ar">אזור</label><input id="h1-ar" data-f maxlength="60" placeholder="מרכז העיר, 5 דקות הליכה מבית חב״ד"></div>
+        </div>
+        <div class="b-3">
+          <div><label for="h1-rm">סוג חדר</label><input id="h1-rm" data-f maxlength="60" placeholder="חדר זוגי עם מרפסת"></div>
+          <div><label for="h1-bd">ארוחות</label><input id="h1-bd" data-f maxlength="40" list="b-boards"></div>
+          <div><label for="h1-ng">לילות</label><input id="h1-ng" data-f maxlength="20" inputmode="numeric"></div>
+        </div>
+        <details id="b-h2">
+          <summary>מלון נוסף</summary>
+          <div class="b-2">
+            <div><label for="h2-nm">שם המלון</label><input id="h2-nm" data-f maxlength="60"></div>
+            <div><label for="h2-ar">אזור</label><input id="h2-ar" data-f maxlength="60"></div>
+          </div>
+          <div class="b-3">
+            <div><label for="h2-rm">סוג חדר</label><input id="h2-rm" data-f maxlength="60"></div>
+            <div><label for="h2-bd">ארוחות</label><input id="h2-bd" data-f maxlength="40" list="b-boards"></div>
+            <div><label for="h2-ng">לילות</label><input id="h2-ng" data-f maxlength="20" inputmode="numeric"></div>
+          </div>
+        </details>
+        <datalist id="b-boards"><option value="לינה בלבד"><option value="ארוחת בוקר"><option value="חצי פנסיון"><option value="פנסיון מלא"><option value="הכול כלול"></datalist>
+      </fieldset>
+
+      <fieldset>
+        <legend>כשרות ושבת</legend>
+        <label for="b-kosher">מה סידרתי (לא חובה)</label>
+        <textarea id="b-kosher" data-f rows="3" maxlength="600" placeholder="לדוגמה: מסעדה כשרה בהשגחת … במרחק 300 מטר. ארוחות שבת בבית חב״ד, הזמנה מראש."></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>מה כלול במחיר</legend>
+        <div class="b-checks" id="b-inc"></div>
+        <label for="b-inc-more">עוד דברים שכלולים (שורה לכל פריט)</label>
+        <textarea id="b-inc-more" data-f rows="3" maxlength="500"></textarea>
+        <label for="b-exc">לא כלול</label>
+        <textarea id="b-exc" data-f rows="2" maxlength="400" placeholder="לדוגמה: ביטוח נסיעות, מס עירוני במלון."></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>מחיר ותנאים</legend>
+        <div class="b-3">
+          <div><label for="b-price">מחיר סופי בשקלים *</label><input id="b-price" data-f inputmode="numeric" dir="ltr" maxlength="9"></div>
+          <div><label for="b-pp">מחיר לנוסע (לא חובה)</label><input id="b-pp" data-f inputmode="numeric" dir="ltr" maxlength="9"></div>
+          <div><label for="b-valid">ההצעה בתוקף עד</label><input id="b-valid" data-f type="date"></div>
+        </div>
+        <label for="b-pay">תנאי תשלום</label>
+        <textarea id="b-pay" data-f rows="2" maxlength="300" placeholder="לדוגמה: מקדמה של 30% בסגירה, היתרה עד 21 יום לפני היציאה."></textarea>
+        <label for="b-cancel">תנאי ביטול של הספקים *</label>
+        <textarea id="b-cancel" data-f rows="4" maxlength="900" placeholder="כתבו את התנאים המדויקים שקיבלתם מחברת התעופה ומהמלון."></textarea>
+      </fieldset>
+
+      <p class="b-err" id="b-err" role="alert" hidden></p>
+      <div class="b-go">
+        <button class="p-btn p-btn-main" type="submit"><span>יצירת קישור</span></button>
+        <button class="p-btn p-btn-ghost" id="b-clear" type="button"><span>טופס ריק</span></button>
+      </div>
+    </form>
+
+    <section class="b-out" id="b-out" hidden aria-live="polite">
+      <h2>הקישור מוכן</h2>
+      <p>מספר הצעה: <b id="b-out-id" dir="ltr"></b></p>
+      <label for="b-link">קישור ללקוח</label>
+      <textarea id="b-link" rows="3" readonly dir="ltr"></textarea>
+      <div class="b-go">
+        <a class="p-btn p-btn-main" id="b-send" href="#" target="_blank" rel="noopener noreferrer"><span>שליחה בוואטסאפ</span></a>
+        <button class="p-btn p-btn-ghost" id="b-copy" type="button"><span>העתקת הקישור</span></button>
+        <a class="p-btn p-btn-ghost" id="b-open" href="#" target="_blank" rel="noopener"><span>לראות כמו הלקוח</span></a>
+      </div>
+    </section>
+
+    <section class="b-hist">
+      <h2>הצעות ששלחתי מהמכשיר הזה</h2>
+      <p class="b-lead" id="b-hist-empty">עוד אין הצעות.</p>
+      <ul id="b-hist"></ul>
+    </section>
+  </div>
+</main>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/proposal-core.js"></script>
+<script src="../assets/js/proposal-build.js"></script>
+</body>
+</html>

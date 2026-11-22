@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<title>ההצעה שלך · NAOR ROYAL TOURS</title>
+<meta name="theme-color" content="#100d0a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="NAOR ROYAL TOURS">
+<meta property="og:title" content="ההצעה שלך מוכנה · NAOR ROYAL TOURS">
+<meta property="og:description" content="כל הפרטים במקום אחד: טיסות, מלון, מה כלול ומחיר סופי.">
+<meta property="og:image" content="https://naor-royal-tours.vercel.app/img/og.jpg">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/fonts.css">
+<link rel="stylesheet" href="../assets/css/proposal.css">
+</head>
+<body class="p-page">
+<a class="p-skip" href="#p-main">דילוג לתוכן</a>
+<header class="p-top">
+  <a class="p-logo" href="../" aria-label="NAOR ROYAL TOURS, לאתר"><b>NAOR ROYAL TOURS</b><small>יועץ חוויות · חופשות בהתאמה אישית</small></a>
+</header>
+
+<main id="p-main">
+  <p class="p-loading" id="p-loading" role="status">טוען את ההצעה…</p>
+
+  <section class="p-fail" id="p-fail" hidden>
+    <h1 id="p-fail-t"></h1>
+    <p id="p-fail-s"></p>
+    <a class="p-btn p-btn-wa" id="p-fail-wa" href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>לדבר עם נאור בוואטסאפ</span></a>
+  </section>
+
+  <div id="p-body" hidden>
+    <section class="p-hero" id="p-hero">
+      <img id="p-img" hidden width="900" height="1200" decoding="async">
+      <div class="p-hero-in">
+        <p class="p-eyebrow">הצעה אישית · <span id="p-id" dir="ltr"></span></p>
+        <p class="p-hello" id="p-hello"></p>
+        <h1 id="p-dest"></h1>
+        <div class="p-meta" id="p-meta"></div>
+      </div>
+    </section>
+
+    <div class="p-wrap">
+      <section class="p-note" id="p-note-box" hidden>
+        <p id="p-note"></p>
+        <p class="p-sign">נאור</p>
+      </section>
+
+      <section id="p-sec-flights" hidden>
+        <h2>טיסות</h2>
+        <div class="p-grid" id="p-flights"></div>
+      </section>
+
+      <section id="p-sec-hotels" hidden>
+        <h2>מלון</h2>
+        <div class="p-grid" id="p-hotels"></div>
+      </section>
+
+      <section id="p-sec-kosher" hidden>
+        <h2>כשרות ושבת</h2>
+        <p class="p-text" id="p-kosher"></p>
+      </section>
+
+      <section id="p-sec-inc" hidden>
+        <h2>מה כלול במחיר</h2>
+        <ul class="p-list" id="p-inc"></ul>
+        <div id="p-exc-box" hidden>
+          <h3>לא כלול</h3>
+          <p class="p-text" id="p-exc"></p>
+        </div>
+      </section>
+
+      <section class="p-pricebox" aria-labelledby="p-price-h">
+        <h2 id="p-price-h">מחיר סופי</h2>
+        <p class="p-price" id="p-price"></p>
+        <p class="p-pp" id="p-pp" hidden></p>
+        <div id="p-pay-box" hidden><p class="p-text" id="p-pay"></p></div>
+        <p class="p-valid" id="p-valid" hidden></p>
+        <div class="p-actions">
+          <a class="p-btn p-btn-main" data-yes href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>מאשר/ת, בוא נסגור</span></a>
+          <a class="p-btn p-btn-ghost" data-ask href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>יש לי שאלה</span></a>
+        </div>
+      </section>
+
+      <section>
+        <h2>תנאי ביטול</h2>
+        <p class="p-text" id="p-cancel"></p>
+      </section>
+
+      <footer class="p-foot">
+        <p id="p-created"></p>
+        <p>ההזמנה נסגרת רק אחרי אישור בכתב מנאור ותשלום. עד אז המחיר והזמינות אצל הספקים עשויים להשתנות.</p>
+        <p>NAOR ROYAL TOURS · וואטסאפ <span data-phone dir="ltr"></span></p>
+      </footer>
+    </div>
+  </div>
+</main>
+
+<div class="p-bar" id="p-bar" hidden>
+  <a class="p-btn p-btn-main" data-yes href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>מאשר/ת, בוא נסגור</span></a>
+  <a class="p-btn p-btn-ghost" data-ask href="https://wa.me/972536233816" target="_blank" rel="noopener noreferrer"><span>שאלה</span></a>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/proposal-core.js"></script>
+<script src="../assets/js/proposal-view.js"></script>
+</body>
+</html>

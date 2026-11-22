@@ -30,5 +30,9 @@ window.NRT_CONFIG = {
   // גיבוי פניות: עותק של הטופס נשמר ב-Netlify Forms ונשלח למייל.
   // עובד רק באחסון Netlify. ב-Cloudflare Pages ובכל אחסון אחר: false
   // (כשזה false, האתר לא מבקש הסכמה לגיבוי ולא מזכיר אותו במדיניות הפרטיות).
-  leadBackup: false
+  leadBackup: false,
+
+  // הצעה חיה: המפתחות הציבוריים שמאמתים שהצעה באמת נשלחה מהעסק.
+  // דף ההצעה מציג רק הצעות שנחתמו במכשיר שהופעל עם קוד ההפעלה התואם.
+  proposalKeys: ['BN037V85DY3pvazaaPBsQo2PXXci2zoOC-Of99YMhFdFxO482WxFpF66tv6eyfoM0gBFyc9UGOcQ4VkY698WCfU']
 };
