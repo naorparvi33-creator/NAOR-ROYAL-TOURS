@@ -358,7 +358,7 @@ const camLook = new THREE.Vector3(); let camDist = 1, camInit = false, fitDt = .
 
 /* ---------- input ---------- */
 const mouse = {x:0, y:0}, cm = {x:0, y:0};
-addEventListener('pointermove', e => { mouse.x = e.clientX / innerWidth - .5; mouse.y = e.clientY / innerHeight - .5; }, {passive:true});
+addEventListener('pointermove', e => { if (e.pointerType === 'touch') return; mouse.x = e.clientX / innerWidth - .5; mouse.y = e.clientY / innerHeight - .5; }, {passive:true}); // a scrolling finger does not wake the scene
 
 /* ---------- frame ---------- */
 let pC = 0, visible = true, last = performance.now();

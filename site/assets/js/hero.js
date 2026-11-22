@@ -56,7 +56,7 @@ passes.forEach((p,i) => setPass(p, TYPES.couple.dests[i]));
 // opens fast; the suitcase then appears with a spin. In the light version it is never downloaded.
 let webgl = false, renderer, scene, camera, rig, spinner, bodyMat, bandMat, tag, shadow, heroColor = 'caramel';
 const lin = hex => NRT.lin(hex);
-let glW = 0, glH = 0;
+let glKey = '';
 let build3DQueued = false;
 // build the suitcase in a quiet moment, never in the middle of a scroll
 function queueHero3D(){
@@ -85,7 +85,19 @@ function layout(){
   if (webgl){
     // resizing the canvas clears it and reallocates memory: only when the size really changed
     // (phones fire "resize" every time the address bar slides in or out)
-    if (W !== glW || H !== glH){ glW = W; glH = H; renderer.setSize(W, H, false); camera.aspect = W/H; camera.updateProjectionMatrix(); }
+    // The canvas covers only the area the suitcase can reach (it moves up while scrolling, and the
+    // shadow sits below it), not the whole hero. setViewOffset keeps the exact same picture as a
+    // full-hero canvas, but the phone draws about a quarter of the pixels on every frame.
+    const u = Math.min(sr.height, sr.width*1.5)/3.5; // pixels per suitcase unit
+    const x0 = Math.max(0, Math.floor(slotC.x - 1.7*u)), x1 = Math.min(W, Math.ceil(slotC.x + 1.7*u));
+    const y0 = Math.max(0, Math.floor(slotC.y - 3.9*u)), y1 = Math.min(H, Math.ceil(slotC.y + 2.4*u));
+    const key = [W, H, x0, y0, x1, y1].map(Math.round).join(',');
+    if (key !== glKey){
+      glKey = key;
+      renderer.setSize(x1 - x0, y1 - y0, false);
+      canvas.style.inset = `${y0}px auto auto ${x0}px`; canvas.style.width = (x1 - x0) + 'px'; canvas.style.height = (y1 - y0) + 'px';
+      camera.aspect = W/H; camera.setViewOffset(W, H, x0, y0, x1 - x0, y1 - y0); camera.updateProjectionMatrix();
+    }
     const visH = 2*camera.position.z*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), visW = visH*camera.aspect;
     rigBase.x = (slotC.x/W - .5)*visW; rigBase.y = -(slotC.y/H - .5)*visH;
     rigScale = (Math.min(sr.height, sr.width*1.5)/H*visH)/3.5;
@@ -105,8 +117,9 @@ if ('ResizeObserver' in window) new ResizeObserver(layout).observe(hero);
 const mouse = {x:0,y:0,px:-9999,py:-9999}, cm = {x:0,y:0};
 let lastMove = 0;
 function onMove(cx,cy){ mouse.x = cx/innerWidth - .5; mouse.y = cy/innerHeight - .5; mouse.px = cx; mouse.py = cy; lastMove = performance.now(); }
-addEventListener('pointermove', e => onMove(e.clientX, e.clientY), {passive:true});
-addEventListener('touchmove', e => { const t = e.touches[0]; if (t) onMove(t.clientX, t.clientY); }, {passive:true});
+// mouse and pen only. On a phone the finger is scrolling the page: if it steered the suitcase,
+// the suitcase would stop floating and freeze in place for as long as the visitor scrolls
+addEventListener('pointermove', e => { if (e.pointerType !== 'touch') onMove(e.clientX, e.clientY); }, {passive:true});
 
 /* ---------------- Cursor ---------------- */
 const cur = document.getElementById('cursor'), curT = cur.querySelector('span');
@@ -212,7 +225,7 @@ function watchQuality(now){
   if (qStep === 1 && pr > 1.5) renderer.setPixelRatio(1.5);
   else if (qStep <= 2 && pr > 1){ qStep = 2; renderer.setPixelRatio(1); }
   else { qStep = 3; site.classList.add('perf-low'); return; }
-  glW = glH = 0; layout();
+  glKey = ''; layout();
 }
 new IntersectionObserver(es => { heroVisible = es[es.length - 1].isIntersecting; }, {threshold:0}).observe(hero);
 function frame(now){
