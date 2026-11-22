@@ -27,6 +27,27 @@
     <input id="b-key" type="password" autocomplete="off" dir="ltr">
     <button class="p-btn p-btn-main" id="b-key-go" type="button"><span>הפעלה</span></button>
     <p class="b-err" id="b-key-err" role="alert" hidden></p>
+
+    <div class="b-new" id="b-new">
+      <h2>אין לכם קוד, או שהקוד נחשף?</h2>
+      <p>יוצרים קוד חדש כאן. הוא נוצר בתוך המכשיר הזה ונשמר רק בו, ואף אחד אחר לא רואה אותו.</p>
+      <button class="p-btn p-btn-ghost" id="b-new-go" type="button"><span>יצירת קוד הפעלה חדש</span></button>
+    </div>
+
+    <div class="b-new-out" id="b-new-out" hidden>
+      <h2>נוצר קוד חדש. נשאר שלב אחד</h2>
+      <p>הקוד הסודי כבר שמור במכשיר הזה. כדי שהאתר יכיר אותו, צריך להוסיף לאתר את <b>המפתח הציבורי</b> שלמטה. הוא לא סודי: אפשר לשלוח אותו בצ'אט ל־Claude או למי שמעדכן את האתר.</p>
+      <label for="b-pub">המפתח הציבורי (מותר לשלוח)</label>
+      <textarea id="b-pub" rows="3" dir="ltr" readonly></textarea>
+      <button class="p-btn p-btn-main" id="b-pub-copy" type="button"><span>העתקת המפתח הציבורי</span></button>
+      <p>אחרי שהאתר מתעדכן, חוזרים לדף הזה במכשיר הזה והכלי נפתח לבד.</p>
+      <details>
+        <summary>להפעיל גם במכשיר נוסף</summary>
+        <p>הכפתור מעתיק את קישור ההפעלה הסודי. פותחים אותו רק במכשיר השני שלכם. <b>לא שולחים אותו לאף אחד</b>: לא בצ'אט, לא בוואטסאפ ולא במייל.</p>
+        <button class="p-btn p-btn-ghost" id="b-dev-copy" type="button"><span>העתקת קישור ההפעלה הסודי</span></button>
+      </details>
+      <button class="b-mini b-new-again" id="b-new-again" type="button">יצירת קוד אחר במקום</button>
+    </div>
   </section>
 
   <div id="b-app" hidden>

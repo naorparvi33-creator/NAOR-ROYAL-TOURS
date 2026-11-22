@@ -9,7 +9,7 @@ const store = {
   set(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } },
   del(k){ try { localStorage.removeItem(k); } catch(e){} }
 };
-const K_KEY = 'nrtp-key', K_DRAFT = 'nrtp-draft', K_HIST = 'nrtp-history';
+const K_KEY = 'nrtp-key', K_NEW = 'nrtp-new-key', K_DRAFT = 'nrtp-draft', K_HIST = 'nrtp-history';
 const clean = (s, max) => String(s || '').replace(/[\u0000-\u0008\u000B-\u001F\u007F‪-‮⁦-⁩]/g, '').trim().slice(0, max || 300);
 const num = s => { const n = parseInt(String(s || '').replace(/[^\d]/g, ''), 10); return n > 0 ? n : 0; };
 const INCLUDED = ['טיסות הלוך ושוב', 'כבודה לפי הפירוט', 'לינה במלון', 'ארוחות לפי הפירוט', 'העברות משדה התעופה ואליו', 'ליווי אישי של נאור עד החזרה'];
@@ -30,12 +30,44 @@ async function boot(){
   }
   const k = store.get(K_KEY);
   if (k && await tryKey(k)) return startApp(k);
+  // a code made on this device starts working as soon as its public key is on the site
+  const n = pendingKey();
+  if (n && await tryKey(n.priv)){ store.set(K_KEY, n.priv); store.del(K_NEW); return startApp(n.priv); }
   gate();
+}
+function pendingKey(){
+  try { const n = JSON.parse(store.get(K_NEW) || 'null'); return n && n.priv && n.pub ? n : null; } catch(e){ return null; }
+}
+async function copyText(text, btn){
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch(e){}
+  const s = btn.querySelector('span'), old = s.textContent;
+  s.textContent = ok ? 'הועתק' : 'סמנו והעתיקו ידנית';
+  setTimeout(() => { s.textContent = old; }, 1800);
+}
+function showNew(n){
+  $('b-new').hidden = true;
+  $('b-new-out').hidden = false;
+  $('b-pub').value = n.pub;
 }
 function gate(msg){
   $('b-gate').hidden = false;
   addEventListener('hashchange', () => location.reload()); // activation link opened in this same tab
   if (msg){ $('b-key-err').textContent = msg; $('b-key-err').hidden = false; }
+  const n = pendingKey();
+  if (n) showNew(n);
+  $('b-new-go').addEventListener('click', async () => {
+    if (pendingKey() && !confirm('כבר יצרתם קוד במכשיר הזה. ליצור במקומו קוד אחר?')) return;
+    const fresh = await P.newKey();
+    if (!store.set(K_NEW, JSON.stringify(fresh))){ $('b-key-err').textContent = 'הדפדפן לא מאפשר לשמור. צאו ממצב גלישה בסתר ונסו שוב.'; $('b-key-err').hidden = false; return; }
+    showNew(fresh);
+  });
+  $('b-new-again').addEventListener('click', () => $('b-new-go').click());
+  $('b-pub-copy').addEventListener('click', () => copyText($('b-pub').value, $('b-pub-copy')));
+  $('b-dev-copy').addEventListener('click', () => {
+    const k = pendingKey() || {};
+    copyText(location.origin + location.pathname + '#k=' + k.priv, $('b-dev-copy'));
+  });
   $('b-key-go').addEventListener('click', async () => {
     const k = $('b-key').value.trim().replace(/^.*#k=/, '');
     if (await tryKey(k)){ store.set(K_KEY, k); location.reload(); }

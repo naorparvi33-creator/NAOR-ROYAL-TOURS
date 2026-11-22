@@ -98,6 +98,12 @@ img{max-width:100%;display:block}
 .b-gate{max-width:480px;margin:40px auto;padding:0!important;border:0!important}
 .b-gate p{color:var(--muted);margin:10px 0 18px}
 .b-gate .p-btn{margin-top:14px;width:100%}
+.b-gate h2{font-size:1.15rem;margin-top:34px}
+.b-new{border-top:1px solid var(--line);margin-top:30px}
+.b-new-out{background:var(--white);border:2px solid var(--caramel);border-radius:18px;padding:4px 18px 18px;margin-top:30px}
+.b-new-out h2{margin-top:16px}
+.b-new-out textarea{font-family:var(--f-mono);font-size:13px;word-break:break-all}
+.b-new-again{margin-top:18px}
 fieldset{border:1px solid var(--line);background:var(--white);border-radius:18px;padding:18px 18px 20px;margin:0 0 18px;min-width:0}
 legend{font-family:var(--f-display);font-size:1.25rem;padding:0 8px}
 label{display:block;font-size:.9rem;font-weight:500;margin:12px 0 5px}
