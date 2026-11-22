@@ -16,7 +16,9 @@
     document.body.appendChild(s);
     return s;
   }
-  var own = ['assets/js/config.js', 'assets/js/art.js', 'assets/js/main.js', 'assets/js/pack.js', 'assets/js/leads.js'];
+  // order matters: core.js first (shared base), then each area of the page in its own file
+  var own = ['config', 'art', 'core', 'destinations', 'reviews', 'page', 'hero-suitcase', 'hero',
+    'pack-data', 'pack-suitcase', 'pack-items', 'pack', 'leads'].map(function(n){ return 'assets/js/' + n + '.js'; });
   var started = false;
   function loadOwn(){
     if (started) return; started = true;
