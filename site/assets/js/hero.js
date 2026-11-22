@@ -62,14 +62,19 @@ let build3DQueued = false;
 function queueHero3D(){
   if (webgl || build3DQueued || typeof THREE === 'undefined') return;
   build3DQueued = true;
-  NRT.whenCalm(() => { build3DQueued = false; initHero3D(); });
+  NRT.whenCalm(() => { build3DQueued = false; initHero3D(); }, 20000);
 }
-function initHero3D(){
-  if (webgl || typeof THREE === 'undefined' || document.documentElement.classList.contains('lite') || !NRT.buildHeroSuitcase) return;
+let building3D = false;
+async function initHero3D(){
+  if (webgl || building3D || typeof THREE === 'undefined' || document.documentElement.classList.contains('lite') || !NRT.buildHeroSuitcase) return;
+  building3D = true;
   let parts = null;
-  try { parts = NRT.buildHeroSuitcase(canvas, COLORS[heroColor]); } catch(e){ parts = null; }
+  try { parts = await NRT.buildHeroSuitcase(canvas, COLORS[heroColor]); } catch(e){ parts = null; }
+  building3D = false;
   if (!parts) return; // no WebGL: the page works without the suitcase
   ({renderer, scene, camera, rig, spinner, bodyMat, bandMat, tag, shadow} = parts);
+  // the visitor may have picked another holiday type while it was being built
+  bodyMat.color.copy(lin(COLORS[heroColor].body)); bandMat.color.copy(lin(COLORS[heroColor].band));
   webgl = true; layout();
   if (entered && !NRT.reduce && hasG){ entry.s = .001; entry.spin = -Math.PI*2; gsap.to(entry, {s:1, duration:1.4, ease:'back.out(1.4)'}); gsap.to(entry, {spin:0, duration:2.2, ease:'power3.out'}); }
 }
@@ -210,7 +215,7 @@ function goDest(code){
 NRT.goDest = goDest; // used by the destination tickets (destinations.js)
 
 /* ---------------- Loop ---------------- */
-let heroVisible = true;
+let heroVisible = true, scrollE = 0;
 /* Adaptive quality: if this device cannot keep the hero smooth, lower the 3D resolution step by step,
    and as a last step switch off the live blur effects (class "perf-low"). Strong devices never notice. */
 let qPrev = 0, qAvg = 16, qN = 0, qStep = 0;
@@ -237,7 +242,13 @@ function frame(now){
   watchQuality(now);
   if (now - lastMove > 2500){ mouse.x = Math.sin(t*.4)*.25; mouse.y = Math.cos(t*.3)*.12; }
   cm.x += (mouse.x - cm.x)*.05; cm.y += (mouse.y - cm.y)*.05;
-  const hr = hero.getBoundingClientRect(), scrollP = Math.min(Math.max((scrollY - anchorScroll)/hr.height, 0), 1);
+  // scroll-linked turn and lift: starts at the very first pixel of scrolling (it used to wait until the
+  // suitcase reached the middle of the screen, so on phones it looked frozen at the start of the scroll),
+  // ends at the same point as before, and is eased so it stays fluid even when scroll events arrive unevenly
+  const hr = hero.getBoundingClientRect();
+  const scrollT = Math.min(Math.max(scrollY/(anchorScroll + hr.height), 0), 1);
+  scrollE += (scrollT - scrollE)*.16; if (Math.abs(scrollT - scrollE) < .0005) scrollE = scrollT;
+  const scrollP = scrollE;
   const still = NRT.reduce;
   porthole.style.transform = `translate3d(${phBase.x - cm.x*14}px,${phBase.y - cm.y*10 + scrollP*60}px,0) perspective(900px) rotateY(${cm.x*-6}deg) rotateX(${cm.y*5}deg)`;
   if (webgl){
