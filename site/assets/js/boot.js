@@ -9,7 +9,7 @@
   d.classList.remove('no-js'); d.classList.add('js');
   setTimeout(function(){
     var s = document.getElementById('site');
-    // main.js marks the site with 'js' as soon as it runs, and then has its own safety timer
+    // core.js marks the site with 'js' as soon as it runs, and then has its own safety timer
     if (!s || !s.classList.contains('js')){ d.classList.remove('js'); if (s) s.classList.remove('js'); }
   }, 4000);
 })();

@@ -2,12 +2,14 @@
    אחרי הכניסה הראשונה, קבצי האתר נשמרים בדפדפן. בכניסה הבאה האתר נפתח מיד,
    וגם בלי קליטה. הדף עצמו תמיד נבדק קודם מול השרת, כך שעדכונים מגיעים מיד.
    בכל העלאה של גרסה חדשה מעדכנים את VERSION (סקריפט הבנייה עושה את זה לבד). */
-const VERSION = 'nrt-2026-11-22-trip1';
+const VERSION = 'nrt-2026-11-22-split1';
 const CORE = [
   './', 'index.html', '404.html', 'favicon.svg', 'site.webmanifest',
   'assets/css/fonts.css', 'assets/css/site.css', 'assets/css/additions.css',
   'assets/js/boot.js', 'assets/js/loader.js', 'assets/js/config.js', 'assets/js/art.js',
-  'assets/js/main.js', 'assets/js/pack.js', 'assets/js/leads.js',
+  'assets/js/core.js', 'assets/js/destinations.js', 'assets/js/reviews.js', 'assets/js/page.js',
+  'assets/js/hero-suitcase.js', 'assets/js/hero.js',
+  'assets/js/pack-data.js', 'assets/js/pack-suitcase.js', 'assets/js/pack-items.js', 'assets/js/pack.js', 'assets/js/leads.js',
   'assets/fonts/heebo-300-hebrew.woff2', 'assets/fonts/frankruhllibre-500-hebrew.woff2',
   'img/naor.webp'
 ];
