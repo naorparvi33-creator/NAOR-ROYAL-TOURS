@@ -22,8 +22,9 @@ const lining = (w, h) => tex(w, h, (g, W, H) => {
   const edge = (x0, y0, x1, y1) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, 'rgba(70,45,25,.42)'); gr.addColorStop(1, 'rgba(70,45,25,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); };
   const e = Math.min(W, H) * .16; edge(0, 0, e, 0); edge(W, 0, W - e, 0); edge(0, 0, 0, e); edge(0, H, 0, H - e);
 }, {text:true});
-const floorMat = new THREE.MeshStandardMaterial({map:lining(1024, 680), roughness:.9});
-const ceilMat = new THREE.MeshStandardMaterial({map:lining(1024, 680), roughness:.9, side:THREE.DoubleSide});
+const liningTex = lining(1024, 680); // painted once, shared by the floor and the lid
+const floorMat = new THREE.MeshStandardMaterial({map:liningTex, roughness:.9});
+const ceilMat = new THREE.MeshStandardMaterial({map:liningTex, roughness:.9, side:THREE.DoubleSide});
 const wallMat = new THREE.MeshStandardMaterial({color:lin('#d9c8ad'), roughness:.92});
 const netMat = new THREE.MeshStandardMaterial({map:tex(256, 256, (g, w, h) => {
   g.strokeStyle = 'rgba(120,85,50,.85)'; g.lineWidth = 2.5;

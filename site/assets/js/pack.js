@@ -94,14 +94,23 @@ function go3D(){
   sec.classList.remove('static'); capIdx = -1; setStage(0);
   const near = new IntersectionObserver(es => {
     if (es[es.length - 1].isIntersecting && !started){ started = true; near.disconnect();
-      const run = () => { try { init(); } catch(e){ goStatic(); } };
+      const run = () => { init().catch(() => goStatic()); };
       if ('requestIdleCallback' in window) requestIdleCallback(run, {timeout:1200}); else setTimeout(run, 60); }
   }, {rootMargin:'150% 0px'});
   near.observe(sec);
 }
 if (!isLite()){ arm(); addEventListener('nrt-three', arm); }
 
-function init(){
+/* The scene is built in small steps with a pause between them, so the page never freezes for long.
+   While the section is still off screen each step waits for a quiet moment (no scrolling);
+   once the visitor is looking at it, the steps run one after another without waiting. */
+let secOnScreen = false;
+new IntersectionObserver(es => { secOnScreen = es[es.length - 1].isIntersecting; }).observe(sec);
+const breathe = () => new Promise(done => {
+  const calm = window.NRT && window.NRT.whenCalm;
+  if (secOnScreen || !calm) setTimeout(done, 0); else calm(done, 1500);
+});
+async function init(){
 let R = null;
 try { R = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, powerPreference:'high-performance'}); } catch(e){ R = null; }
 if (!R) throw new Error('no webgl');
@@ -188,11 +197,13 @@ const bgMat = new THREE.ShaderMaterial({
 });
 const bg = M(new THREE.PlaneGeometry(2, 2), bgMat); bg.frustumCulled = false; bg.renderOrder = -10; scene.add(bg);
 
+await breathe();
 /* ---------- suitcase + items: built in their own files ---------- */
 const kit = {tex, lin, M, slabGeo, shellGeo, FONT};
 const {bodyMat, bandMat, metal, rubber, leather, goldM, blob, knit, fitParts,
   W, D, Hb, Hl, T, Hc, Y0, TOP_L, TOP_R,
   display, stand, tilt, body, carry, posts, setTele, lidPivot} = P.buildSuitcase(kit, scene);
+await breathe();
 const {BUILD, META} = P.makeItems({...kit, knit, goldM, metal, rubber});
 
 // 7 places on top of the folded clothes: [x, z, rest rotation]
@@ -210,8 +221,11 @@ function buildSet(list){
     return {...it, obj, slot, start, spin, rest:r, a, land:a + DUR, sh};
   });
 }
-const sets = {summer:buildSet(SEASONS.summer.items), winter:buildSet(SEASONS.winter.items)};
+const sets = {summer:buildSet(SEASONS.summer.items)};
+await breathe();
+sets.winter = buildSet(SEASONS.winter.items);
 let items = sets[season];
+await breathe();
 
 /* ---------- straps + buckles (the last detail before the lid shuts) ---------- */
 const straps = [-.2, .27].map(x => {
@@ -451,6 +465,7 @@ function loop(now){
   if (!downgraded && frames > 90 && avg > 34 && dpr > 1.25){ downgraded = true; dpr = 1.25; R.setPixelRatio(dpr); layout(); }
   loop.prev = now;
 }
+await breathe();
 render(performance.now()); requestAnimationFrame(loop);
 }
 })();
