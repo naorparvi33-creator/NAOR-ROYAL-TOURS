@@ -32,6 +32,8 @@
   g.onload = g.onerror = function(){ clearTimeout(timer); loadOwn(); };
 
   // 3D library: only after the page has fully loaded, when the phone is idle
+  // the 3D library (600KB) takes a moment to start: never in the middle of a scroll (core.js knows when the visitor is scrolling)
+  function threeWhenCalm(){ if (window.NRT && window.NRT.whenCalm) window.NRT.whenCalm(three, 20000); else three(); }
   function three(){
     if (d.classList.contains('lite')) return;
     var s = add('assets/vendor/three.min.js', false);
@@ -42,7 +44,7 @@
     var t0 = Date.now();
     (function wait(){
       var s = document.getElementById('site');
-      if ((s && s.classList.contains('ready') && !document.querySelector('.intro')) || Date.now() - t0 > 8000){ if ('requestIdleCallback' in window) requestIdleCallback(three, {timeout:2000}); else setTimeout(three, 300); }
+      if ((s && s.classList.contains('ready') && !document.querySelector('.intro')) || Date.now() - t0 > 8000){ if ('requestIdleCallback' in window) requestIdleCallback(threeWhenCalm, {timeout:2000}); else setTimeout(threeWhenCalm, 300); }
       else setTimeout(wait, 250);
     })();
   }

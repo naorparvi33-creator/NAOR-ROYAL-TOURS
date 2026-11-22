@@ -10,7 +10,10 @@ function roundedRect(w,h,r){ const s = new THREE.Shape(), x = -w/2, y = -h/2;
 function slab(w,h,d,r,bevel,mat){ const g = new THREE.ExtrudeGeometry(roundedRect(w,h,r), {depth:d, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel, bevelSegments:5, curveSegments:18}); g.center(); return new THREE.Mesh(g, mat); }
 
 // look = one entry of NRT.COLORS (body + band colours). Returns the parts, or nothing when WebGL is unavailable.
-function buildHeroSuitcase(canvas, look){
+// Built in three short steps, each in a quiet moment (no scrolling), so the page never freezes while it is built:
+// 1. engine + lighting, 2. the suitcase itself, 3. preparing the graphics so the first frame does not stall.
+const calm = () => new Promise(done => NRT.whenCalm ? NRT.whenCalm(done, 20000) : setTimeout(done, 0));
+async function buildHeroSuitcase(canvas, look){
   let renderer, scene, camera, rig, spinner, bodyMat, bandMat, tag, shadow;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); } catch(e){ return; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -27,6 +30,7 @@ function buildHeroSuitcase(canvas, look){
   const key = new THREE.DirectionalLight(0xffffff,1.5); key.position.set(4,6,7); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffc68a,1.4); rim.position.set(-6,3,-5); scene.add(rim);
   scene.add(new THREE.AmbientLight(0xffffff,.22));
+  await calm();
 
   rig = new THREE.Group(); scene.add(rig);
   spinner = new THREE.Group(); rig.add(spinner);
@@ -72,6 +76,8 @@ function buildHeroSuitcase(canvas, look){
   grd.addColorStop(0,'rgba(0,0,0,.55)'); grd.addColorStop(1,'rgba(0,0,0,0)'); sg.fillStyle = grd; sg.fillRect(0,0,256,256);
   shadow = new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.1), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
   shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.75; rig.add(shadow);
+  await calm();
+  renderer.compile(scene, camera); // prepare the graphics now, not on the first visible frame
   return {renderer, scene, camera, rig, spinner, bodyMat, bandMat, tag, shadow};
 }
 

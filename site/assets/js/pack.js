@@ -108,7 +108,7 @@ let secOnScreen = false;
 new IntersectionObserver(es => { secOnScreen = es[es.length - 1].isIntersecting; }).observe(sec);
 const breathe = () => new Promise(done => {
   const calm = window.NRT && window.NRT.whenCalm;
-  if (secOnScreen || !calm) setTimeout(done, 0); else calm(done, 1500);
+  if (secOnScreen || !calm) setTimeout(done, 0); else calm(done, 5000);
 });
 async function init(){
 let R = null;
