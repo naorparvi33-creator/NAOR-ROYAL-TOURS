@@ -14,7 +14,11 @@ func _ready() -> void:
 	mat.shader = preload("res://world/grass.gdshader")
 	mat.set_shader_parameter("card", preload("res://assets/foliage/grass_card.png"))
 	mat.set_shader_parameter("spacing", SPACING)
-	var mesh := _crossed_cards(1.0, 0.5)
+	# No lawn on the fountain plaza and its flower ring (world/park.gd).
+	var f: Vector3 = preload("res://world/park.gd").FOUNTAIN
+	mat.set_shader_parameter("clear_spots", PackedVector4Array([Vector4(f.x, f.z, 10.3, 0), Vector4(0, 0, -1, 0),
+		Vector4(0, 0, -1, 0), Vector4(0, 0, -1, 0)]))
+	var mesh := _crossed_cards(0.9, 0.42)
 	mesh.surface_set_material(0, mat)
 
 	var mm := MultiMesh.new()

@@ -60,6 +60,7 @@ cd game
 - אובייקטי רחוב סרוקים (תריסים, מדרגות חירום, פחים, רכב מכוסה, ספסל): Poly Haven, רישיון CC0.
 - נשק, עצים, דקלים, סלעים ודשא: נוצרים בקוד או בסקריפט Python.
 - שלטי חוצות על הגגות: פרסומות מומצאות (בלי מותגים אמיתיים) שנוצרות ב-`tools/texgen/make_billboards.py`. חזיתות הבניינים (חלונות עם חדרים מדומים, השתקפויות, חנויות, בלאי) והרחובות (סדקים, טלאים, ביוב, לכלוך) מחושבים ב-shader.
+- צמחייה ורחוב: עצים רחבי עלים, דקלים, משוכות, ערוגות פרחים, מזרקה, שחפים, עלים נישאים ברוח, ברזי כיבוי, תיבות עיתונים ותחנות אוטובוס נבנים בקוד (`world/tree_builder.gd`, `world/props.gd`, `world/park.gd`, `world/street_life.gd`, `world/fountain.gd`). טקסטורות העלים, הדשא, הפרחים וגזע הדקל נוצרות ב-Python (`tools/foliagegen/`).
 - כל הצלילים והמוזיקה: סינתזה ב-Python (`tools/audiogen/make_sounds.py`, `tools/audiogen/make_polish_sounds.py`), בלי דגימות.
 - רכבים, אופנוע ונהג: נבנים בקוד (`vehicles/car_mesh.gd`). צלילי מנוע, צופר, חריקת צמיגים, אש ופיצוץ: `tools/audiogen/make_vehicle_sounds.py`. מספרי הרישוי מומצאים.
 - גופן: Noto Sans Hebrew (רישיון SIL Open Font License 1.1).
