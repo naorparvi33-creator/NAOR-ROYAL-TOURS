@@ -2,7 +2,7 @@
    אחרי הכניסה הראשונה, קבצי האתר נשמרים בדפדפן. בכניסה הבאה האתר נפתח מיד,
    וגם בלי קליטה. הדף עצמו תמיד נבדק קודם מול השרת, כך שעדכונים מגיעים מיד.
    בכל העלאה של גרסה חדשה מעדכנים את VERSION (סקריפט הבנייה עושה את זה לבד). */
-const VERSION = 'nrt-2026-11-23-deals1';
+const VERSION = 'nrt-2026-11-23-deals2';
 const CORE = [
   './', 'index.html', '404.html', 'favicon.svg', 'site.webmanifest',
   'assets/css/fonts.css', 'assets/css/site.css', 'assets/css/additions.css',
@@ -47,7 +47,19 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // files (code, fonts, images): cache first, then network, and keep a copy
+  // code and styles: network first, so a new page never runs with an old stylesheet or script;
+  // the saved copy is used only when offline
+  if (/\/assets\/(css|js)\//.test(url.pathname)){
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res.ok && res.type === 'basic'){ const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // fonts and images (they don't change): cache first, then network, and keep a copy
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res.ok && res.type === 'basic'){ const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
