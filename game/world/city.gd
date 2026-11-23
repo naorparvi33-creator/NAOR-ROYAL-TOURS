@@ -110,9 +110,9 @@ func _build_environment() -> void:
 	sun.light_energy = 2.3
 	sun.light_color = Color(1.0, 0.94, 0.84)
 	sun.light_angular_distance = 0.5
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_max_distance = 70.0
-	sun.directional_shadow_split_1 = 0.22
+	# One shadow pass with a limited range: the biggest single saving on mobile.
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 50.0
 	sun.shadow_bias = 0.04
 	sun.shadow_normal_bias = 1.2
 	add_child(sun)
@@ -301,14 +301,14 @@ func _build_street_props() -> void:
 		_multimesh(Props.palm(300 + v * 11, bark, fronds), _palms[v])
 	var metal := Mats.plain(Color(0.16, 0.17, 0.18), 0.45, 0.6)
 	var lamp_glass := Mats.plain(Color(0.9, 0.9, 0.85), 0.2)
-	_multimesh(Props.street_lamp(metal, lamp_glass), _lamps)
+	_multimesh(Props.street_lamp(metal, lamp_glass), _lamps, false)
 	var red := StandardMaterial3D.new()
 	red.albedo_color = Color(1, 0.1, 0.05)
 	red.emission_enabled = true
 	red.emission = Color(1, 0.12, 0.05)
 	red.emission_energy_multiplier = 3.0
 	var off := Mats.plain(Color(0.08, 0.09, 0.08), 0.3)
-	_multimesh(Props.traffic_light(metal, red, off), _signals)
+	_multimesh(Props.traffic_light(metal, red, off), _signals, false)
 	# Thin collision for poles and palm trunks.
 	for list in [_lamps, _signals, _palms[0], _palms[1], _palms[2]]:
 		for xf in list:
@@ -323,7 +323,7 @@ func _build_street_props() -> void:
 
 # ------------------------------------------------------------ helpers
 
-func _multimesh(mesh: Mesh, xfs: Array) -> void:
+func _multimesh(mesh: Mesh, xfs: Array, shadows := true) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = mesh
@@ -332,6 +332,8 @@ func _multimesh(mesh: Mesh, xfs: Array) -> void:
 		mm.set_instance_transform(i, xfs[i])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
+	if not shadows:
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mmi)
 
 

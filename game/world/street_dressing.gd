@@ -47,23 +47,23 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 					var uc := (k + 0.5) * SHOP_CELL
 					var p := Vector3(wall.x, curb_h, uc) if u_axis else Vector3(uc, curb_h, wall.z)
 					var xf := Transform3D(face_basis, p + n * 0.02)
-					_place("rollershutter_door", xf.translated_local(Vector3(-1.0, 0, 0)), 70.0, false)
+					_place("rollershutter_door", xf.translated_local(Vector3(-1.0, 0, 0)), 45.0, false)
 				k += 1
 			# Fire escape on tall brick buildings.
 			if b["m"] == 0 and size.y > 16.0 and rng.randf() < 0.7:
 				var off := rng.randf_range(-half_len * 0.4, half_len * 0.4)
 				var p := wall + along * off
 				p.y = curb_h + 4.2 + 3.7
-				_place("modular_fire_escape", Transform3D(face_basis, p + n * 0.8), 160.0, true)
+				_place("modular_fire_escape", Transform3D(face_basis, p + n * 0.8), 85.0, false)
 				if size.y > 28.0:
-					_place("modular_fire_escape", Transform3D(face_basis, p + n * 0.8 + Vector3(0, 9.7, 0)), 160.0, true)
+					_place("modular_fire_escape", Transform3D(face_basis, p + n * 0.8 + Vector3(0, 9.7, 0)), 85.0, false)
 			# Trash bags piled against the wall now and then.
 			if rng.randf() < 0.45:
 				var bp := wall + n * 0.35 + along * rng.randf_range(-half_len * 0.8, half_len * 0.8)
 				bp.y = curb_h
 				for i in rng.randi_range(1, 3):
 					var jitter := along * rng.randf_range(-0.6, 0.6) + n * rng.randf_range(0.0, 0.4)
-					_place("trashbag", Transform3D(Basis(Vector3.UP, rng.randf() * TAU), bp + jitter), 45.0, false)
+					_place("trashbag", Transform3D(Basis(Vector3.UP, rng.randf() * TAU), bp + jitter), 30.0, false)
 
 	# Curb-side items and parked cars along every block side.
 	var rings: int = c.RINGS
@@ -78,21 +78,21 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 				var face := Basis.looking_at(out, Vector3.UP)   # +Z toward the building
 				if rng.randf() < 0.7:
 					var p := center + out * (half - 1.4) + along * rng.randf_range(-30, 30)
-					_place("metal_trash_can", Transform3D(face, p), 55.0, false, Vector3(0.9, 0.9, 0.5))
+					_place("metal_trash_can", Transform3D(face, p), 35.0, false, Vector3(0.9, 0.9, 0.5))
 				if rng.randf() < 0.5:
 					var p := center + out * (half - 0.7) + along * rng.randf_range(-35, 35)
-					_place("utility_box_01", Transform3D(face, p), 55.0, false, Vector3(0.5, 1.1, 0.45))
+					_place("utility_box_01", Transform3D(face, p), 35.0, false, Vector3(0.5, 1.1, 0.45))
 				if park:
 					for t in [-22.0, 0.0, 22.0]:
 						var bp: Vector3 = center + out * (half - 4.6) + along * (float(t) + 5.5)
-						_place("painted_wooden_bench", Transform3D(Basis.looking_at(-out, Vector3.UP), bp), 50.0, false, Vector3(1.2, 0.9, 0.5))
+						_place("painted_wooden_bench", Transform3D(Basis.looking_at(-out, Vector3.UP), bp), 40.0, false, Vector3(1.2, 0.9, 0.5))
 				# Parked covered cars in the curb lane (kept clear of the crossings).
 				var t := -32.0
 				while t < 32.0:
 					if rng.randf() < 0.3:
 						var cp := Vector3(center.x, 0.0, center.z) + out * PARK_LANE + along * t
 						var cb := Basis.looking_at(along if rng.randf() < 0.5 else -along, Vector3.UP)
-						_place("covered_car", Transform3D(cb, cp), 150.0, true, Vector3(1.8, 1.4, 4.4))
+						_place("covered_car", Transform3D(cb, cp), 90.0, true, Vector3(1.8, 1.4, 4.4))
 					t += 7.0
 
 
