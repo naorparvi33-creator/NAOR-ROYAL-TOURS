@@ -57,6 +57,7 @@ func _ready() -> void:
 	_add_module("res://ui/map/map_module.gd")
 	_add_module("res://world/interiors/interiors.gd")
 	_add_module("res://weapons/sniper/sniper.gd")
+	_add_module("res://missions/campaign.gd")
 	# (end of modules)
 
 
@@ -99,6 +100,7 @@ func _save_game() -> void:
 	if player == null:
 		return
 	var cfg := ConfigFile.new()
+	cfg.load(SAVE_PATH)   # keep sections written by modules (campaign progress, ...)
 	cfg.set_value("player", "position", player.global_position)
 	cfg.set_value("player", "yaw", player.rig.yaw)
 	cfg.set_value("player", "money", player.money)

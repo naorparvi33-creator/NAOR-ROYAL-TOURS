@@ -1,12 +1,16 @@
 extends Node3D
 ## Generic mission system. Glowing pillars around the city start missions; each mission
 ## is a short list of steps (get in a car, reach a point, kill a target, collect items,
-## drive through checkpoints) with an optional time limit and a cash reward.
+## drive through checkpoints, taxi fares) with an optional time limit and a cash reward.
 ## New missions are added by appending to MISSIONS and, if needed, a new step type.
+## These are the repeatable odd jobs: every completion raises the pay a little.
+## The story campaign (campaign.gd) sets `blocked` while it runs and provides its
+## waypoint through `external_waypoint`.
 
 signal objective_changed(text: String)
 signal timer_changed(seconds: float)          # < 0 hides the timer
 signal mission_result(passed: bool, title: String, reward: int)
+signal job_finished(id: String, passed: bool)
 
 const MISSIONS := [
 	{"id": "delivery", "title": "משלוח דחוף", "giver": Vector3(-8, 0.15, 43), "reward": 500, "time": 80.0,
@@ -17,7 +21,11 @@ const MISSIONS := [
 		"intro": "חמש שקיות כסף מפוזרות בעיר. אסוף את כולן לפני שמישהו אחר יגיע אליהן."},
 	{"id": "race", "title": "מרוץ צ'קפוינטים", "giver": Vector3(8, 0.15, -43), "reward": 800, "time": 85.0,
 		"intro": "היכנס לרכב ועבור בכל נקודות הביקורת לפי הסדר."},
+	{"id": "taxi", "title": "נהג מונית", "giver": Vector3(24, 0.15, 43), "reward": 400, "time": 75.0,
+		"intro": "שלושה נוסעים מחכים להסעה. אסוף כל נוסע והורד אותו ביעד."},
 ]
+const TAXI_FARES := 3
+const TAXI_FARE_PAY := 150
 
 var player: Node3D
 var city: Node3D
@@ -34,6 +42,12 @@ var _givers: Array = []
 var _beam: MeshInstance3D
 var _target_marker: MeshInstance3D
 var _rng := RandomNumberGenerator.new()
+var blocked := false                   # the story or a street event is running
+var external_waypoint := Callable()    # waypoint provider while no odd job runs
+var completions: Dictionary = {}       # job id -> times completed (saved by campaign.gd)
+var _rest := 0.0
+var _fare := 0
+var _passenger: Dictionary = {}
 
 
 func _ready() -> void:
@@ -102,10 +116,14 @@ func _make_beam(c: Color, radius: float, height: float) -> MeshInstance3D:
 ## The point the HUD arrow points at (or null when nothing to show).
 func waypoint() -> Variant:
 	if active < 0:
+		if external_waypoint.is_valid():
+			return external_waypoint.call()
 		return null
+	if _step == "taxi_pick" and not _passenger.is_empty():
+		return (_passenger["node"] as Node3D).global_position
 	if _step == "kill" and not _target_ped.is_empty():
 		return (_target_ped["node"] as Node3D).global_position
-	if _step in ["reach", "race", "collect", "car"]:
+	if _step in ["reach", "race", "collect", "car", "taxi_drop", "taxi_car"]:
 		return _target_pos
 	return null
 
@@ -115,6 +133,12 @@ func _physics_process(delta: float) -> void:
 		return
 	var pp := player.global_position
 	if active < 0:
+		_rest -= delta
+		var show := not blocked and _rest <= 0.0
+		for g in _givers:
+			(g as Node3D).visible = show
+		if not show:
+			return
 		for i in _givers.size():
 			var g: Node3D = _givers[i]
 			if Vector2(pp.x - g.global_position.x, pp.z - g.global_position.z).length() < 1.8:
@@ -160,6 +184,38 @@ func _physics_process(delta: float) -> void:
 					objective_changed.emit("נקודת ביקורת %d מתוך %d" % [_cp_index + 1, _checkpoints.size()])
 			else:
 				objective_changed.emit("נקודת ביקורת %d מתוך %d" % [_cp_index + 1, _checkpoints.size()])
+		"taxi_car":
+			if player.in_vehicle:
+				_next_fare()
+		"taxi_pick":
+			if not player.in_vehicle:
+				objective_changed.emit("חזור לרכב!")
+			elif not _passenger.is_empty():
+				var pn: Node3D = _passenger["node"]
+				var slow: bool = player.vehicle.linear_velocity.length() < 3.5
+				objective_changed.emit("אסוף את הנוסע %d מתוך %d · עצור לידו" % [_fare + 1, TAXI_FARES])
+				if pp.distance_to(pn.global_position) < 7.0 and slow:
+					peds.remove_special(_passenger)
+					_passenger = {}
+					Sfx.play_3d("car_door", pp, 0.0)
+					_target_pos = _sidewalk_point(2)
+					_beam.global_position = _target_pos
+					_beam.visible = true
+					_time_left = MISSIONS[active]["time"]
+					_step = "taxi_drop"
+		"taxi_drop":
+			if not player.in_vehicle:
+				objective_changed.emit("חזור לרכב!")
+			else:
+				objective_changed.emit("הסע את הנוסע ליעד (%d מתוך %d)" % [_fare + 1, TAXI_FARES])
+				if pp.distance_to(_target_pos) < 7.0 and player.vehicle.linear_velocity.length() < 4.0:
+					_beam.visible = false
+					player.add_money(TAXI_FARE_PAY)
+					_fare += 1
+					if _fare >= TAXI_FARES:
+						_finish(true)
+					else:
+						_next_fare()
 
 
 func _start(i: int) -> void:
@@ -206,6 +262,13 @@ func _start(i: int) -> void:
 			_beam.global_position = _target_pos
 			_beam.visible = true
 			_step = "race"
+		"taxi":
+			_fare = 0
+			if player.in_vehicle:
+				_next_fare()
+			else:
+				_step = "taxi_car"
+				objective_changed.emit("היכנס לרכב כלשהו (חפש רכב חונה ליד המדרכה)")
 
 
 func _set_reach(pos: Vector3, text: String) -> void:
@@ -216,15 +279,28 @@ func _set_reach(pos: Vector3, text: String) -> void:
 	objective_changed.emit(text)
 
 
+func _next_fare() -> void:
+	var at := _sidewalk_point(1)
+	_passenger = peds.add_special(["ped_01", "ped_04", "ped_05", "ped_07"][_fare % 4], at)
+	_target_pos = at
+	_time_left = MISSIONS[active]["time"]
+	_step = "taxi_pick"
+
+
 func _on_ped_killed(p: Dictionary) -> void:
 	if _step == "kill" and p == _target_ped:
 		_finish(true)
+	elif _step == "taxi_pick" and p == _passenger:
+		_finish(false)
 
 
 func _finish(passed: bool) -> void:
 	var m: Dictionary = MISSIONS[active]
-	var reward: int = m["reward"] if passed else 0
+	var done_before: int = completions.get(m["id"], 0)
+	# Repeat jobs pay 10% more each time (up to double).
+	var reward: int = int(float(m["reward"]) * (1.0 + 0.1 * mini(done_before, 10))) if passed else 0
 	if passed:
+		completions[m["id"]] = done_before + 1
 		player.add_money(reward)
 		Sfx.play_ui("mission_done")
 	else:
@@ -241,15 +317,19 @@ func _finish(passed: bool) -> void:
 		if is_instance_valid(it):
 			it.queue_free()
 	_items.clear()
+	if not _passenger.is_empty():
+		var ps := _passenger
+		_passenger = {}
+		peds.remove_special(ps)
+	var job_id: String = m["id"]
 	active = -1
 	_step = ""
 	_time_left = -1.0
 	timer_changed.emit(-1.0)
 	objective_changed.emit("")
 	# Mission pillars come back after a short break.
-	get_tree().create_timer(4.0).timeout.connect(func():
-		for g in _givers:
-			g.visible = true)
+	_rest = 4.0
+	job_finished.emit(job_id, passed)
 
 
 ## A random sidewalk point `rings_away` blocks from the player.
