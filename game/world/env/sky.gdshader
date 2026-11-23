@@ -24,6 +24,11 @@ uniform float stars = 0.0;
 uniform float overcast = 0.0;
 uniform vec3 cloud_col : source_color = vec3(0.55, 0.57, 0.6);
 uniform float flash = 0.0;
+// Cinematic sun: bright HDR disc (blooms through the glow pass) and a warm Mie halo,
+// plus a hazy band along the horizon that matches the distance fog.
+uniform float sun_glare = 1.0;
+uniform vec3 haze_col : source_color = vec3(0.8, 0.78, 0.75);
+uniform float haze = 0.5;
 
 vec2 pano_uv(vec3 d) {
 	vec2 c = vec2(atan(d.x, -d.z), acos(clamp(d.y, -1.0, 1.0)));
@@ -58,8 +63,19 @@ void sky() {
 	vec3 photo = texture(panorama, pano_uv(rd)).rgb * photo_energy;
 	vec3 col = mix(grad, photo, photo_mix);
 
-	// Low sun disc (the photo has its own at day).
-	col += vec3(1.0, 0.75, 0.45) * sun_disc * smoothstep(0.9993, 0.9997, sd) * 12.0 * step(-0.02, h);
+	// Horizon haze (aerial perspective of the sky itself).
+	float hz = (1.0 - smoothstep(-0.02, 0.22, h)) * step(-0.08, h);
+	col = mix(col, haze_col * mix(1.0, 1.25, pow(sd, 4.0)), hz * haze);
+
+	// Sun: Mie halo always, a hot disc (the photo's own sun is clipped LDR).
+	float day_sun = smoothstep(0.0, 0.5, sun_dir.y);
+	vec3 sun_c = mix(vec3(1.0, 0.55, 0.28), vec3(1.0, 0.86, 0.68), day_sun);
+	float halo = pow(sd, 64.0) * 0.55 + pow(sd, 8.0) * 0.14;
+	col += sun_c * halo * sun_glare * mix(1.0, 0.6, day_sun) * step(-0.04, h);
+	if (!AT_CUBEMAP_PASS) {
+		float disc = smoothstep(0.99955, 0.99975, sd);
+		col += sun_c * disc * max(sun_glare, sun_disc) * mix(14.0, 30.0, day_sun) * step(-0.02, h);
+	}
 
 	// Night: stars and the moon (skipped for the ambient/reflection cubemap).
 	if (!AT_CUBEMAP_PASS) {

@@ -54,6 +54,7 @@ func _ready() -> void:
 	# Modules get main (self) through `main` and find player/world/peds/missions/hud on it.
 	_add_module("res://ui/menus/polish.gd")
 	_add_module("res://world/env/day_night.gd")
+	_add_module("res://world/env/cinematic.gd")
 	_add_module("res://vehicles/vehicle_fx.gd")
 	_add_module("res://traffic/traffic.gd")
 	_add_module("res://police/police.gd")

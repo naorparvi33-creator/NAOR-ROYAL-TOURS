@@ -22,15 +22,17 @@ const SKY_TICK := 1.0
 
 # Key frames by sun height (sin of elevation).
 const KE := [-0.35, -0.12, -0.02, 0.06, 0.2, 0.45, 0.75]
-const K_SUN_COL := [Color(1, 0.4, 0.2), Color(1, 0.4, 0.2), Color(1.0, 0.42, 0.2), Color(1.0, 0.6, 0.34),
-	Color(1.0, 0.82, 0.64), Color(1.0, 0.92, 0.8), Color(1.0, 0.94, 0.84)]
-const K_SUN_E := [0.0, 0.0, 0.0, 0.7, 1.6, 2.15, 2.3]
+const K_SUN_COL := [Color(1, 0.4, 0.2), Color(1, 0.4, 0.2), Color(1.0, 0.42, 0.2), Color(1.0, 0.56, 0.28),
+	Color(1.0, 0.74, 0.5), Color(1.0, 0.88, 0.72), Color(1.0, 0.94, 0.84)]
+const K_SUN_E := [0.0, 0.0, 0.0, 1.1, 2.3, 2.5, 2.5]
 const K_TOP := [Color(0.008, 0.013, 0.035), Color(0.016, 0.028, 0.065), Color(0.07, 0.1, 0.22),
 	Color(0.2, 0.3, 0.52), Color(0.26, 0.42, 0.72), Color(0.3, 0.5, 0.85), Color(0.3, 0.5, 0.85)]
 const K_HOR := [Color(0.012, 0.016, 0.032), Color(0.06, 0.06, 0.1), Color(0.6, 0.32, 0.2),
 	Color(0.95, 0.62, 0.4), Color(0.85, 0.78, 0.7), Color(0.75, 0.8, 0.88), Color(0.75, 0.8, 0.88)]
 const K_FOG := [Color(0.025, 0.03, 0.055), Color(0.045, 0.05, 0.08), Color(0.36, 0.26, 0.24),
-	Color(0.72, 0.56, 0.46), Color(0.78, 0.75, 0.72), Color(0.78, 0.8, 0.84), Color(0.78, 0.8, 0.84)]
+	Color(0.78, 0.58, 0.44), Color(0.84, 0.74, 0.62), Color(0.74, 0.78, 0.84), Color(0.72, 0.78, 0.86)]
+# How strongly the distance haze glows toward the sun, by sun height.
+const K_SCATTER := [0.0, 0.0, 0.15, 0.55, 0.45, 0.25, 0.18]
 const K_GLOW := [0.0, 0.12, 0.9, 1.0, 0.45, 0.08, 0.0]
 
 const LOC := {
@@ -84,10 +86,16 @@ func _ready() -> void:
 	Loc.register(LOC)
 	Settings.register_defaults({
 		"dn_day_minutes": 24.0,
-		"dn_start_hour": 10.0,
+		"dn_start_hour": 17.0,
 		"dn_paused": false,
 		"weather_on": true,
+		"dn_look_v": 0,
 	})
+	# One-time move of the untouched old default (10:00) to the warm late afternoon.
+	if int(Settings.get_value("dn_look_v")) < 1:
+		if is_equal_approx(float(Settings.get_value("dn_start_hour")), 10.0):
+			Settings.set_value("dn_start_hour", 17.0)
+		Settings.set_value("dn_look_v", 1)
 	hour = clampf(float(Settings.get_value("dn_start_hour")), 0.0, 23.99)
 	Settings.changed.connect(_on_setting)
 
@@ -233,19 +241,18 @@ func _apply_light() -> void:
 	var day := smoothstep(-0.1, 0.15, e)
 	_env.ambient_light_color = Color(0.11, 0.13, 0.22)
 	_env.ambient_light_sky_contribution = lerpf(0.25, 1.0, day)
-	_env.ambient_light_energy = lerpf(0.9, 0.8, day)
-	_env.tonemap_exposure = lerpf(1.35, 1.05, day) + oc * 0.12
+	_env.ambient_light_energy = lerpf(0.9, 1.0, day)
+	_env.tonemap_exposure = lerpf(1.35, 1.12, day) + oc * 0.12
 
 	var fog: Color = _key(K_FOG)
 	var grey := Color(0.55, 0.57, 0.6) * lerpf(0.08, 1.0, day)
 	fog = fog.lerp(grey * (1.0 - rain * 0.35), oc * 0.8)
 	_env.fog_light_color = fog
-	_env.fog_density = 0.0028 + oc * 0.0018 + rain * 0.006
-
-	var glow_on: bool = night > 0.05 and not Settings.get_value("battery_saver")
-	if _env.glow_enabled != glow_on:
-		_env.glow_enabled = glow_on
-	_env.glow_intensity = 0.55 * night
+	_env.fog_density = 0.0024 + oc * 0.0018 + rain * 0.006
+	# Aerial perspective: distance haze takes the sky's colour and glows toward the sun.
+	_env.fog_sun_scatter = float(_key(K_SCATTER)) * (1.0 - oc)
+	_env.fog_aerial_perspective = 0.6
+	# Bloom is tuned per quality preset by world/env/cinematic.gd.
 
 
 func _apply_sky() -> void:
@@ -278,6 +285,9 @@ func _apply_sky() -> void:
 		"moon": snappedf(1.0 - smoothstep(-0.15, 0.05, e), 0.01),
 		"stars": snappedf(1.0 - smoothstep(-0.2, -0.02, e), 0.01),
 		"overcast": snappedf(oc, 0.01),
+		"sun_glare": snappedf(smoothstep(-0.06, 0.02, e) * (1.0 - oc), 0.01),
+		"haze_col": _snap_col(fog.lerp(hor, 0.35)),
+		"haze": snappedf(lerpf(0.25, 0.6, day) * (1.0 - oc * 0.5), 0.01),
 		"cloud_col": _snap_col(cloud),
 	}
 	for k in vals:
