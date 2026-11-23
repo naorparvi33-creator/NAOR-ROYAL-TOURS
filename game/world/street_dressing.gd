@@ -95,10 +95,13 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 				# get an empty space in front and behind so they can pull out.
 				var slots: Array = []
 				var near_start := absi(i) <= 1 and absi(j) <= 1
+				var showcase := park and side == 1   # the street in front of the start point
 				var t := -32.0
 				while t < 32.0:
 					var kind := ""
-					if near_start and _drivable < MAX_DRIVABLE and rng.randf() < 0.16:
+					if showcase and absf(t) < 27.0:
+						kind = "show"
+					elif near_start and _drivable < MAX_DRIVABLE and rng.randf() < 0.16:
 						kind = "drive"
 						_drivable += 1
 					elif rng.randf() < 0.3:
@@ -106,17 +109,27 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 					slots.append([t, kind])
 					t += 7.0
 				for k in slots.size():
-					if slots[k][1] == "drive":
+					if slots[k][1] in ["drive", "show"]:
 						if k > 0 and slots[k - 1][1] == "covered":
 							slots[k - 1][1] = ""
 						if k + 1 < slots.size() and slots[k + 1][1] == "covered":
 							slots[k + 1][1] = ""
+				var show_i := 0
 				for sl in slots:
 					var st: float = sl[0]
-					if sl[1] == "drive":
+					if sl[1] in ["drive", "show"]:
 						var cp := Vector3(center.x, 0.25, center.z) + out * PARK_LANE + along * st
 						var car: VehicleBody3D = preload("res://vehicles/car.gd").new()
 						car.paint = CAR_COLORS[rng.randi() % CAR_COLORS.size()]
+						# Vehicle types (vehicles/vehicle_types.gd): a showcase row at the start.
+						var vt := preload("res://vehicles/vehicle_types.gd")
+						if sl[1] == "show":
+							car.vtype = vt.SHOWCASE[show_i % vt.SHOWCASE.size()]
+							show_i += 1
+						else:
+							car.vtype = vt.PARK_MIX[rng.randi() % vt.PARK_MIX.size()]
+						if car.vtype == "moto":
+							cp += out * 0.4
 						car.transform = Transform3D(Basis.looking_at(-along, Vector3.UP), cp)
 						_city.add_child(car)
 					elif sl[1] == "covered":
