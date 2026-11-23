@@ -19,6 +19,8 @@ uniform sampler2D asphalt_rough : hint_roughness_gray, filter_linear_mipmap, rep
 uniform float tile_m = 2.5;
 // Rain (set by world/env/weather.gd): 0 = dry, 1 = soaked roads with puddles.
 uniform float wetness = 0.0;
+// Graphics preset (city.gd): 0 = low, 1 = medium, 2 = high.
+uniform int detail = 1;
 
 varying vec3 world_pos;
 
@@ -31,6 +33,13 @@ float band(float x, float c, float w) {
 	float d = abs(x - c) - w;
 	float fw = fwidth(x) * 0.75;
 	return 1.0 - smoothstep(-fw, fw, d);
+}
+
+// 1 inside the rectangle lo..hi (anti-aliased).
+float box01(vec2 x, vec2 lo, vec2 hi) {
+	vec2 fw = max(fwidth(x) * 0.75, vec2(1e-4));
+	vec2 a = smoothstep(lo - fw, lo + fw, x) * (1.0 - smoothstep(hi - fw, hi + fw, x));
+	return a.x * a.y;
 }
 
 void fragment() {
@@ -52,7 +61,12 @@ void fragment() {
 	// ---------------- roads
 	vec2 auv = p / 4.0;
 	vec3 aa = texture(asphalt_albedo, auv).rgb;
-	aa *= mix(0.8, 1.08, tn_fbm(p * 0.05));                 // patches / repairs
+	// Second, rotated sample at another scale: the 4 m tile never repeats visibly.
+	vec2 auv2 = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * p / 9.3 + vec2(0.31, 0.77);
+	vec3 aa2 = texture(asphalt_albedo, auv2).rgb;
+	aa = mix(aa, aa * aa2 / max(dot(aa2, vec3(0.333)), 0.05), 0.4);
+	aa *= mix(0.78, 1.1, tn_fbm(p * 0.05));                 // large patches / sun bleaching
+	aa *= vec3(1.0, 0.985, 0.96);                           // warm, dusty asphalt
 	vec3 an = texture(asphalt_normal, auv).rgb;
 	float ar = texture(asphalt_rough, auv).r;
 
@@ -82,21 +96,83 @@ void fragment() {
 	white += on_vroad * band(abs(q.y), half_w + 4.0, 0.2) * step(abs(q.x), half_w - 0.4) * step(0.0, q.x * sign(q.y));
 	white += on_hroad * band(abs(q.x), half_w + 4.0, 0.2) * step(abs(q.y), half_w - 0.4) * step(0.0, -q.y * sign(q.x));
 
-	float wear = mix(0.55, 1.0, smoothstep(0.15, 0.4, tn_noise(p * 2.5)));   // worn paint
+	// Road-local coordinates: `across` from the road centre, `along` the road.
+	bool vr = on_vroad > 0.5 && (on_hroad < 0.5 || abs(q.x) < abs(q.y));
+	float across = vr ? q.x : q.y;
+	float along = vr ? p.y : p.x;
+	float aacross = abs(across);
+	// Wheel paths: two tyre tracks per lane (lanes centred at 2 m and 6 m).
+	float lane_off = abs(aacross - (aacross < 4.0 ? 2.0 : 6.0));
+	float tyres = band(lane_off, 0.85, 0.28) * (1.0 - inter);
+
+	// Worn paint: blotchy everywhere, scrubbed off where the tyres roll over it.
+	float wear = mix(0.45, 1.0, smoothstep(0.15, 0.45, tn_noise(p * 2.5)));
+	wear *= mix(1.0, 0.45, tyres * smoothstep(0.3, 0.7, tn_noise(p * vec2(0.6, 6.0))));
+	wear *= mix(0.7, 1.0, smoothstep(0.2, 0.5, texture(asphalt_albedo, auv * 3.1).g));   // grit shows through
 	white = clamp(white, 0.0, 1.0) * wear;
 	yellow = clamp(yellow, 0.0, 1.0) * wear;
-	vec3 road_albedo = mix(aa, vec3(0.82, 0.82, 0.78), white * 0.9);
-	road_albedo = mix(road_albedo, vec3(0.85, 0.62, 0.12), yellow * 0.9);
-	float road_rough = mix(ar, 0.55, max(white, yellow));
+	vec3 road_albedo = aa;
 
-	// Wear: oil streaks down the lane centres and dirt in the gutters by the curb.
+	// Repair patches: rectangles of newer, darker asphalt with tar-sealed seams.
+	vec2 pc = vec2(along / 7.0, across / 3.2 + 7.0);
+	vec2 pid = floor(pc);
+	float ph = tn_hash(pid + floor(p / CITY_PITCH) * 3.7);
+	vec2 pf = fract(pc);
+	vec2 pl = vec2(0.1 + 0.25 * fract(ph * 7.1), 0.12 + 0.2 * fract(ph * 3.3));
+	float rpatch = step(0.82, ph) * box01(pf, pl, 1.0 - pl.yx) * (1.0 - inter);
+	float seam = step(0.82, ph) * (box01(pf, pl - 0.012, 1.0 - pl.yx + 0.012) - rpatch);
+	road_albedo = mix(road_albedo, aa * vec3(0.62, 0.62, 0.64), rpatch);
+	float road_rough = mix(ar, 0.7, rpatch);
+
+	// Cracks: thin dark lines following noise iso-lines; crazing in the wheel paths.
+	float cn = tn_fbm(p * 0.9 + 11.0);
+	float crack = 1.0 - smoothstep(0.0, 0.012 + fwidth(cn), abs(cn - 0.5));
+	crack *= smoothstep(0.66, 0.82, tn_noise(p * 0.23 + 4.0)) * (1.0 - rpatch);
+	float craze = 1.0 - smoothstep(0.0, 0.03 + fwidth(tn_noise(p * 6.0)), abs(tn_noise(p * 6.0) - 0.5));
+	craze *= tyres * smoothstep(0.55, 0.8, tn_noise(p * 0.4 + 2.0)) * (1.0 - rpatch);
+	// Tar snakes: glossy black crack sealant along longer lines.
+	float tn2 = tn_noise(vec2(along * 0.15, across * 0.9) + 31.0);
+	float tar = (1.0 - smoothstep(0.0, 0.025 + fwidth(tn2), abs(tn2 - 0.5))) * smoothstep(0.62, 0.8, tn_noise(p * 0.11 + 9.0));
+	tar = max(tar, seam);
+	road_albedo *= 1.0 - clamp(crack * 0.55 + craze * 0.35, 0.0, 0.7);
+	road_albedo = mix(road_albedo, vec3(0.035, 0.034, 0.033), tar * 0.9);
+	road_rough = mix(road_rough, 0.6, tar);
+
+	// Lane paint on top of the asphalt.
+	road_albedo = mix(road_albedo, vec3(0.8, 0.8, 0.76), white * 0.92);
+	road_albedo = mix(road_albedo, vec3(0.86, 0.63, 0.14), yellow * 0.92);
+	road_rough = mix(road_rough, 0.55, max(white, yellow));
+
+	// Wear: polished tyre tracks, oil drips down the lane centres.
+	road_albedo *= mix(1.0, 0.9, tyres * 0.6);
+	road_rough = mix(road_rough, 0.6, tyres * 0.4);
 	float oil = vfree * (band(abs(q.x), 2.0, 0.4) + band(abs(q.x), 6.0, 0.4))
 		+ hfree * (band(abs(q.y), 2.0, 0.4) + band(abs(q.y), 6.0, 0.4));
 	oil *= smoothstep(0.3, 0.8, tn_noise(p * 0.7));
-	float gutter = max(on_vroad * (1.0 - on_hroad) * smoothstep(6.9, 8.0, abs(q.x)),
-		on_hroad * (1.0 - on_vroad) * smoothstep(6.9, 8.0, abs(q.y)));
-	road_albedo *= 1.0 - clamp(oil * 0.22 + gutter * 0.3, 0.0, 0.5);
-	road_rough = mix(road_rough, 0.45, oil * 0.5);
+	// Oil stains in the parking lane, where cars stand.
+	float spots = smoothstep(0.62, 0.8, tn_fbm(p * 0.8 + 5.0)) * band(aacross, 6.7, 1.0) * (1.0 - inter);
+	// Gutter: a darker, damp-looking strip with grit and litter along the curb.
+	float gutter = max(on_vroad * (1.0 - on_hroad) * smoothstep(7.1, 7.85, abs(q.x)),
+		on_hroad * (1.0 - on_vroad) * smoothstep(7.1, 7.85, abs(q.y)));
+	road_albedo *= 1.0 - clamp(oil * 0.22 + spots * 0.4 + gutter * 0.35, 0.0, 0.6);
+	road_rough = mix(road_rough, 0.45, oil * 0.5 + spots * 0.4);
+	road_rough = mix(road_rough, 0.35, gutter * smoothstep(0.4, 0.7, tn_noise(p * 1.7)));
+	if (detail > 0) {
+		// Litter: paper scraps and leaves blown into the gutter.
+		vec2 lc = floor(p * 4.0);
+		float lh = tn_hash(lc + 3.3);
+		float litter = step(0.93, lh) * gutter * box01(fract(p * 4.0), vec2(0.3), vec2(0.3 + 0.4 * fract(lh * 9.0)));
+		vec3 lcol = mix(vec3(0.85, 0.83, 0.78), vec3(0.45, 0.32, 0.15), step(0.5, fract(lh * 31.0)));
+		road_albedo = mix(road_albedo, lcol, litter);
+	}
+
+	// Storm drains at the curb, a few metres before every crossing.
+	float dr_along = abs(abs(along - (floor(along / CITY_PITCH) + 0.5) * CITY_PITCH) - (half_w + 6.0));
+	vec2 dl = vec2(aacross - 7.55, dr_along);
+	float drain = box01(dl + vec2(0.25, 0.5), vec2(0.0), vec2(0.5, 1.0)) * (1.0 - inter);
+	float slots = step(0.5, fract(dl.y * 8.0));
+	road_albedo = mix(road_albedo, mix(vec3(0.05), vec3(0.2, 0.19, 0.18), slots), drain);
+	road_rough = mix(road_rough, 0.4, drain);
 
 	// Manhole covers in the lanes.
 	vec2 mv = vec2(abs(q.x) - 2.0, mod(p.y + 5.0, 37.0) - 18.5);
@@ -106,7 +182,9 @@ void fragment() {
 	disk = clamp(disk, 0.0, 1.0);
 	vec2 mlocal = vfree > 0.5 ? mv : mhv;
 	float grooves = step(0.5, fract((mlocal.x + mlocal.y) * 8.0));
-	road_albedo = mix(road_albedo, vec3(0.1, 0.095, 0.09) * mix(0.8, 1.3, grooves), disk);
+	float rim = band(length(mlocal), 0.35, 0.025);
+	road_albedo *= 1.0 - (1.0 - smoothstep(0.35, 0.6, length(mlocal))) * 0.25 * (1.0 - disk);   // sunken ring of dirt
+	road_albedo = mix(road_albedo, vec3(0.1, 0.095, 0.09) * mix(0.8, 1.3, grooves) + rim * 0.12, disk);
 	road_rough = mix(road_rough, 0.5, disk);
 
 	float park = tn_park(p);
