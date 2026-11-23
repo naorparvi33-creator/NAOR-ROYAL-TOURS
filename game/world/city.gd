@@ -24,6 +24,7 @@ var _rng := RandomNumberGenerator.new()
 var _palms: Array = [[], [], []]
 var _lamps: Array = []
 var _signals: Array = []
+var _buildings: Array = []   # {pos, size, material, block_center}
 
 
 func _ready() -> void:
@@ -50,6 +51,7 @@ func _ready() -> void:
 				continue
 			_build_block(Vector3(i * PITCH, 0, j * PITCH), outer)
 	_build_street_props()
+	preload("res://world/street_dressing.gd").new().dress(self, _buildings, _rng)
 
 	var park := preload("res://world/park.gd").new()
 	add_child(park)
@@ -234,6 +236,8 @@ func _build_block(center: Vector3, outer: bool) -> void:
 			_add_box(tools[m], pos + Vector3(ux, top * 0.5 + 1.2, uz), Vector3(2.5, 1.4, 2.0), Color(0.6, 0.6, 0.6, bseed), 1.0, 0.0)
 		used[m] = true
 		_box_collision(pos, size)
+		if not outer:
+			_buildings.append({"pos": pos, "size": size, "m": m, "block": center})
 
 	var mesh := ArrayMesh.new()
 	for m in tools.size():

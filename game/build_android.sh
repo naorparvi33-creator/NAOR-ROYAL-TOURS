@@ -59,7 +59,7 @@ while IFS= read -r f; do
 	if ! grep -rqs --exclude-dir=.godot --exclude-dir=build --exclude="$base" -e "res://$rel" . ; then
 		echo "   unused: $rel"; UNUSED=1
 	fi
-done < <(find . -path ./.godot -prune -o -path ./build -prune -o -path ./android -prune -o -type f -print)
+done < <(find . -path ./.godot -prune -o -path ./build -prune -o -path ./android -prune -o -path ./assets/models -prune -o -type f -print)
 [ "$UNUSED" = 0 ] && echo "   none"
 
 echo "== Importing assets"

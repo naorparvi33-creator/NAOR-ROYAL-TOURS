@@ -87,6 +87,26 @@ void fragment() {
 	road_albedo = mix(road_albedo, vec3(0.85, 0.62, 0.12), yellow * 0.9);
 	float road_rough = mix(ar, 0.55, max(white, yellow));
 
+	// Wear: oil streaks down the lane centres and dirt in the gutters by the curb.
+	float oil = vfree * (band(abs(q.x), 2.0, 0.4) + band(abs(q.x), 6.0, 0.4))
+		+ hfree * (band(abs(q.y), 2.0, 0.4) + band(abs(q.y), 6.0, 0.4));
+	oil *= smoothstep(0.3, 0.8, tn_noise(p * 0.7));
+	float gutter = max(on_vroad * (1.0 - on_hroad) * smoothstep(6.9, 8.0, abs(q.x)),
+		on_hroad * (1.0 - on_vroad) * smoothstep(6.9, 8.0, abs(q.y)));
+	road_albedo *= 1.0 - clamp(oil * 0.22 + gutter * 0.3, 0.0, 0.5);
+	road_rough = mix(road_rough, 0.45, oil * 0.5);
+
+	// Manhole covers in the lanes.
+	vec2 mv = vec2(abs(q.x) - 2.0, mod(p.y + 5.0, 37.0) - 18.5);
+	vec2 mhv = vec2(abs(q.y) - 2.0, mod(p.x + 11.0, 37.0) - 18.5);
+	float disk = vfree * (1.0 - smoothstep(0.33, 0.37, length(mv)))
+		+ hfree * (1.0 - smoothstep(0.33, 0.37, length(mhv)));
+	disk = clamp(disk, 0.0, 1.0);
+	vec2 mlocal = vfree > 0.5 ? mv : mhv;
+	float grooves = step(0.5, fract((mlocal.x + mlocal.y) * 8.0));
+	road_albedo = mix(road_albedo, vec3(0.1, 0.095, 0.09) * mix(0.8, 1.3, grooves), disk);
+	road_rough = mix(road_rough, 0.5, disk);
+
 	float park = tn_park(p);
 	ALBEDO = mix(road_albedo, park_albedo, park);
 	NORMAL_MAP = mix(an, park_normal, park);
