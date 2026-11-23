@@ -176,7 +176,22 @@ const STRINGS := {
 }
 
 
+## Strings added at runtime by modules (so each feature keeps its own text in its own file).
+var _extra := {"he": {}, "en": {}}
+
+
+## Modules call Loc.register({"he": {...}, "en": {...}}) from their _ready / _init.
+func register(tables: Dictionary) -> void:
+	for l in tables:
+		if not _extra.has(l):
+			_extra[l] = {}
+		(_extra[l] as Dictionary).merge(tables[l], true)
+
+
 func t(key: String) -> String:
+	var extra: Dictionary = _extra.get(lang, {})
+	if extra.has(key):
+		return extra[key]
 	var table: Dictionary = STRINGS.get(lang, STRINGS["he"])
 	return table.get(key, key)
 

@@ -52,6 +52,16 @@ func _ready() -> void:
 	Loc.set_language(values["language"])
 
 
+## Modules add their own settings with defaults (stored values win if already saved).
+func register_defaults(defaults: Dictionary) -> void:
+	var cfg := ConfigFile.new()
+	var has_file := cfg.load(PATH) == OK
+	for k in defaults:
+		if values.has(k):
+			continue
+		values[k] = cfg.get_value("settings", k, defaults[k]) if has_file else defaults[k]
+
+
 func get_value(key: String) -> Variant:
 	return values.get(key, DEFAULTS.get(key))
 

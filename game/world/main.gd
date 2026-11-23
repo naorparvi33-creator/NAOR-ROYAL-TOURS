@@ -7,6 +7,8 @@ const SAVE_PATH := "user://save.cfg"
 var player: CharacterBody3D
 var hud: CanvasLayer
 var missions: Node3D
+var world: Node3D
+var peds: Node3D
 
 
 func _ready() -> void:
@@ -14,7 +16,7 @@ func _ready() -> void:
 	get_tree().auto_accept_quit = false
 	get_tree().quit_on_go_back = false
 
-	var world = preload("res://world/city.gd").new()
+	world = preload("res://world/city.gd").new()
 	add_child(world)
 
 	player = preload("res://player/player.gd").new()
@@ -26,7 +28,7 @@ func _ready() -> void:
 	player.rig.yaw = 180.0   # face the street
 	_load_game()
 
-	var peds = preload("res://world/pedestrians.gd").new()
+	peds = preload("res://world/pedestrians.gd").new()
 	peds.player = player
 	peds.city = world
 	add_child(peds)
@@ -43,6 +45,20 @@ func _ready() -> void:
 	hud.missions = missions
 	hud.player = player
 	add_child(hud)
+
+	# MODULES: each feature module is created here with one line, e.g.
+	#   _add_module("res://police/police.gd")
+	# Modules get main (self) through `main` and find player/world/peds/missions/hud on it.
+	# (end of modules)
+
+
+## Creates a feature module (a Node script with an optional `main` property).
+func _add_module(path: String) -> Node:
+	var m: Node = load(path).new()
+	if "main" in m:
+		m.main = self
+	add_child(m)
+	return m
 
 
 func _setup_theme() -> void:
