@@ -57,6 +57,8 @@ var _prev_vel := Vector3.ZERO
 var _crash_cooldown := 0.0
 
 var _body: MeshInstance3D
+var _lod: MeshInstance3D = null
+var _lod_dist := 120.0
 var _mesh: ArrayMesh
 var _verts := PackedVector3Array()
 var _verts0 := PackedVector3Array()
@@ -120,6 +122,17 @@ func _ready() -> void:
 		_lean_node.add_child(_body)
 	else:
 		add_child(_body)        # first MeshInstance3D child: traffic code finds the paint here
+		# Distant cars swap body, wheels and driver for a one-surface stand-in.
+		_lod_dist = clampf(float(Settings.get_value("draw_distance")) * 0.1, 30.0, 70.0)
+		_body.visibility_range_end = _lod_dist
+		_body.visibility_range_end_margin = 2.0
+		_lod = MeshInstance3D.new()
+		_lod.mesh = CarMesh.lod_mesh(vtype)
+		_lod.set_surface_override_material(0, _mesh.get_meta("paint_mat"))
+		_lod.visibility_range_begin = _lod_dist
+		_lod.visibility_range_begin_margin = 2.0
+		_lod.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_lod)
 	_add_plates()
 
 	for c in spec["cols"]:
@@ -132,7 +145,7 @@ func _ready() -> void:
 
 	var drive: String = spec["drive"]
 	var traction := 0
-	var wmesh := CarMesh.wheel_mesh(float(wh["r"]), float(wh["w"]))
+	var wmesh := CarMesh.wheel_mesh(float(wh["r"]), float(wh["w"]), vtype)
 	for wz in [float(wh["zf"]), float(wh["zr"])]:
 		for wx in [float(wh["x"]), -float(wh["x"])]:
 			var w := VehicleWheel3D.new()
@@ -155,6 +168,8 @@ func _ready() -> void:
 				var wm := MeshInstance3D.new()
 				wm.mesh = wmesh
 				wm.rotation.y = 0.0 if wx > 0.0 else PI
+				wm.visibility_range_end = _lod_dist
+				wm.visibility_range_end_margin = 2.0
 				w.add_child(wm)
 			add_child(w)
 			_wheels.append(w)
@@ -180,7 +195,7 @@ func _ready() -> void:
 	_rider.position = spec["seat"]
 	_rider.visible = false
 	_rider.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_rider.visibility_range_end = 120.0
+	_rider.visibility_range_end = 120.0 if is_moto else _lod_dist
 	if is_moto:
 		_lean_node.add_child(_rider)
 	else:
@@ -725,11 +740,7 @@ func explode() -> void:
 		if who.has_method("take_damage"):
 			who.take_damage(60.0)
 	# Scorched look: dark paint, black glass, dead lamps, no driver.
-	var pm: StandardMaterial3D = _mesh.get_meta("paint_mat")
-	pm.albedo_color = Color(0.05, 0.045, 0.04)
-	pm.metallic = 0.15
-	pm.roughness = 0.95
-	pm.clearcoat_enabled = false
+	CarMesh.set_burnt(_mesh.get_meta("paint_mat"), true)
 	var gi := CarMesh.surface_of(_mesh, CarMesh.S_GLASS)
 	if gi >= 0:
 		_mesh.surface_set_material(gi, CarMesh.shared_mat("burnt_glass"))
@@ -768,11 +779,9 @@ func repair() -> void:
 	_smoke.emitting = false
 	if _fire_snd:
 		_fire_snd.stop()
-	var pm: StandardMaterial3D = _mesh.get_meta("paint_mat")
-	pm.albedo_color = paint
-	pm.metallic = 0.55
-	pm.roughness = 0.22
-	pm.clearcoat_enabled = true
+	var pm: Material = _mesh.get_meta("paint_mat")
+	CarMesh.set_burnt(pm, false)
+	CarMesh.set_paint_color(pm, paint)
 	var gi := CarMesh.surface_of(_mesh, CarMesh.S_GLASS)
 	if gi >= 0:
 		_mesh.surface_set_material(gi, CarMesh.shared_mat("glass"))
@@ -804,8 +813,7 @@ func _ai_has_driver() -> bool:
 ## Cockpit camera: show the inside of the shell, hide our own driver.
 func set_interior_view(on: bool) -> void:
 	_interior_view = on
-	var pm: StandardMaterial3D = _mesh.get_meta("paint_mat")
-	pm.cull_mode = BaseMaterial3D.CULL_DISABLED if on else BaseMaterial3D.CULL_BACK
+	CarMesh.set_two_sided(_mesh.get_meta("paint_mat"), on)
 	_rider.visible = driver != null and (not on or vtype == "moto") and not wrecked
 	if vtype == "moto" and on:
 		_rider.visible = false

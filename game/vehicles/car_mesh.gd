@@ -6,32 +6,47 @@ class_name CarMesh
 ## (seats, dash, steering wheel) and yellow licence plates. The motorcycle is built
 ## from tubes and shells, its fork / front wheel / bars are a separate mesh that steers.
 ##
-## Surfaces (fixed order, see S_*): paint (dented on impacts), glass, trim (vertex
-## coloured: plastics, plates, interior), chrome, head L/R, tail L/R. Head and tail
-## each share one material per car so brake / head lights stay in sync; a broken
-## lamp just gets the broken-lens material on its own surface.
+## Surfaces (fixed order, see S_*): body (paint + trims + chrome + interior merged into
+## one surface: car_body.gdshader picks the material per vertex from the colour alpha,
+## dented on impacts), glass (also carries the soft contact shadow), head L/R, tail L/R.
+## Head and tail each share one material per car so brake / head lights stay in sync;
+## a broken lamp just gets the broken-lens material on its own surface.
 ## Geometry is built once per type and cached; every car gets its own ArrayMesh
 ## (cheap: add_surface_from_arrays) so dents and broken lights stay per car.
+## lod_mesh() is a one-surface low-poly stand-in (wheels and lamps included) that
+## car.gd shows beyond the LOD distance instead of the body, wheels and driver.
 
 const L := 4.4
 const W := 1.8
 const EX := 0.35          # cross-section superellipse exponents (smaller = boxier)
 const EY := 0.45
 const VT := preload("res://vehicles/vehicle_types.gd")
+const BODY_SHADER := preload("res://vehicles/car_body.gdshader")
+const BODY_SHADER_2S := preload("res://vehicles/car_body_2s.gdshader")
+const GLASS_SHADER := preload("res://vehicles/car_glass.gdshader")
 
 enum { S_PAINT, S_GLASS, S_TRIM, S_CHROME, S_HEAD_L, S_HEAD_R, S_TAIL_L, S_TAIL_R, S_COUNT }
 
-const C_BLACK := Color(0.035, 0.035, 0.04)
-const C_PLASTIC := Color(0.07, 0.07, 0.075)
-const C_INTERIOR := Color(0.11, 0.105, 0.1)
-const C_SEAT := Color(0.16, 0.14, 0.13)
-const C_PLATE := Color(0.95, 0.78, 0.08)
-const C_WELL := Color(0.015, 0.015, 0.018)
+# Vertex colours of the merged body surface: alpha = material class (car_body.gdshaderinc).
+const C_BLACK := Color(0.035, 0.035, 0.04, 0.0)
+const C_PLASTIC := Color(0.07, 0.07, 0.075, 0.0)
+const C_INTERIOR := Color(0.11, 0.105, 0.1, 0.0)
+const C_SEAT := Color(0.16, 0.14, 0.13, 0.0)
+const C_PLATE := Color(0.95, 0.78, 0.08, 0.0)
+const C_WELL := Color(0.015, 0.015, 0.018, 0.0)
+const C_GLOSS := Color(0.02, 0.02, 0.024, 0.25)
+const C_CHROME := Color(0.86, 0.87, 0.9, 0.5)
+const C_PAINT := Color(1, 1, 1, 1)
+const C_AMBER := Color(0.95, 0.45, 0.05, 0.25)
+const C_REFLEX := Color(0.5, 0.03, 0.02, 0.25)
+const C_TYRE := Color(0.05, 0.05, 0.055, 0.0)
+const C_TYRE_BAND := Color(0.1, 0.1, 0.105, 0.0)
 
 static var _geo_cache := {}
 static var _mat_cache := {}
 static var _wheel_cache := {}
 static var _rider_cache := {}
+static var _lod_cache := {}
 
 
 # ================================================================ public API
@@ -46,26 +61,22 @@ static func build(paint: Color) -> ArrayMesh:
 ## plate centres, Vector3.ZERO if none), "head_mat", "tail_mat", "paint_mat".
 static func build_type(vtype: String, paint: Color) -> ArrayMesh:
 	var geo: Dictionary = _geometry(vtype)
-	var paint_mat := StandardMaterial3D.new()
-	paint_mat.albedo_color = paint
-	paint_mat.metallic = 0.55
-	paint_mat.roughness = 0.22
-	paint_mat.clearcoat_enabled = true
-	paint_mat.clearcoat = 0.8
-	paint_mat.clearcoat_roughness = 0.1
+	var sp: Dictionary = VT.get_spec(vtype)
+	var paint_mat := paint_material(paint, float(sp.get("bottom", 0.3)))
 	var head := StandardMaterial3D.new()
-	head.albedo_color = Color(0.95, 0.95, 0.9)
+	head.albedo_color = Color(0.95, 0.95, 0.92)
 	head.emission_enabled = true
-	head.emission = Color(1, 0.97, 0.85)
-	head.emission_energy_multiplier = 1.5
-	head.roughness = 0.1
+	head.emission = Color(1, 0.96, 0.86)
+	head.emission_energy_multiplier = 1.8
+	head.roughness = 0.08
+	head.metallic = 0.3
 	var tail := StandardMaterial3D.new()
-	tail.albedo_color = Color(0.7, 0.03, 0.03)
+	tail.albedo_color = Color(0.55, 0.02, 0.02)
 	tail.emission_enabled = true
-	tail.emission = Color(0.9, 0.05, 0.03)
+	tail.emission = Color(1.0, 0.04, 0.02)
 	tail.emission_energy_multiplier = 1.2
-	tail.roughness = 0.15
-	var mats := [paint_mat, shared_mat("glass"), shared_mat("trim"), shared_mat("chrome"), head, head, tail, tail]
+	tail.roughness = 0.08
+	var mats := [paint_mat, shared_mat("glass"), null, null, head, head, tail, tail]
 	var mesh := ArrayMesh.new()
 	var kinds: Array[int] = []
 	var surfs: Array = geo["surfs"]
@@ -82,6 +93,35 @@ static func build_type(vtype: String, paint: Color) -> ArrayMesh:
 	mesh.set_meta("head_mat", head)
 	mesh.set_meta("tail_mat", tail)
 	return mesh
+
+
+## Per-car body material (car_body.gdshader). Dust level is random per car.
+static func paint_material(paint: Color, sill := 0.3) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = BODY_SHADER
+	m.set_shader_parameter("paint", paint)
+	m.set_shader_parameter("sill", sill)
+	m.set_shader_parameter("dirt", randf_range(0.12, 0.7))
+	return m
+
+
+static func set_paint_color(m: Material, c: Color) -> void:
+	if m is ShaderMaterial:
+		(m as ShaderMaterial).set_shader_parameter("paint", c)
+	elif m is StandardMaterial3D:
+		(m as StandardMaterial3D).albedo_color = c
+
+
+## Scorched look after an explosion (on) or the clean paint again (off).
+static func set_burnt(m: Material, on: bool) -> void:
+	if m is ShaderMaterial:
+		(m as ShaderMaterial).set_shader_parameter("burnt", 1.0 if on else 0.0)
+
+
+## Cockpit camera: draw the shell from inside too.
+static func set_two_sided(m: Material, on: bool) -> void:
+	if m is ShaderMaterial:
+		(m as ShaderMaterial).shader = BODY_SHADER_2S if on else BODY_SHADER
 
 
 ## The cached paint-surface vertices of a type (for dents).
@@ -116,91 +156,167 @@ static func surface_of(mesh: ArrayMesh, kind: int) -> int:
 	return kinds.find(kind)
 
 
-static func shared_mat(kind: String) -> StandardMaterial3D:
+static func shared_mat(kind: String) -> Material:
 	if _mat_cache.has(kind):
 		return _mat_cache[kind]
-	var m := StandardMaterial3D.new()
+	var m: Material
 	match kind:
 		"glass":
-			m.albedo_color = Color(0.06, 0.08, 0.1, 0.62)
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.metallic = 0.6
-			m.roughness = 0.04
-		"trim":
-			m.vertex_color_use_as_albedo = true
-			m.vertex_color_is_srgb = true
-			m.roughness = 0.6
-		"chrome":
-			m.albedo_color = Color(0.82, 0.83, 0.85)
-			m.metallic = 1.0
-			m.roughness = 0.12
-		"broken_lens":
-			m.albedo_color = Color(0.08, 0.07, 0.07)
-			m.roughness = 0.9
-		"burnt":
-			m.albedo_color = Color(0.045, 0.04, 0.035)
-			m.roughness = 0.95
-			m.metallic = 0.2
-		"burnt_glass":
-			m.albedo_color = Color(0.02, 0.02, 0.02, 0.9)
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.roughness = 1.0
-		"tire":
-			m.albedo_color = Color(0.045, 0.045, 0.048)
-			m.roughness = 0.92
-		"rim":
-			m.albedo_color = Color(0.72, 0.73, 0.76)
-			m.metallic = 0.9
-			m.roughness = 0.28
-		"rider":
-			m.vertex_color_use_as_albedo = true
-			m.vertex_color_is_srgb = true
-			m.roughness = 0.75
+			var g := ShaderMaterial.new()
+			g.shader = GLASS_SHADER
+			m = g
+		"wheel":
+			var w := ShaderMaterial.new()
+			w.shader = BODY_SHADER
+			w.set_shader_parameter("dirt", 0.0)
+			w.set_shader_parameter("sill", -10.0)
+			w.set_shader_parameter("flakes", 0.0)
+			m = w
+		_:
+			var s := StandardMaterial3D.new()
+			match kind:
+				"trim":
+					s.vertex_color_use_as_albedo = true
+					s.vertex_color_is_srgb = true
+					s.roughness = 0.6
+				"chrome":
+					s.albedo_color = Color(0.82, 0.83, 0.85)
+					s.metallic = 1.0
+					s.roughness = 0.12
+				"broken_lens":
+					s.albedo_color = Color(0.08, 0.07, 0.07)
+					s.roughness = 0.9
+				"burnt":
+					s.albedo_color = Color(0.045, 0.04, 0.035)
+					s.roughness = 0.95
+					s.metallic = 0.2
+				"burnt_glass":
+					s.albedo_color = Color(0.02, 0.02, 0.02, 0.9)
+					s.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+					s.roughness = 1.0
+				"rider":
+					s.vertex_color_use_as_albedo = true
+					s.vertex_color_is_srgb = true
+					s.roughness = 0.75
+			m = s
 	_mat_cache[kind] = m
 	return m
 
 
-## Tyre + alloy rim (5 spokes) with its axle along X, outer face toward +X.
-static func wheel_mesh(radius := 0.34, width := 0.24) -> ArrayMesh:
-	var key := "%.3f_%.3f" % [radius, width]
+## Tyre + rim + brake disc in ONE surface (wheel material, vertex-colour classes), axle
+## along X, outer face toward +X. Tyre: rounded shoulders, tread grooves and a raised
+## lettering band on the sidewall. Rims per design (= vehicle type): sedan 5 double
+## spokes, hatch 8 spokes, sports 10 twisted graphite spokes, pickup 6 chunky spokes,
+## van steel wheel with a hub cap, moto 6 thin black spokes.
+static func wheel_mesh(radius := 0.34, width := 0.24, design := "sedan") -> ArrayMesh:
+	var key := "%.3f_%.3f_%s" % [radius, width, design]
 	if _wheel_cache.has(key):
 		return _wheel_cache[key]
-	var mesh := ArrayMesh.new()
-	var seg := 22
-	# Tyre: a lathe of a rounded profile (radius, x) around the X axis.
-	var hw := width * 0.5
-	var r_in := radius * 0.68
-	var prof: Array[Vector2] = [
-		Vector2(r_in, -hw), Vector2(radius * 0.9, -hw), Vector2(radius * 0.98, -hw * 0.8),
-		Vector2(radius, -hw * 0.45), Vector2(radius, hw * 0.45), Vector2(radius * 0.98, hw * 0.8),
-		Vector2(radius * 0.9, hw), Vector2(r_in, hw)]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_lathe(st, prof, seg)
-	st.generate_normals()
-	st.set_material(shared_mat("tire"))
-	st.commit(mesh)
-	# Rim: dished face, spokes, hub and the inner barrel.
-	st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rr := r_in * 1.01
-	var face_x := hw * 0.55
-	var rim_prof: Array[Vector2] = [Vector2(rr, -hw * 0.9), Vector2(rr, face_x), Vector2(rr * 0.9, face_x + 0.005)]
-	_lathe(st, rim_prof, seg)
+	var seg := 24
+	var hw := width * 0.5
+	var r_in := radius * (0.7 if design != "pickup" else 0.66)
+	var sw := radius - r_in           # sidewall height
+	# Tyre profile (radius, x) from the inner bead around the tread to the outer bead.
+	var prof: Array[Vector2] = [
+		Vector2(r_in, -hw * 0.82), Vector2(r_in + sw * 0.55, -hw * 0.98), Vector2(radius * 0.965, -hw * 0.94),
+		Vector2(radius, -hw * 0.66), Vector2(radius, -hw * 0.36), Vector2(radius - 0.012, -hw * 0.33),
+		Vector2(radius - 0.012, -hw * 0.22), Vector2(radius, -hw * 0.19), Vector2(radius, hw * 0.19),
+		Vector2(radius - 0.012, hw * 0.22), Vector2(radius - 0.012, hw * 0.33), Vector2(radius, hw * 0.36),
+		Vector2(radius, hw * 0.66), Vector2(radius * 0.965, hw * 0.94), Vector2(r_in + sw * 0.72, hw * 1.0),
+		Vector2(r_in + sw * 0.55, hw * 1.005), Vector2(r_in + sw * 0.32, hw * 0.98), Vector2(r_in, hw * 0.84)]
+	var cols: Array[Color] = []
+	for i in prof.size():
+		cols.append(C_TYRE_BAND if i == 14 or i == 15 else C_TYRE)
+	_lathe_c(st, prof, cols, seg)
+
+	var alloy := Color(0.78, 0.79, 0.81, 0.62)
+	var spoke_n := 5
+	var spoke_w := 0.04
+	var pair := 0.0
+	var twist := 0.0
+	match design:
+		"sedan":
+			pair = 0.12
+			spoke_w = 0.026
+		"hatch":
+			spoke_n = 8
+			spoke_w = 0.03
+		"sports":
+			alloy = Color(0.16, 0.16, 0.18, 0.62)
+			spoke_n = 10
+			spoke_w = 0.022
+			twist = 0.16
+		"pickup":
+			alloy = Color(0.42, 0.43, 0.45, 0.62)
+			spoke_n = 6
+			spoke_w = 0.075
+		"van":
+			alloy = Color(0.6, 0.61, 0.63, 0.62)
+			spoke_n = 0
+		"moto":
+			alloy = Color(0.08, 0.08, 0.09, 0.25)
+			spoke_n = 6
+			spoke_w = 0.02
+	var rr := r_in * 1.005
+	var face_x := hw * 0.62
+	# Barrel (darker inside), polished outer lip.
+	st.set_color(Color(alloy.r * 0.45, alloy.g * 0.45, alloy.b * 0.45, alloy.a))
+	var barrel: Array[Vector2] = [Vector2(rr, -hw * 0.8), Vector2(rr * 0.97, -hw * 0.6), Vector2(rr * 0.97, face_x - 0.02)]
+	_lathe(st, barrel, seg)
+	st.set_color(Color(0.9, 0.9, 0.92, 0.62) if design != "sports" else alloy)
+	var lip: Array[Vector2] = [Vector2(rr * 0.97, face_x - 0.02), Vector2(rr * 0.97, face_x + 0.004),
+		Vector2(rr * 1.0, face_x + 0.012), Vector2(rr * 0.93, face_x + 0.006)]
+	_lathe(st, lip, seg)
+	# Brake disc and its hat behind the spokes.
+	st.set_color(Color(0.32, 0.31, 0.3, 0.62))
+	_cyl(st, Vector3(-0.04, 0, 0), Vector3(-0.012, 0, 0), rr * 0.8, 20, true)
+	st.set_color(Color(0.1, 0.1, 0.1, 0.0))
+	_cyl(st, Vector3(-0.012, 0, 0), Vector3(0.01, 0, 0), rr * 0.36, 12, true)
 	st.set_smooth_group(-1)
-	for i in 5:
-		var a := TAU * i / 5.0
-		var dir := Vector3(0, cos(a), sin(a))
-		var side := Vector3(1, 0, 0).cross(dir)
-		_box_b(st, Vector3(0.03, rr * 0.82, 0.055), Vector3(face_x - 0.01, 0, 0) + dir * rr * 0.47,
-			Basis(Vector3(1, 0, 0), dir, side).orthonormalized())
-	_cyl(st, Vector3(face_x - 0.04, 0, 0), Vector3(face_x + 0.012, 0, 0), rr * 0.2, 10, true)
-	# Brake disc behind the spokes.
-	_cyl(st, Vector3(-0.02, 0, 0), Vector3(0.0, 0, 0), rr * 0.78, 16, true)
+	if spoke_n == 0:
+		# Steel wheel: a pressed face with cooling holes and a plastic hub cap.
+		st.set_color(alloy)
+		var face: Array[Vector2] = [Vector2(rr * 0.93, face_x), Vector2(rr * 0.75, face_x - 0.025),
+			Vector2(rr * 0.42, face_x - 0.03), Vector2(rr * 0.3, face_x - 0.005)]
+		_lathe(st, face, seg)
+		st.set_color(C_WELL)
+		for i in 8:
+			var a := TAU * i / 8.0
+			var c := Vector3(face_x - 0.022, cos(a) * rr * 0.6, sin(a) * rr * 0.6)
+			_cyl(st, c, c + Vector3(0.006, 0, 0), rr * 0.075, 8, true)
+		st.set_color(Color(0.72, 0.73, 0.75, 0.5))
+		_cyl(st, Vector3(face_x - 0.02, 0, 0), Vector3(face_x + 0.02, 0, 0), rr * 0.32, 14, true)
+	else:
+		st.set_color(alloy)
+		var offs: Array[float] = [0.0]
+		if pair > 0.0:
+			offs = [-pair, pair]
+		for i in spoke_n:
+			for off in offs:
+				var a := TAU * i / spoke_n + off
+				var dir := Vector3(0, cos(a), sin(a))
+				var tang := Vector3(1, 0, 0).cross(dir)
+				var slen := rr * 0.74
+				var c := Vector3(face_x - 0.012, 0, 0) + dir * (rr * 0.2 + slen * 0.5)
+				var bs := Basis(Vector3(1, 0, 0), dir, tang)
+				if twist != 0.0:
+					bs = bs * Basis(Vector3(1, 0, 0), twist)
+				_box_b(st, Vector3(0.028, slen, spoke_w), c, bs.orthonormalized())
+		# Hub, lug nuts and the centre cap.
+		_cyl(st, Vector3(face_x - 0.045, 0, 0), Vector3(face_x + 0.004, 0, 0), rr * 0.24, 14, true)
+		st.set_color(C_CHROME)
+		for i in 5:
+			var a := TAU * i / 5.0 + 0.3
+			var c := Vector3(face_x + 0.004, cos(a) * rr * 0.15, sin(a) * rr * 0.15)
+			_cyl(st, c, c + Vector3(0.012, 0, 0), 0.011, 6, true)
+		st.set_color(C_GLOSS)
+		_cyl(st, Vector3(face_x, 0, 0), Vector3(face_x + 0.012, 0, 0), rr * 0.085, 10, true)
 	st.set_smooth_group(0)
 	st.generate_normals()
-	st.set_material(shared_mat("rim"))
-	st.commit(mesh)
+	var mesh := st.commit()
+	mesh.surface_set_material(0, shared_mat("wheel"))
 	_wheel_cache[key] = mesh
 	return mesh
 
@@ -275,6 +391,17 @@ static func _geometry(vtype: String) -> Dictionary:
 	var surfs: Array = []
 	for k in S_COUNT:
 		surfs.append(b.commit(k))
+	# Paint, trims and chrome become one surface (class in the vertex colour alpha).
+	var body: Array = surfs[S_PAINT]
+	for k in [S_TRIM, S_CHROME]:
+		var add: Variant = surfs[k]
+		if add == null:
+			continue
+		var arr: Array = add
+		body[Mesh.ARRAY_VERTEX] = (body[Mesh.ARRAY_VERTEX] as PackedVector3Array) + (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array)
+		body[Mesh.ARRAY_NORMAL] = (body[Mesh.ARRAY_NORMAL] as PackedVector3Array) + (arr[Mesh.ARRAY_NORMAL] as PackedVector3Array)
+		body[Mesh.ARRAY_COLOR] = (body[Mesh.ARRAY_COLOR] as PackedColorArray) + (arr[Mesh.ARRAY_COLOR] as PackedColorArray)
+		surfs[k] = null
 	var geo := {"surfs": surfs, "plate_f": b.plate_f, "plate_r": b.plate_r}
 	_geo_cache[vtype] = geo
 	return geo
@@ -292,8 +419,15 @@ class Builder:
 		for k in CarMesh.S_COUNT:
 			var st := SurfaceTool.new()
 			st.begin(Mesh.PRIMITIVE_TRIANGLES)
-			if k == CarMesh.S_TRIM:
-				st.set_color(CarMesh.C_PLASTIC)
+			match k:
+				CarMesh.S_TRIM:
+					st.set_color(CarMesh.C_PLASTIC)
+				CarMesh.S_PAINT:
+					st.set_color(CarMesh.C_PAINT)
+				CarMesh.S_CHROME:
+					st.set_color(CarMesh.C_CHROME)
+				CarMesh.S_GLASS:
+					st.set_color(Color(0, 0, 0, 1))
 			tools.append(st)
 			used.append(false)
 
@@ -306,7 +440,15 @@ class Builder:
 			return null
 		var st: SurfaceTool = tools[k]
 		st.generate_normals()
-		return st.commit_to_arrays()
+		var arr := st.commit_to_arrays()
+		if k == CarMesh.S_TRIM:
+			# Trim colours given without a class (alpha 1) are matte plastic.
+			var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR]
+			for i in cols.size():
+				if cols[i].a > 0.95:
+					cols[i].a = 0.0
+			arr[Mesh.ARRAY_COLOR] = cols
+		return arr
 
 
 # ---------------------------------------------------------------- loft helpers
@@ -479,14 +621,17 @@ static func _build_car(b: Builder) -> void:
 			var hz: float = float(doors[di]) - 0.2
 			var hy := door_top - 0.14
 			var hx := _side_x(sp, _u(sp, hz), hy)
-			_box(chrome, Vector3(0.025, 0.035, 0.16), Vector3(side * (hx + 0.008), hy, hz))
+			trim.set_color(C_GLOSS)
+			_box(trim, Vector3(0.01, 0.055, 0.2), Vector3(side * (hx + 0.001), hy, hz))
+			_box(paint, Vector3(0.026, 0.034, 0.16), Vector3(side * (hx + 0.01), hy, hz))
+			_box(chrome, Vector3(0.03, 0.006, 0.15), Vector3(side * (hx + 0.012), hy + 0.019, hz))
 		# Lower body moulding and sill.
 		trim.set_color(C_PLASTIC)
 		var mu0 := _u(sp, float(wh["zr"]) + arch_r + 0.05)
 		var mu1 := _u(sp, float(wh["zf"]) - arch_r - 0.05)
 		_patch(trim, sp, mu0, mu1, bottom + 0.02, bottom + 0.1, side, 0.004, 6, 2)
-		if style in ["sedan", "pickup", "van"]:
-			_patch(chrome, sp, mu0, mu1, bottom + 0.2, bottom + 0.225, side, 0.005, 6, 1)
+		if style == "sedan":
+			_patch(chrome, sp, mu0, mu1, bottom + 0.2, bottom + 0.215, side, 0.005, 6, 1)
 	if style == "van":
 		# Sliding door rail and the split of the rear doors.
 		trim.set_color(C_BLACK)
@@ -500,65 +645,114 @@ static func _build_car(b: Builder) -> void:
 	var rear_z := _face_z(sp, -1.0, float(sp["tail"][1]) + float(sp["tail"][3]) * 0.5,
 		float(sp["tail"][0]) + float(sp["tail"][2]) * 0.5)
 	_lights(b, sp, front_z, rear_z)
-	var gr: Array = sp["grille"]
-	var gw: float = gr[0]
-	var gy: float = gr[1]
-	var gz := _face_z(sp, 1.0, gy + 0.1)
-	trim.set_color(C_BLACK)
-	_box(trim, Vector3(gw, 0.17 if style != "van" else 0.28, 0.08), Vector3(0, gy, gz - 0.02))
-	for gi in 3:
-		var yy := gy - 0.05 + gi * 0.05 if style != "van" else gy - 0.09 + gi * 0.09
-		_box(chrome, Vector3(gw * 0.96, 0.014, 0.02), Vector3(0, yy, gz + 0.025))
-	_frame(chrome, Vector3(0, gy, gz + 0.02), gw + 0.03, (0.17 if style != "van" else 0.28) + 0.03, 0.02)
 
-	# Bumpers: dark plastic with a chrome strip on the classic shapes.
-	var bw: float = float(sp["W"]) * 0.97
-	var by := bottom + 0.1
-	trim.set_color(C_PLASTIC)
-	_box(trim, Vector3(bw, 0.2, 0.22), Vector3(0, by, _face_z(sp, 1.0, by + 0.1) - 0.04))
-	_box(trim, Vector3(bw, 0.2, 0.22), Vector3(0, by, _face_z(sp, -1.0, by + 0.1) + 0.04))
-	if style in ["sedan", "pickup", "van"]:
-		_box(chrome, Vector3(bw * 0.9, 0.03, 0.03), Vector3(0, by + 0.07, _face_z(sp, 1.0, by + 0.1) + 0.08))
-		_box(chrome, Vector3(bw * 0.9, 0.03, 0.03), Vector3(0, by + 0.07, _face_z(sp, -1.0, by + 0.1) - 0.08))
+	# Bumpers: rounded covers wrapping the corners (body colour on cars, chrome on the
+	# pickup, raw plastic on the van), a black lip / diffuser under them.
+	var bw: float = float(sp["W"]) * 0.965
+	var bh := 0.25
+	var by := bottom + bh * 0.5
+	var bump_st := paint
 	if style == "pickup":
-		# Steel bash plate and tow hook, side steps.
+		bump_st = chrome
+	elif style == "van":
+		trim.set_color(C_PLASTIC)
+		bump_st = trim
+	var bf_c := _face_z(sp, 1.0, by + 0.1) - 0.08
+	var br_c := _face_z(sp, -1.0, by + 0.1) + 0.08
+	var bd := 0.34
+	_sbox(bump_st, Vector3(bw, bh, bd), Vector3(0, by, bf_c), 0.3, 18, 8)
+	_sbox(bump_st, Vector3(bw, bh, bd), Vector3(0, by, br_c), 0.3, 18, 8)
+	var bump_f := bf_c + bd * 0.5          # front face z
+	var bump_r := br_c - bd * 0.5
+	trim.set_color(C_BLACK)
+	_box(trim, Vector3(bw * 0.9, 0.035, 0.24), Vector3(0, bottom + 0.005, bf_c + 0.0))
+	_box(trim, Vector3(bw * 0.8, 0.06, 0.26), Vector3(0, bottom + 0.01, br_c - 0.0))
+	if style in ["sedan", "hatch", "sports"]:
+		# Lower air intake with slats and fog lamps; rear diffuser fins and reflectors.
+		trim.set_color(C_GLOSS)
+		_box(trim, Vector3(bw * 0.5, 0.075, 0.02), Vector3(0, bottom + 0.075, bump_f - 0.002))
+		for fx in [-1.0, 1.0]:
+			trim.set_color(C_GLOSS)
+			_box(trim, Vector3(0.16, 0.06, 0.02), Vector3(fx * bw * 0.36, bottom + 0.08, bump_f - 0.018))
+			_cyl(chrome, Vector3(fx * bw * 0.36, bottom + 0.08, bump_f - 0.02), Vector3(fx * bw * 0.36, bottom + 0.08, bump_f - 0.008), 0.024, 10, true)
+			trim.set_color(C_REFLEX)
+			_box(trim, Vector3(0.12, 0.025, 0.02), Vector3(fx * bw * 0.4, by + 0.02, bump_r + 0.006))
+	if style == "pickup":
+		# Steel bash plate, side steps.
 		_box(chrome, Vector3(0.9, 0.05, 0.3), Vector3(0, bottom - 0.05, Lh - 0.25))
 		for side in [1, -1]:
 			trim.set_color(C_BLACK)
 			_box(trim, Vector3(0.18, 0.05, 1.5), Vector3(side * (float(sp["W"]) * 0.5 - 0.02), bottom - 0.03, 0.4))
-	# Licence plates (invented numbers are drawn by car.gd with a Label3D).
-	var py: float = sp["plate_y"]
-	var pf := Vector3(0, py, _face_z(sp, 1.0, py + 0.07) + 0.075)
-	var pr := Vector3(0, py, _face_z(sp, -1.0, py + 0.07) - 0.075)
-	if style in ["pickup", "van"]:
-		pr.y = bottom + 0.32
-		pr.z = _face_z(sp, -1.0, pr.y + 0.07) - 0.03
-	trim.set_color(C_PLATE)
-	_box(trim, Vector3(0.52, 0.12, 0.012), pf)
-	_box(trim, Vector3(0.52, 0.12, 0.012), pr)
+
+	# Grille: gloss black slats in a chrome / gloss surround; set into the bumper when
+	# it sits low (sports intake).
+	var gr: Array = sp["grille"]
+	var gw: float = gr[0]
+	var gy: float = gr[1]
+	var gh_ := 0.17 if style != "van" else 0.28
+	var gz := _face_z(sp, 1.0, gy + 0.1)
+	if gy - gh_ * 0.5 < bottom + bh:
+		gz = maxf(gz, bump_f - 0.02)
+	trim.set_color(C_BLACK)
+	_box(trim, Vector3(gw, gh_, 0.08), Vector3(0, gy, gz - 0.02))
+	trim.set_color(C_GLOSS)
+	var slats := 4 if style != "van" else 5
+	for gi in slats:
+		var yy := gy - gh_ * 0.5 + gh_ * (gi + 0.5) / slats
+		_box(trim, Vector3(gw * 0.95, gh_ / slats * 0.45, 0.03), Vector3(0, yy, gz + 0.022), Basis(Vector3.RIGHT, -0.35))
+	if style in ["sedan", "pickup", "van"]:
+		_frame(chrome, Vector3(0, gy, gz + 0.02), gw + 0.03, gh_ + 0.03, 0.018)
+	else:
+		trim.set_color(C_GLOSS)
+		_frame(trim, Vector3(0, gy, gz + 0.02), gw + 0.03, gh_ + 0.03, 0.02)
+
+	# Licence plates on the bumpers (invented numbers: car.gd draws them with a Label3D).
+	var py: float = clampf(float(sp["plate_y"]), bottom + 0.08, bottom + bh - 0.07)
+	var pf := Vector3(0, py, bump_f + 0.012)
+	var pr := Vector3(0, py, bump_r - 0.012)
+	for pp in [pf, pr]:
+		var p3: Vector3 = pp
+		trim.set_color(C_GLOSS)
+		_box(trim, Vector3(0.55, 0.145, 0.012), p3 + Vector3(0, 0, -0.004 if p3.z > 0.0 else 0.004))
+		trim.set_color(C_PLATE)
+		_box(trim, Vector3(0.52, 0.12, 0.012), p3)
 	b.plate_f = pf + Vector3(0, 0, 0.008)
 	b.plate_r = pr - Vector3(0, 0, 0.008)
-	# Exhaust tips.
-	var ex_y := bottom + 0.06
-	var ex_z := _face_z(sp, -1.0, bottom + 0.15)
+	# Exhaust tips through the diffuser.
+	var ex_y := bottom + 0.04
+	var ex_z := bump_r + 0.06
 	var tips := [-0.55, 0.55] if style == "sports" else [-0.55]
 	for tx in tips:
-		_cyl(chrome, Vector3(float(tx), ex_y, ex_z + 0.15), Vector3(float(tx), ex_y, ex_z - 0.05), 0.045, 10, true)
+		_cyl(chrome, Vector3(float(tx), ex_y, ex_z + 0.15), Vector3(float(tx), ex_y, ex_z - 0.1), 0.045, 10, true)
+		trim.set_color(C_WELL)
+		_cyl(trim, Vector3(float(tx), ex_y, ex_z - 0.08), Vector3(float(tx), ex_y, ex_z - 0.102), 0.034, 10, true)
 
-	# Mirrors on the doors at the base of the A pillar.
+	# Mirrors on the doors at the base of the A pillar: black arm, body-colour cap,
+	# mirror glass facing back, an amber repeater.
 	if not gh.is_empty():
 		var mz: float = float(gh["z0"]) - 0.18
 		var my := belt_f + 0.06
 		for side in [1, -1]:
 			var mx := _side_x(sp, _u(sp, mz), belt_f - 0.05)
-			trim.set_color(C_BLACK)
-			_box(trim, Vector3(0.12, 0.04, 0.06), Vector3(side * (mx + 0.04), my - 0.03, mz))
-			_box(paint, Vector3(0.07, 0.11, 0.16), Vector3(side * (mx + 0.11), my + 0.02, mz), Basis(Vector3.UP, side * 0.15))
+			trim.set_color(C_GLOSS)
+			_box(trim, Vector3(0.13, 0.035, 0.07), Vector3(side * (mx + 0.05), my - 0.035, mz))
+			var mb := Basis(Vector3.UP, side * 0.15)
+			var mc := Vector3(side * (mx + 0.13), my + 0.02, mz)
+			_sbox(paint, Vector3(0.1, 0.12, 0.17), mc, 0.35, 10, 6, mb)
+			_box(chrome, Vector3(0.082, 0.098, 0.01), mc + mb * Vector3(0, 0, -0.082), mb)
+			trim.set_color(C_AMBER)
+			_box(trim, Vector3(0.04, 0.012, 0.06), mc + mb * Vector3(side * 0.035, -0.055, 0.02), mb)
 	else:
 		for side in [1, -1]:
-			trim.set_color(C_BLACK)
-			_box(trim, Vector3(0.05, 0.24, 0.12), Vector3(side * (float(sp["W"]) * 0.5 + 0.1), 1.45, 1.42))
+			trim.set_color(C_GLOSS)
+			_box(trim, Vector3(0.05, 0.26, 0.13), Vector3(side * (float(sp["W"]) * 0.5 + 0.1), 1.45, 1.42))
 			_box(trim, Vector3(0.14, 0.03, 0.03), Vector3(side * (float(sp["W"]) * 0.5 + 0.03), 1.4, 1.42))
+			_box(chrome, Vector3(0.012, 0.22, 0.11), Vector3(side * (float(sp["W"]) * 0.5 + 0.1), 1.45, 1.35))
+
+	# Soft contact shadow on the ground (part of the glass surface, no extra draw call).
+	# (resting on its springs: about g / (4 * stiffness) of compression).
+	var ground := float(wh["y"]) - float(wh["r"]) - float(wh["rest"]) + 9.8 / (4.0 * float(wh["stiff"])) + 0.025
+	_blob(b.get_st(S_GLASS), float(sp["W"]) * 0.5, Lh, ground)
 
 	# --- extras per style
 	match style:
@@ -704,18 +898,18 @@ static func _greenhouse(b: Builder, sp: Dictionary, gh: Dictionary) -> Array:
 	for s in [1, -1]:
 		var c: Array = corners[s]
 		var out := Vector3(float(s), 0, 0)
-		_pillar(paint, c[0], c[1], out, 0.07, s, Vector3(0, 0, -1))
-		_pillar(paint, c[3], c[2], out, 0.09 if sp["style"] != "hatch" else 0.06, s, Vector3(0, 0, 1))
+		_pillar(paint, c[0], c[1], out, 0.095, s, Vector3(0, 0, -1))
+		_pillar(paint, c[3], c[2], out, 0.13 if sp["style"] != "hatch" else 0.08, s, Vector3(0, 0, 1))
 		# B pillar halfway between the A and C pillars.
 		var zb := lerpf(z1, z2, 0.42) if sp["style"] != "sports" else lerpf(z1, z2, 0.9)
 		var pb_top := Vector3(s * wt, y1, zb)
 		var yb := lerpf(y0f, y0r, inverse_lerp(z0, z3, zb))
 		var pb_bot := Vector3(s * wb, yb, zb)
-		trim.set_color(C_BLACK)
-		_strip(trim, pb_bot, pb_top, Vector3(0, 0, 0.045), out * 0.006, s)
-		# Chrome window line along the belt.
+		trim.set_color(C_GLOSS)
+		_strip(trim, pb_bot, pb_top, Vector3(0, 0, 0.06), out * 0.006, s)
+		# Chrome window line along the belt, gloss black seal along the roof.
 		_strip(chrome, c[0], c[3], Vector3(0, 0.012, 0), out * 0.008, -s)
-		_strip(chrome, c[1], c[2], Vector3(0, 0.01, 0), out * 0.006 + Vector3(0, 0.004, 0), -s)
+		_strip(trim, c[1], c[2], Vector3(0, 0.018, 0), out * 0.006 + Vector3(0, 0.004, 0), -s)
 	# Wipers at the windshield base.
 	trim.set_color(C_BLACK)
 	for wx in [-0.1, 0.45]:
@@ -768,31 +962,107 @@ static func _van_glass(b: Builder, sp: Dictionary) -> void:
 		_patch(trim, sp, _u(sp, 0.6), _u(sp, 0.64), 1.36, 1.92, side, 0.008, 1, 3)
 
 
-static func _lights(b: Builder, sp: Dictionary, front_z: float, rear_z: float) -> void:
+## Surface point, outward normal and up tangent of the nose (dir 1) / tail (dir -1)
+## where the shell passes through height y at half width x (right side).
+static func _lamp_frame(sp: Dictionary, dir: float, x: float, y: float) -> Array:
+	var z := _face_z(sp, dir, y, x)
+	var u := _u(sp, z)
+	var n := Vector3(0, 0, dir)
+	var p := Vector3(x, y, z)
+	if absf(u) < 0.995:
+		var c := clampf(pow(clampf(x / _hw(sp, u), 0.0, 1.0), 1.0 / EX), 0.0, 1.0)
+		var a := acos(c)
+		p = _P(sp, u, a)
+		var du := 0.01
+		var da := 0.02
+		var tu := _P(sp, u + du, a) - _P(sp, u - du, a)
+		var ta := _P(sp, u, a + da) - _P(sp, u, a - da)
+		n = tu.cross(ta).normalized()
+		if n.z * dir < 0.0:
+			n = -n
+		# Keep the lamps facing mostly forward / back, even on a steep bonnet.
+		n = (n + Vector3(0, 0, dir) * 0.6).normalized()
+	var up := (Vector3.UP - n * n.dot(Vector3.UP)).normalized()
+	return [p, n, up]
+
+
+## Light clusters, aligned to the body surface. Head: gloss black bezel, chrome
+## reflector, two projector lenses and an L-shaped LED daytime strip (lit parts on
+## the head surface), amber indicator. Tail: smoked red lens with LED bars (tail
+## surface), reverse lamp; saloons, hatches and the sports car get a light bar across
+## the tail, all get a third brake light.
+static func _lights(b: Builder, sp: Dictionary, _front_z: float, _rear_z: float) -> void:
 	var chrome := b.get_st(S_CHROME)
 	var trim := b.get_st(S_TRIM)
 	var hd: Array = sp["head"]
 	var tl: Array = sp["tail"]
+	var style: String = sp["style"]
+	var hw_: float = hd[2]
+	var hh: float = hd[3]
+	var tw: float = tl[2]
+	var th: float = tl[3]
+	var hf := _lamp_frame(sp, 1.0, float(hd[0]), float(hd[1]))
+	var tf := _lamp_frame(sp, -1.0, float(tl[0]), float(tl[1]))
 	for s in [1, -1]:
+		var sx := float(s)
+		# --- head lamp
 		var hst := b.get_st(S_HEAD_L if s > 0 else S_HEAD_R)
-		var hp := Vector3(s * float(hd[0]), float(hd[1]), front_z - 0.03)
-		_box(hst, Vector3(float(hd[2]), float(hd[3]), 0.12), hp)
-		_box(chrome, Vector3(float(hd[2]) + 0.04, float(hd[3]) + 0.03, 0.1), hp - Vector3(0, 0, 0.018))
-		# Daytime running strip and turn signal under the lamp.
-		_box(hst, Vector3(float(hd[2]) * 0.8, 0.018, 0.04), hp + Vector3(0, -float(hd[3]) * 0.5 - 0.025, 0.035))
+		var p0: Vector3 = hf[0]
+		var n: Vector3 = hf[1]
+		var up: Vector3 = hf[2]
+		p0.x *= sx
+		n.x *= sx
+		var bb := Basis.looking_at(-n, up)
+		var P := func(lx: float, ly: float, lz: float) -> Vector3:
+			return p0 + Vector3(sx * lx, 0, 0) + up * ly + n * lz
+		trim.set_color(C_GLOSS)
+		_box(trim, Vector3(hw_ + 0.035, hh + 0.02, 0.12), P.call(0.0, 0.0, -0.06), bb)
+		_box(chrome, Vector3(hw_, hh, 0.12), P.call(0.0, 0.0, -0.056), bb)
+		var pr := minf(hh * 0.34, hw_ * 0.15)
+		for k in [-1.0, 1.0]:
+			var c: Vector3 = P.call(hw_ * 0.2 * k, -hh * 0.08, 0.005)
+			trim.set_color(C_GLOSS)
+			_cyl(trim, c - n * 0.004, c + n * 0.006, pr * 1.35, 12, true)
+			_cyl(hst, c, c + n * 0.013, pr, 12, true)
+		_box(hst, Vector3(hw_ * 0.96, 0.017, 0.02), P.call(0.0, hh * 0.5 - 0.012, 0.006), bb)
+		_box(hst, Vector3(0.017, hh * 0.85, 0.02), P.call(hw_ * 0.5 - 0.012, -0.005, 0.006), bb)
+		trim.set_color(C_AMBER)
+		_box(trim, Vector3(hw_ * 0.3, 0.018, 0.02), P.call(-hw_ * 0.28, -hh * 0.5 + 0.014, 0.006), bb)
+
+		# --- tail lamp
 		var tst := b.get_st(S_TAIL_L if s > 0 else S_TAIL_R)
-		var tp := Vector3(s * float(tl[0]), float(tl[1]), rear_z + 0.03)
-		_box(tst, Vector3(float(tl[2]), float(tl[3]), 0.12), tp)
-		trim.set_color(Color(0.85, 0.85, 0.82))
-		var rev := Vector3(float(tl[2]) * 0.35, float(tl[3]) * 0.3, 0.02)
-		_box(trim, rev, tp + Vector3(-s * float(tl[2]) * 0.25, -float(tl[3]) * 0.22, -0.055))
-		trim.set_color(C_BLACK)
-		_box(trim, Vector3(float(tl[2]) + 0.03, float(tl[3]) + 0.03, 0.1), tp + Vector3(0, 0, 0.018))
+		var q0: Vector3 = tf[0]
+		var m: Vector3 = tf[1]
+		var tup: Vector3 = tf[2]
+		q0.x *= sx
+		m.x *= sx
+		var tb := Basis.looking_at(-m, tup)
+		var Q := func(lx: float, ly: float, lz: float) -> Vector3:
+			return q0 + Vector3(sx * lx, 0, 0) + tup * ly + m * lz
+		trim.set_color(C_GLOSS)
+		_box(trim, Vector3(tw + 0.03, th + 0.03, 0.1), Q.call(0.0, 0.0, -0.045), tb)
+		trim.set_color(Color(0.22, 0.012, 0.012, 0.25))
+		_box(trim, Vector3(tw, th, 0.1), Q.call(0.0, 0.0, -0.038), tb)
+		var bars := 3 if th > tw * 1.4 else 2
+		for bi in bars:
+			var yy := -th * 0.5 + th * (bi + 0.5) / bars
+			_box(tst, Vector3(tw * 0.88, maxf(th / bars * 0.32, 0.012), 0.02), Q.call(0.0, yy, 0.006), tb)
+		_box(tst, Vector3(0.015, th * 0.85, 0.02), Q.call(tw * 0.5 - 0.014, 0.0, 0.007), tb)
+		trim.set_color(Color(0.86, 0.86, 0.84, 0.25))
+		var rev := Vector3(tw * 0.32, maxf(th * 0.18, 0.02), 0.02)
+		_box(trim, rev, Q.call(-tw * 0.26, -th * 0.5 + rev.y * 0.5 + 0.008, 0.007), tb)
+	if style in ["sedan", "hatch", "sports"]:
+		var inner := float(tl[0]) - tw * 0.5
+		var by := float(tl[1]) + th * 0.2
+		var bz := _face_z(sp, -1.0, by + 0.02) + 0.02
+		trim.set_color(C_GLOSS)
+		_box(trim, Vector3(inner * 2.0, 0.05, 0.06), Vector3(0, by, bz))
+		_box(b.get_st(S_TAIL_L), Vector3(inner * 2.0 - 0.04, 0.014, 0.02), Vector3(0, by, bz - 0.025))
 	# Third brake light on the roof edge / tailgate.
 	var gh: Dictionary = sp["gh"]
 	if not gh.is_empty():
 		var t3 := b.get_st(S_TAIL_L)
-		_box(t3, Vector3(0.36, 0.035, 0.03), Vector3(0, float(gh["y1"]) - 0.03, float(gh["z2"]) - 0.02))
+		_box(t3, Vector3(0.36, 0.03, 0.03), Vector3(0, float(gh["y1"]) - 0.03, float(gh["z2"]) - 0.02))
 
 
 static func _interior(b: Builder, sp: Dictionary) -> void:
@@ -828,9 +1098,13 @@ static func _interior(b: Builder, sp: Dictionary) -> void:
 		_box(trim, Vector3(0.46, 0.14, 0.5), Vector3(sx, seat.y - 0.02, seat.z + 0.05))
 		_box(trim, Vector3(0.46, back_h, 0.12), Vector3(sx, seat.y + back_h * 0.5 + 0.02, seat.z - 0.24), Basis(Vector3.RIGHT, -0.18))
 		_box(trim, Vector3(0.24, 0.15, 0.08), Vector3(sx, eye.y - 0.08, seat.z - 0.3))
-	if sp["style"] in ["sedan", "hatch"]:
+	if sp["style"] == "hatch":
 		_box(trim, Vector3(iw * 1.9, 0.14, 0.5), Vector3(0, seat.y - 0.02, seat.z - 0.9))
 		_box(trim, Vector3(iw * 1.9, 0.55, 0.12), Vector3(0, seat.y + 0.3, seat.z - 1.18), Basis(Vector3.RIGHT, -0.2))
+	elif sp["style"] == "sedan":
+		# Rear bench kept under the sloping rear glass.
+		_box(trim, Vector3(iw * 1.9, 0.14, 0.42), Vector3(0, seat.y - 0.02, seat.z - 0.52))
+		_box(trim, Vector3(iw * 1.9, 0.45, 0.12), Vector3(0, seat.y + 0.24, seat.z - 0.74), Basis(Vector3.RIGHT, -0.25))
 	if sp["style"] == "van":
 		# Bulkhead behind the cab.
 		trim.set_color(C_INTERIOR)
@@ -1058,3 +1332,161 @@ static func _lathe(st: SurfaceTool, prof: Array[Vector2], seg: int) -> void:
 			var v10 := Vector3(q.y, cos(a0) * q.x, sin(a0) * q.x)
 			var v11 := Vector3(q.y, cos(a1) * q.x, sin(a1) * q.x)
 			_quad(st, v00, v01, v11, v10)
+
+
+## _lathe with one vertex colour per profile point.
+static func _lathe_c(st: SurfaceTool, prof: Array[Vector2], cols: Array[Color], seg: int) -> void:
+	for i in seg:
+		var a0 := TAU * i / seg
+		var a1 := TAU * (i + 1) / seg
+		for k in prof.size() - 1:
+			var p: Vector2 = prof[k]
+			var q: Vector2 = prof[k + 1]
+			var v00 := Vector3(p.y, cos(a0) * p.x, sin(a0) * p.x)
+			var v01 := Vector3(p.y, cos(a1) * p.x, sin(a1) * p.x)
+			var v10 := Vector3(q.y, cos(a0) * q.x, sin(a0) * q.x)
+			var v11 := Vector3(q.y, cos(a1) * q.x, sin(a1) * q.x)
+			_quad_c(st, [v00, v01, v11, v10], [cols[k], cols[k], cols[k + 1], cols[k + 1]])
+
+
+## _quad with a colour per corner (same winding as _quad).
+static func _quad_c(st: SurfaceTool, p: Array, c: Array) -> void:
+	for idx in [0, 2, 1, 0, 3, 2]:
+		st.set_color(c[idx])
+		st.add_vertex(p[idx])
+
+
+## Rounded box (superellipsoid, smaller e = boxier) - bumpers and mirror caps.
+static func _sbox(st: SurfaceTool, size: Vector3, pos: Vector3, e := 0.3, seg := 16, rings := 8, basis := Basis()) -> void:
+	var h := size * 0.5
+	for j in rings:
+		var p0 := PI * float(j) / rings - PI * 0.5
+		var p1 := PI * float(j + 1) / rings - PI * 0.5
+		for i in seg:
+			var a0 := TAU * float(i) / seg
+			var a1 := TAU * float(i + 1) / seg
+			_quad(st, pos + basis * _se(h, p0, a0, e), pos + basis * _se(h, p1, a0, e),
+				pos + basis * _se(h, p1, a1, e), pos + basis * _se(h, p0, a1, e))
+
+
+static func _se(h: Vector3, p: float, a: float, e: float) -> Vector3:
+	return Vector3(h.x * _spow(cos(p), e) * _spow(cos(a), e), h.y * _spow(sin(p), e), h.z * _spow(cos(p), e) * _spow(sin(a), e))
+
+
+static func _spow(v: float, e: float) -> float:
+	return signf(v) * pow(absf(v), e)
+
+
+## Soft dark rectangle on the ground under the car (glass shader blob mode:
+## COLOR.r = 1, COLOR.g = opacity), fading out past the body outline.
+static func _blob(st: SurfaceTool, hw: float, hl: float, y: float) -> void:
+	var ix := hw - 0.12
+	var iz := hl - 0.3
+	var ox := hw + 0.32
+	var oz := hl + 0.42
+	var inner := [Vector3(ix, y, -iz), Vector3(-ix, y, -iz), Vector3(-ix, y, iz), Vector3(ix, y, iz)]
+	var outer := [Vector3(ox, y, -oz), Vector3(-ox, y, -oz), Vector3(-ox, y, oz), Vector3(ox, y, oz)]
+	var ci := Color(1, 1, 0, 1)
+	var co := Color(1, 0, 0, 1)
+	_quad_c(st, inner, [ci, ci, ci, ci])
+	for i in 4:
+		var j := (i + 1) % 4
+		_quad_c(st, [outer[i], outer[j], inner[j], inner[i]], [co, co, ci, ci])
+	st.set_color(Color(0, 0, 0, 1))
+
+
+## One-surface low-poly stand-in for distant cars: coarse shell, dark glass, wheels
+## and lit lamps all in vertex colours of the body shader (car.gd puts the car's own
+## paint material on it). Cached per type.
+static func lod_mesh(vtype: String) -> ArrayMesh:
+	if _lod_cache.has(vtype):
+		return _lod_cache[vtype]
+	var sp: Dictionary = VT.get_spec(vtype)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_color(C_PAINT)
+	var stations := 14
+	var ring := 12
+	var rings: Array = []
+	for i in stations + 1:
+		var u := -1.0 + 2.0 * float(i) / stations
+		var pts: Array[Vector3] = []
+		for k in ring:
+			pts.append(_P(sp, u, TAU * float(k) / ring))
+		rings.append(pts)
+	for i in stations:
+		for k in ring:
+			var k2 := (k + 1) % ring
+			_quad(st, rings[i][k], rings[i][k2], rings[i + 1][k2], rings[i + 1][k])
+	for end in [0, stations]:
+		var pts: Array = rings[end]
+		var c := Vector3.ZERO
+		for p in pts:
+			c += p
+		c /= pts.size()
+		for k in ring:
+			var k2 := (k + 1) % ring
+			if end == 0:
+				_tri(st, c, pts[k2], pts[k])
+			else:
+				_tri(st, c, pts[k], pts[k2])
+	st.set_smooth_group(-1)
+	var glass := Color(0.035, 0.045, 0.055, 0.25)
+	var gh: Dictionary = sp["gh"]
+	if not gh.is_empty():
+		var z0: float = gh["z0"]
+		var z1: float = gh["z1"]
+		var z2: float = gh["z2"]
+		var z3: float = gh["z3"]
+		var y1: float = gh["y1"]
+		var wb: float = gh["wb"]
+		var wt: float = gh["wt"]
+		var y0f := _y_at_x(sp, _u(sp, z0), wb) - 0.012
+		var y0r := _y_at_x(sp, _u(sp, z3), wb) - 0.012
+		var R := [Vector3(wb, y0f, z0), Vector3(wt, y1, z1), Vector3(wt, y1, z2), Vector3(wb, y0r, z3)]
+		var Lf := [Vector3(-wb, y0f, z0), Vector3(-wt, y1, z1), Vector3(-wt, y1, z2), Vector3(-wb, y0r, z3)]
+		st.set_color(glass)
+		_quad(st, R[3], R[2], R[1], R[0])
+		_quad(st, Lf[0], Lf[1], Lf[2], Lf[3])
+		_quad(st, R[0], R[1], Lf[1], Lf[0])
+		_quad(st, Lf[3], Lf[2], R[2], R[3])
+		st.set_color(C_PAINT)
+		_quad(st, Vector3(wt, y1 + 0.02, z2), Vector3(-wt, y1 + 0.02, z2), Vector3(-wt, y1 + 0.02, z1), Vector3(wt, y1 + 0.02, z1))
+	else:
+		st.set_color(glass)
+		_patch(st, sp, 0.445, 0.645, 1.25, 0.0, 0, 0.006, 2, 4)
+		for side in [1, -1]:
+			_patch(st, sp, _u(sp, 0.62), _u(sp, 1.42), 1.38, 1.9, side, 0.006, 1, 1)
+	# Wheels (tyre + rim face) hanging at their rest length, wells behind them.
+	var wh: Dictionary = sp["wheel"]
+	var wy: float = float(wh["y"]) - float(wh["rest"])
+	var r: float = wh["r"]
+	var ww: float = wh["w"]
+	var wx: float = wh["x"]
+	for wz in [float(wh["zf"]), float(wh["zr"])]:
+		for side in [1.0, -1.0]:
+			var xo: float = side * (wx + ww * 0.5)
+			st.set_color(C_TYRE)
+			_cyl(st, Vector3(xo - side * ww, wy, wz), Vector3(xo, wy, wz), r, 10, true)
+			st.set_color(Color(0.7, 0.71, 0.73, 0.62))
+			_cyl(st, Vector3(xo - side * 0.01, wy, wz), Vector3(xo + side * 0.004, wy, wz), r * 0.66, 10, true)
+	# Lamps (emissive class) and dark bumpers.
+	var hd: Array = sp["head"]
+	var tl: Array = sp["tail"]
+	var fz := _face_z(sp, 1.0, float(hd[1]) + float(hd[3]) * 0.5, float(hd[0]) + float(hd[2]) * 0.5)
+	var rz := _face_z(sp, -1.0, float(tl[1]) + float(tl[3]) * 0.5, float(tl[0]) + float(tl[2]) * 0.5)
+	for s in [1.0, -1.0]:
+		st.set_color(Color(1.0, 0.96, 0.88, 0.78))
+		_box(st, Vector3(float(hd[2]), float(hd[3]), 0.1), Vector3(s * float(hd[0]), float(hd[1]), fz - 0.02))
+		st.set_color(Color(0.75, 0.04, 0.03, 0.78))
+		_box(st, Vector3(float(tl[2]), float(tl[3]), 0.1), Vector3(s * float(tl[0]), float(tl[1]), rz + 0.02))
+	var bottom: float = sp["bottom"]
+	st.set_color(C_PLASTIC)
+	var bwid: float = float(sp["W"]) * 0.95
+	_box(st, Vector3(bwid, 0.12, 0.3), Vector3(0, bottom + 0.03, _face_z(sp, 1.0, bottom + 0.2) - 0.02))
+	_box(st, Vector3(bwid, 0.12, 0.3), Vector3(0, bottom + 0.03, _face_z(sp, -1.0, bottom + 0.2) + 0.02))
+	st.set_smooth_group(0)
+	st.generate_normals()
+	var mesh := st.commit()
+	_lod_cache[vtype] = mesh
+	return mesh
