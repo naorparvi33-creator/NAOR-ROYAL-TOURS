@@ -22,14 +22,18 @@ const SKY_TICK := 1.0
 
 # Key frames by sun height (sin of elevation).
 const KE := [-0.35, -0.12, -0.02, 0.06, 0.2, 0.45, 0.75]
-const K_SUN_COL := [Color(1, 0.4, 0.2), Color(1, 0.4, 0.2), Color(1.0, 0.42, 0.2), Color(1.0, 0.56, 0.28),
-	Color(1.0, 0.74, 0.5), Color(1.0, 0.88, 0.72), Color(1.0, 0.94, 0.84)]
+# A low sun is golden, not orange: a saturated orange key turned every white shirt and
+# pale wall into a glowing peach patch.
+const K_SUN_COL := [Color(1, 0.45, 0.24), Color(1, 0.45, 0.24), Color(1.0, 0.5, 0.26), Color(1.0, 0.66, 0.4),
+	Color(1.0, 0.8, 0.6), Color(1.0, 0.9, 0.76), Color(1.0, 0.95, 0.86)]
 const K_SUN_E := [0.0, 0.0, 0.0, 1.1, 2.3, 2.5, 2.5]
 const K_TOP := [Color(0.008, 0.013, 0.035), Color(0.016, 0.028, 0.065), Color(0.07, 0.1, 0.22),
 	Color(0.2, 0.3, 0.52), Color(0.26, 0.42, 0.72), Color(0.3, 0.5, 0.85), Color(0.3, 0.5, 0.85)]
-const K_HOR := [Color(0.012, 0.016, 0.032), Color(0.06, 0.06, 0.1), Color(0.6, 0.32, 0.2),
+# Night horizon: the glow of the city's own lights on the haze, so rooftops and palms
+# stand out as silhouettes instead of melting into a black sky.
+const K_HOR := [Color(0.07, 0.055, 0.07), Color(0.1, 0.08, 0.11), Color(0.6, 0.32, 0.2),
 	Color(0.95, 0.62, 0.4), Color(0.85, 0.78, 0.7), Color(0.75, 0.8, 0.88), Color(0.75, 0.8, 0.88)]
-const K_FOG := [Color(0.025, 0.03, 0.055), Color(0.045, 0.05, 0.08), Color(0.36, 0.26, 0.24),
+const K_FOG := [Color(0.04, 0.038, 0.058), Color(0.055, 0.052, 0.08), Color(0.36, 0.26, 0.24),
 	Color(0.78, 0.58, 0.44), Color(0.84, 0.74, 0.62), Color(0.74, 0.78, 0.84), Color(0.72, 0.78, 0.86)]
 # How strongly the distance haze glows toward the sun, by sun height.
 const K_SCATTER := [0.0, 0.0, 0.15, 0.55, 0.45, 0.25, 0.18]
@@ -239,16 +243,22 @@ func _apply_light() -> void:
 	# Ambient: the sky's own light by day, a fixed blue tone at night (a black night
 	# sky would make everything pitch dark).
 	var day := smoothstep(-0.1, 0.15, e)
-	_env.ambient_light_color = Color(0.11, 0.13, 0.22)
-	_env.ambient_light_sky_contribution = lerpf(0.25, 1.0, day)
-	_env.ambient_light_energy = lerpf(0.9, 1.0, day)
-	_env.tonemap_exposure = lerpf(1.35, 1.12, day) + oc * 0.12
+	# By day part of the fill is a fixed neutral-cool tone: the sky cubemap alone is orange
+	# at golden hour, which turned every shadow the same brown as the sunlit walls. Warm sun
+	# against cooler shade is what gives the frame its depth.
+	var golden := smoothstep(-0.05, 0.08, e) * (1.0 - smoothstep(0.25, 0.55, e)) * (1.0 - oc)
+	_env.ambient_light_color = Color(0.11, 0.13, 0.22).lerp(Color(0.42, 0.44, 0.5), day * (1.0 - oc * 0.7))
+	_env.ambient_light_sky_contribution = lerpf(0.25, lerpf(0.8, 0.6, golden), day)
+	_env.ambient_light_energy = lerpf(0.75, 1.0, day)
+	# Exposed for the faces and the shade, not the sky: AgX rolls the bright sky off softly.
+	_env.tonemap_exposure = lerpf(1.35, 1.5, day) + oc * 0.12
 
 	var fog: Color = _key(K_FOG)
 	var grey := Color(0.55, 0.57, 0.6) * lerpf(0.08, 1.0, day)
 	fog = fog.lerp(grey * (1.0 - rain * 0.35), oc * 0.8)
 	_env.fog_light_color = fog
-	_env.fog_density = 0.0024 + oc * 0.0018 + rain * 0.006
+	# Clear air near the camera; the haze only builds up over the long street views.
+	_env.fog_density = 0.0015 + oc * 0.0026 + rain * 0.006
 	# Aerial perspective: distance haze takes the sky's colour and glows toward the sun.
 	_env.fog_sun_scatter = float(_key(K_SCATTER)) * (1.0 - oc)
 	_env.fog_aerial_perspective = 0.6

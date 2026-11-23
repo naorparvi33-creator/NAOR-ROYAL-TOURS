@@ -51,7 +51,7 @@ func _draw() -> void:
 	# Health bar and money (top-left, under the FPS line).
 	var hb := Rect2(110, 46, 260, 14)
 	draw_rect(hb.grow(2), Color(0, 0, 0, 0.45))
-	var hp: float = player.health / 100.0
+	var hp: float = clampf(player.health / 100.0, 0.0, 1.0)
 	var hcol := Color(0.3, 0.85, 0.35).lerp(Color(0.9, 0.2, 0.15), 1.0 - hp)
 	draw_rect(Rect2(hb.position, Vector2(hb.size.x * hp, hb.size.y)), hcol)
 	_text("$%d" % int(_money_shown), Vector2(390, 60), 30, Color(0.55, 1.0, 0.55), HORIZONTAL_ALIGNMENT_LEFT, 300)

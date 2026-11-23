@@ -50,7 +50,10 @@ void fragment() {
 	vec2 uv2 = p / (tile_m * 3.7) + vec2(0.37, 0.71);
 	vec3 ga = mix(texture(grass_albedo, uv).rgb, texture(grass_albedo, uv2).rgb, 0.45);
 	float macro = tn_fbm(p * 0.012);
-	ga = ga * vec3(0.78, 1.3, 0.55) * 1.05;
+	// The scanned grass is dry and brown: keep its detail (luminance) but colour it as a
+	// watered lawn that matches the grass blades and hedges next to it.
+	float gl = dot(ga, vec3(0.2126, 0.7152, 0.0722));
+	ga = mix(ga * vec3(0.78, 1.3, 0.55), gl * vec3(1.55, 2.25, 0.62), 0.8) * 1.15;
 	ga *= mix(vec3(1.08, 1.02, 0.85), vec3(0.85, 1.0, 0.95), macro);
 	vec3 da = mix(texture(dirt_albedo, uv * 0.8).rgb, texture(dirt_albedo, uv2).rgb, 0.4);
 	float d = tn_dirt_mask(p);

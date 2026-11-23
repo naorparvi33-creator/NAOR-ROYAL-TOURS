@@ -50,7 +50,10 @@ void sky() {
 	float up = clamp(h, 0.0, 1.0);
 
 	// Procedural gradient (dawn, dusk, night).
-	vec3 grad = mix(sky_horizon, sky_top, sqrt(up));
+	// The warm horizon colour hugs the horizon and the zenith turns blue quickly: a wide
+	// blend of orange into blue read as a flat lavender dome at dusk.
+	float tz = 1.0 - pow(1.0 - up, 4.0);
+	vec3 grad = mix(sky_horizon, sky_top, tz);
 	float sd = max(dot(d, sun_dir), 0.0);
 	float low = 1.0 - smoothstep(-0.05, 0.55, h);
 	grad += glow_col * glow * (pow(sd, 8.0) * 0.9 + pow(sd, 2.0) * 0.3) * low;

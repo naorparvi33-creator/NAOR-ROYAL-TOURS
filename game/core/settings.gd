@@ -15,7 +15,7 @@ const DEFAULTS := {
 	"shadows": true,
 	"grass": true,
 	"draw_distance": 400.0,
-	"show_perf": true,
+	"show_perf": false,       # FPS / load counter (Settings > graphics)
 	"music_volume": 0.7,
 	"sfx_volume": 1.0,
 	"blood": true,

@@ -62,7 +62,9 @@ func _ready() -> void:
 		var l := OmniLight3D.new()
 		l.light_color = Color(1.0, 0.78, 0.5)
 		l.omni_range = 19.0
-		l.omni_attenuation = 1.0
+		# Steeper falloff: a bright pool under each lamp that fades into the dark street,
+		# instead of an even wash over the whole block.
+		l.omni_attenuation = 1.8
 		l.light_energy = 0.0
 		l.light_specular = 0.6
 		l.shadow_enabled = false
@@ -145,7 +147,7 @@ func _process(delta: float) -> void:
 			l.visible = false
 			continue
 		_pool_fade[i] = minf(_pool_fade[i] + delta * 2.5, 1.0)
-		l.light_energy = 7.0 * n * _pool_fade[i]
+		l.light_energy = 10.0 * n * _pool_fade[i]
 		l.visible = true
 	_update_headlight(n)
 

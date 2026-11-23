@@ -11,14 +11,14 @@ extends RefCounted
 
 const LOOKS := {
 	"golden": {
-		"curve": 0.32, "pivot": 0.4, "sat": 1.22, "vib": 0.18,
-		"shadow": Vector3(-0.030, 0.004, 0.036), "high": Vector3(0.060, 0.016, -0.060),
-		"gain": Vector3(1.05, 0.995, 0.90), "lift": Vector3(0.012, 0.010, 0.016),
+		"curve": 0.36, "pivot": 0.42, "sat": 1.14, "vib": 0.2,
+		"shadow": Vector3(-0.028, 0.004, 0.034), "high": Vector3(0.042, 0.012, -0.038),
+		"gain": Vector3(1.03, 1.0, 0.955), "lift": Vector3(0.004, 0.005, 0.010),
 	},
 	"day": {
 		"curve": 0.3, "pivot": 0.45, "sat": 1.16, "vib": 0.14,
 		"shadow": Vector3(-0.026, 0.008, 0.032), "high": Vector3(0.034, 0.012, -0.030),
-		"gain": Vector3(1.025, 1.0, 0.965), "lift": Vector3(0.008, 0.009, 0.013),
+		"gain": Vector3(1.025, 1.0, 0.975), "lift": Vector3(0.003, 0.004, 0.008),
 	},
 	"night": {
 		"curve": 0.30, "pivot": 0.32, "sat": 1.0, "vib": 0.1,
