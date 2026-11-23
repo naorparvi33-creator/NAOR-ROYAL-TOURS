@@ -13,6 +13,7 @@ const DEFAULTS := {
 	"dynamic_res": true,
 	"render_scale_max": 1.0,    # dynamic resolution moves between 0.7 and this
 	"shadows": true,
+	"grass": true,
 	"draw_distance": 400.0,
 	"show_perf": true,
 	# controls

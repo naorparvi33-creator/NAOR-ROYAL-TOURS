@@ -60,6 +60,7 @@ func _build() -> void:
 	_check(g, "dynamic_res")
 	_slider(g, "render_scale_max", 0.7, 1.0, 0.05)
 	_check(g, "shadows")
+	_check(g, "grass")
 	_slider(g, "draw_distance", 150.0, 1500.0, 50.0)
 	_check(g, "show_perf")
 
