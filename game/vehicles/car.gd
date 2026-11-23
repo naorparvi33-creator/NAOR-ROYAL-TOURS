@@ -29,7 +29,12 @@ const MAX_STEER := 0.55
 var vtype := "sedan"
 var driver: Node3D = null
 var peds: Node = null
-var health := 100.0
+var health := 100.0:
+	set(v):
+		health = v
+		# A pool (traffic) recycled the car: undo the wreck / dents / broken lamps.
+		if v > 0.0 and (burning or (_scarred and (wrecked or v >= 100.0))):
+			repair.call_deferred()
 var paint := Color(0.6, 0.05, 0.05)
 var plate := ""
 var spec: Dictionary = {}
@@ -77,6 +82,7 @@ var _inertia_y := 2000.0
 var _inertia_roll := 20.0
 var _rng := RandomNumberGenerator.new()
 var _interior_view := false
+var _scarred := false        # dents, broken lamps or burnt (repair() undoes them)
 
 
 func _ready() -> void:
@@ -292,8 +298,6 @@ func _physics_process(delta: float) -> void:
 	_crash_cooldown -= delta
 	var fwd_speed := linear_velocity.dot(global_basis.z)
 	var spd := linear_velocity.length()
-	if wrecked and health > 0.0:
-		repair()        # recycled by a pool (traffic) after it burned out
 	if burning or wrecked:
 		_burn_tick(delta)
 	if float(spec["roll_assist"]) > 0.0 and not wrecked:
@@ -620,6 +624,7 @@ func _break_light(kind: int) -> void:
 	if idx < 0:
 		return
 	_broken[kind] = true
+	_scarred = true
 	_mesh.surface_set_material(idx, CarMesh.shared_mat("broken_lens"))
 	var fx := _get_fx()
 	if fx:
@@ -641,6 +646,7 @@ func _dent(local_dir: Vector3, depth: float) -> void:
 	if _verts0.is_empty():
 		_verts0 = CarMesh.body_vertices(vtype)
 		_verts = _verts0.duplicate()
+	_scarred = true
 	var d := local_dir
 	d.y *= 0.4
 	if d.length() < 0.01:
@@ -697,6 +703,7 @@ func explode() -> void:
 	if wrecked:
 		return
 	wrecked = true
+	_scarred = true
 	burning = false
 	_wreck_t = 0.0
 	health = minf(health, 0.0)
@@ -746,6 +753,9 @@ func explode() -> void:
 
 ## Undoes all damage (used when a pool recycles the vehicle).
 func repair() -> void:
+	if not _scarred and not burning:
+		return
+	_scarred = false
 	wrecked = false
 	burning = false
 	_overkill = 0.0
