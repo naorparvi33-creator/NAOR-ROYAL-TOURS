@@ -10,7 +10,8 @@ import re
 
 GAME = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 changed = 0
-for imp in sorted(glob.glob(os.path.join(GAME, "assets/characters/*.jpg.import"))):
+for imp in sorted(glob.glob(os.path.join(GAME, "assets/characters/*.jpg.import")) +
+                  glob.glob(os.path.join(GAME, "assets/characters/*.png.import"))):
     name = os.path.basename(imp)[:-len(".jpg.import")]
     is_normal = name.endswith("_n") or "normal" in name
     s = open(imp).read()

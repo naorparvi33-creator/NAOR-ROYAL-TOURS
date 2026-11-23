@@ -2,7 +2,7 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://yrgfidbtxh12"
+uid="uid://c1o8561q114qv"
 path.s3tc="res://.godot/imported/ped_05_cloth.jpg-ffae512292501f5839131152e5e50586.s3tc.ctex"
 path.etc2="res://.godot/imported/ped_05_cloth.jpg-ffae512292501f5839131152e5e50586.etc2.ctex"
 metadata={
@@ -10,7 +10,7 @@ metadata={
 "vram_texture": true
 }
 generator_parameters={
-"md5": "95193aa1e20aa3511320519577e8d6af"
+"md5": "2268b7b20cd972d181c4cad6293f684a"
 }
 
 [deps]

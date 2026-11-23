@@ -9,6 +9,7 @@ extends Node3D
 const FWD := Vector3(0, 0, 1)
 const UP := Vector3(0, 1, 0)
 const RIGHT := Vector3(-1, 0, 0)    # character's right side in skeleton space
+const HAIR_SHADER := preload("res://player/hair.gdshader")
 
 @export var model_path := "res://assets/characters/player.glb"
 var armed := true
@@ -98,6 +99,80 @@ func _load_visual() -> void:
 	lod_enabled = not (get_parent() != null and get_parent().is_in_group("player"))
 	for g in _visual.find_children("*", "GeometryInstance3D", true, false):
 		(g as GeometryInstance3D).visibility_range_end = 120.0
+	_setup_lod()
+	_polish_materials()
+
+
+## Distance LOD: character files built with a "CharacterLOD" mesh (one material, everything
+## baked into one small atlas) show it beyond lod_distance(); the full mesh (7-10 surfaces)
+## is drawn only up close. The player's own model always keeps the full mesh.
+func _setup_lod() -> void:
+	var full: Array[GeometryInstance3D] = []
+	var lod: GeometryInstance3D = null
+	for g in _visual.find_children("*", "GeometryInstance3D", true, false):
+		if String(g.name).contains("LOD"):
+			lod = g as GeometryInstance3D
+		else:
+			full.append(g as GeometryInstance3D)
+	if lod == null:
+		return
+	if not lod_enabled:
+		lod.visible = false
+		return
+	var d := lod_distance()
+	for g in full:
+		g.visibility_range_end = d
+		g.visibility_range_end_margin = 1.5
+	lod.visibility_range_begin = d
+	lod.visibility_range_begin_margin = 1.5
+	lod.visibility_range_end = 120.0
+
+
+## Small material fixes glTF cannot express. The materials are shared by every instance of
+## a model (cached resources), so each is only touched once.
+func _polish_materials() -> void:
+	for g in _visual.find_children("*", "MeshInstance3D", true, false):
+		var mi := g as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var m := mi.mesh.surface_get_material(i) as BaseMaterial3D
+			if m == null or m.has_meta("polished"):
+				continue
+			m.set_meta("polished", true)
+			match m.resource_name:
+				"cornea":
+					# Clear, wet cornea: almost no diffuse, full specular highlights.
+					m.blend_mode = BaseMaterial3D.BLEND_MODE_PREMULT_ALPHA
+					m.cull_mode = BaseMaterial3D.CULL_BACK
+				"skin":
+					# A faint grazing-angle sheen (cheap stand-in for skin scattering).
+					m.rim_enabled = true
+					m.rim = 0.18
+					m.rim_tint = 0.65
+				"hair":
+					# Strand tips are alpha-tested (glTF MASK). The StandardMaterial3D alpha
+					# scissor variant loses the sky ambient light in the Mobile renderer (the
+					# hair turns black), so use a small hair shader: same cost, opaque pass.
+					if m.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+						var sm := ShaderMaterial.new()
+						sm.shader = HAIR_SHADER
+						sm.resource_name = "hair"
+						sm.set_shader_parameter("albedo", m.albedo_color)
+						sm.set_shader_parameter("albedo_tex", m.albedo_texture)
+						sm.set_shader_parameter("normal_tex", m.normal_texture)
+						sm.set_shader_parameter("normal_scale", m.normal_scale)
+						sm.set_shader_parameter("roughness", m.roughness)
+						mi.mesh.surface_set_material(i, sm)
+
+
+## Switch distance follows the graphics preset's draw distance (low ~14 m, high ~30 m).
+static func lod_distance() -> float:
+	var dd := 450.0
+	var st := Engine.get_main_loop() as SceneTree
+	if st and st.root.has_node("Settings"):
+		dd = float(st.root.get_node("Settings").call("get_value", "draw_distance"))
+	return clampf(dd / 22.0, 12.0, 30.0)
 
 
 func _build_phone() -> MeshInstance3D:

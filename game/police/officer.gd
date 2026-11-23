@@ -6,7 +6,9 @@ extends CharacterBody3D
 ## Driven by police.gd, which owns spawning, line-of-sight bookkeeping and recycling.
 
 const NAV := preload("res://police/road_nav.gd")
-const MODELS := ["ped_01", "ped_02", "ped_03", "ped_04", "ped_05", "ped_06", "ped_07", "ped_08"]
+const MODELS := ["ped_01", "ped_02", "ped_03", "ped_04", "ped_05", "ped_06", "ped_07", "ped_08", "ped_17"]
+## Models that already wear their own gear (helmet, plate carrier): no cap or badge added.
+const GEARED := ["ped_17"]
 const GRAVITY := 22.0
 const STEP_UP := 0.42
 const RUN := 5.2
@@ -106,7 +108,7 @@ func _dress() -> void:
 					_mat_cache[key] = m
 				mi.set_surface_override_material(i, _mat_cache[key])
 	var skel: Skeleton3D = model.skeleton
-	if skel == null:
+	if skel == null or model_name in GEARED:
 		return
 	if skel.find_bone("head") >= 0:
 		var head := BoneAttachment3D.new()
