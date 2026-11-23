@@ -337,7 +337,7 @@ func _tint_for(material_index: int) -> Color:
 			options = [Color(1, 1, 1), Color(0.85, 0.72, 0.66), Color(1.05, 0.95, 0.82), Color(0.75, 0.6, 0.55)]
 		1:  # stucco: warm sun-bleached pastels of a coastal city
 			options = [Color(1.0, 0.93, 0.8), Color(1.0, 0.8, 0.66), Color(0.98, 0.72, 0.62), Color(0.85, 0.93, 0.88),
-				Color(0.98, 0.88, 0.62), Color(0.82, 0.88, 0.98), Color(1.0, 0.97, 0.92), Color(0.95, 0.7, 0.72)]
+				Color(1.0, 0.9, 0.74), Color(0.82, 0.88, 0.98), Color(1.0, 0.97, 0.92), Color(0.95, 0.7, 0.72)]
 		2:  # concrete / travertine offices
 			options = [Color(1.18, 1.14, 1.08), Color(1.08, 1.08, 1.1), Color(1.2, 1.1, 0.95), Color(0.98, 0.97, 0.97)]
 		_:  # glass towers: tint of the coated glass
@@ -476,7 +476,7 @@ func _decorate(st: SurfaceTool, m: int, pos: Vector3, size: Vector3, roof_y: flo
 			# Balconies in a regular rhythm from the second floor up.
 			var cols := maxi(1, int((half_len * 2.0 - 2.0) / 3.8))
 			var cw := (half_len * 2.0 - 2.0) / cols
-			var every := 1 if a < 0.5 else 2
+			var every := 1 if a < 0.5 and floors <= 7 else 2
 			var rail := metal if a > 0.3 else trim
 			for c in cols:
 				if c % every != 0:
@@ -485,9 +485,10 @@ func _decorate(st: SurfaceTool, m: int, pos: Vector3, size: Vector3, roof_y: flo
 				var bw := minf(cw - 0.6, 3.2)
 				for f in range(1, floors):
 					var bc := wall + along * t + n * 0.6 + Vector3(0, CURB_H + 4.2 + (f - 1) * 3.3 + 0.08, 0)
-					_add_box(st, bc, (along * bw).abs() + n.abs() * 1.2 + Vector3(0, 0.16, 0), trim, 1.0, 0.0)
-					_add_box(st, bc + n * 0.56 + Vector3(0, 0.55, 0), (along * bw).abs() + n.abs() * 0.08 + Vector3(0, 0.95, 0),
-						rail, 2.0 if a > 0.3 else 1.0, 0.0)
+					_add_box(st, bc, (along * bw).abs() + n.abs() * 1.2 + Vector3(0, 0.16, 0), trim, 1.0, 0.0, -n)
+					# Railing: one two-sided panel (painted metal or a solid stucco parapet).
+					_add_quad(st, bc + n * 0.58 + Vector3(0, 0.55, 0), along * (bw * 0.5), Vector3(0, 0.47, 0), n, rail,
+						2.0 if a > 0.3 else 1.0, Vector2.ZERO, Vector2.ZERO, true)
 		elif (m == 0 or m == 2) and floors <= 14:
 			# Window AC units.
 			for i in _deco.randi_range(2, 6 + floors / 2):
@@ -584,7 +585,7 @@ func _box_collision(pos: Vector3, size: Vector3) -> void:
 ## Adds an axis-aligned box. UV.x = part kind (0 facade with windows, 1 plain wall, 2 metal,
 ## 3 awning, 4 billboard, 5 water tank), UV.y = building top, UV2 = extent of the facade
 ## volume along each wall so window columns are centred on the face (see building.gdshader).
-func _add_box(st: SurfaceTool, c: Vector3, s: Vector3, color: Color, plain: float, top: float) -> void:
+func _add_box(st: SurfaceTool, c: Vector3, s: Vector3, color: Color, plain: float, top: float, skip := Vector3.ZERO) -> void:
 	var h := s * 0.5
 	var vol := _volume_at(c) if plain < 0.5 else AABB()
 	var known := vol.size != Vector3.ZERO
@@ -598,6 +599,8 @@ func _add_box(st: SurfaceTool, c: Vector3, s: Vector3, color: Color, plain: floa
 	]
 	for f in faces:
 		var n: Vector3 = f[0]
+		if n == skip:
+			continue
 		var u: Vector3 = f[1]
 		var v: Vector3 = f[2]
 		var o := c + n * (h * n.abs()).length()

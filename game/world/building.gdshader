@@ -58,6 +58,14 @@ float box_mask(vec2 p, vec2 lo, vec2 hi) {
 	return a.x * a.y * b.x * b.y;
 }
 
+// Same with derivatives taken from the continuous coordinate (p is a fract() of it,
+// whose own derivative jumps at every cell edge and would draw a line there).
+float box_c(vec2 p, vec2 fw, vec2 lo, vec2 hi) {
+	vec2 a = smoothstep(lo - fw, lo + fw, p);
+	vec2 b = 1.0 - smoothstep(hi - fw, hi + fw, p);
+	return a.x * a.y * b.x * b.y;
+}
+
 float aa_step(float edge, float x) {
 	float fw = max(fwidth(x) * 0.7, 1e-4);
 	return smoothstep(edge - fw, edge + fw, x);
@@ -250,6 +258,7 @@ void fragment() {
 				// ---------- storefronts (world 4.5 m grid: matches street_dressing shutters)
 				float cw = 4.5;
 				vec2 c = vec2(fract(u / cw), v);
+				vec2 cfw = max(vec2(fwidth(u / cw), fwidth(v)) * 0.7, vec2(1e-4));
 				float cell = floor(u / cw);
 				// Shops span 1-3 cells: neighbouring cells of one shop share colours.
 				float shop_id = floor((cell + floor(seed * 7.0)) / (1.0 + floor(h3.y * 3.0)));
@@ -257,21 +266,21 @@ void fragment() {
 				float door = step(0.72, tn_hash(vec2(cell, seed * 5.0)));
 				float sill_y = door > 0.5 ? 0.17 : 0.6;
 				float pil = 0.28 / cw;
-				glass = box_mask(c, vec2(pil, sill_y), vec2(1.0 - pil, 3.05));
-				float transom = box_mask(c, vec2(pil, 3.12), vec2(1.0 - pil, 3.45));
-				float mull = box_mask(c, vec2(0.49, 0.0), vec2(0.51, 9.0)) * (1.0 - door);
-				frame = box_mask(c, vec2(pil - 0.012, sill_y - 0.05), vec2(1.0 - pil + 0.012, 3.5)) - glass - transom * 0.9;
+				glass = box_c(c, cfw, vec2(pil, sill_y), vec2(1.0 - pil, 3.05));
+				float transom = box_c(c, cfw, vec2(pil, 3.12), vec2(1.0 - pil, 3.45));
+				float mull = box_c(c, cfw, vec2(0.49, 0.0), vec2(0.51, 9.0)) * (1.0 - door);
+				frame = box_c(c, cfw, vec2(pil - 0.012, sill_y - 0.05), vec2(1.0 - pil + 0.012, 3.5)) - glass - transom * 0.9;
 				frame = clamp(frame + mull * glass, 0.0, 1.0);
 				glass = max(glass * (1.0 - mull), transom);
 				// Kick plate (dark stone) under the glass.
-				float kick = (1.0 - step(sill_y, v)) * box_mask(c, vec2(pil, 0.0), vec2(1.0 - pil, 0.7));
+				float kick = (1.0 - step(sill_y, v)) * box_c(c, cfw, vec2(pil, 0.0), vec2(1.0 - pil, 0.7));
 				wall = mix(wall, mix(vec3(0.16, 0.15, 0.14), vec3(0.42, 0.4, 0.38), sr.z), kick);
 				// Fascia sign band above the windows.
-				float fascia = box_mask(c, vec2(0.0, 3.55), vec2(1.0, 4.1));
+				float fascia = box_c(c, cfw, vec2(0.0, 3.55), vec2(1.0, 4.1));
 				vec3 fcol = SIGN_PAL[int(sr.x * 5.99)];
 				if (style == 3) fcol = vec3(0.12, 0.13, 0.14);
-				float letters = box_mask(vec2(fract(u / 0.5), v), vec2(0.15, 3.68), vec2(0.8, 3.98))
-					* box_mask(c, vec2(0.12, 0.0), vec2(0.88, 9.0))
+				float letters = box_c(vec2(fract(u / 0.5), v), vec2(fwidth(u / 0.5), fwidth(v)) * 0.7 + 1e-4, vec2(0.15, 3.68), vec2(0.8, 3.98))
+					* box_c(c, cfw, vec2(0.12, 0.0), vec2(0.88, 9.0))
 					* step(0.35, tn_hash(vec2(floor(u / 0.5), shop_id))) * step(0.35, sr.z) * (style == 3 ? 0.0 : 1.0);
 				vec3 lcol = mix(vec3(0.95, 0.93, 0.88), vec3(1.0, 0.85, 0.35), step(0.6, sr.y));
 				wall = mix(wall, fcol, fascia);
@@ -315,33 +324,34 @@ void fragment() {
 				float fx = fract(cu);
 				float wfrac = min(ww / cw, 0.96);
 				vec2 c = vec2(fx, fy);
+				vec2 cfw = max(vec2(fwidth(cu), fwidth(fv)) * 0.7, vec2(1e-4));
 				vec2 lo = vec2(0.5 - wfrac * 0.5, wy);
 				vec2 hi = vec2(0.5 + wfrac * 0.5, wy + wh);
-				glass = box_mask(c, lo, hi) * inside;
+				glass = box_c(c, cfw, lo, hi) * inside;
 				float fwm = 0.07 / cw;
 				float fwv = 0.07 / floor_h;
-				float outer = box_mask(c, lo - vec2(fwm, fwv), hi + vec2(fwm, fwv)) * inside;
+				float outer = box_c(c, cfw, lo - vec2(fwm, fwv), hi + vec2(fwm, fwv)) * inside;
 				frame = outer - glass;
 				// Mullions / transoms inside the opening.
 				float mid = 0.0;
 				if (style == 0) {
-					mid = box_mask(c, vec2(lo.x, lo.y + wh * 0.5 - 0.012), vec2(hi.x, lo.y + wh * 0.5 + 0.012));
+					mid = box_c(c, cfw, vec2(lo.x, lo.y + wh * 0.5 - 0.012), vec2(hi.x, lo.y + wh * 0.5 + 0.012));
 				} else if (style == 1 && ww > 1.8) {
-					mid = box_mask(c, vec2(0.49, lo.y), vec2(0.51, hi.y));
+					mid = box_c(c, cfw, vec2(0.49, lo.y), vec2(0.51, hi.y));
 				} else if (style == 3) {
-					mid = box_mask(c, vec2(lo.x, 0.86), vec2(hi.x, 0.9));
+					mid = box_c(c, cfw, vec2(lo.x, 0.86), vec2(hi.x, 0.9));
 				}
 				mid *= glass;
 				frame = clamp(frame + mid, 0.0, 1.0);
 				glass *= 1.0 - mid;
 				// Sill (light stone) and its shadow; brick lintels; dirt streaks below.
 				if (style != 3) {
-					sill = box_mask(c, vec2(lo.x - fwm * 2.0, lo.y - 0.045), vec2(hi.x + fwm * 2.0, lo.y - fwv)) * inside;
+					sill = box_c(c, cfw, vec2(lo.x - fwm * 2.0, lo.y - 0.045), vec2(hi.x + fwm * 2.0, lo.y - fwv)) * inside;
 					float below = clamp((lo.y - fy) / 0.6, 0.0, 1.0);
 					float sx = step(lo.x, fx) * step(fx, hi.x);
 					streak = sx * (1.0 - below) * step(fy, lo.y) * smoothstep(0.35, 0.8, tn_noise(vec2(u * 9.0, fl + seed * 3.0)));
 					if (style == 0) {
-						lintel = box_mask(c, vec2(lo.x - fwm, hi.y + fwv), vec2(hi.x + fwm, hi.y + 0.08)) * inside;
+						lintel = box_c(c, cfw, vec2(lo.x - fwm, hi.y + fwv), vec2(hi.x + fwm, hi.y + 0.08)) * inside;
 					}
 				}
 				// Art-deco stucco: raised vertical piers between window columns.
@@ -353,7 +363,7 @@ void fragment() {
 				}
 				// Curtain wall: dark spandrel bands at the slabs, everything else glass.
 				if (style == 3) {
-					float spandrel = 1.0 - box_mask(c, vec2(-1.0, wy - 0.01), vec2(2.0, wy + wh + 0.01));
+					float spandrel = 1.0 - box_c(c, cfw, vec2(-1.0, wy - 0.01), vec2(2.0, wy + wh + 0.01));
 					wall = mix(wall, vec3(0.2, 0.22, 0.24) * vcol.rgb, 0.85);
 					glass = max(glass, spandrel * 0.85 * inside);   // spandrel glass is opaque-backed
 					frame = clamp(frame, 0.0, 1.0);
@@ -427,7 +437,7 @@ void fragment() {
 		vec3 glass_emis = refl * kref * gtint * day * 0.65 * (1.0 - reveal * 0.3);
 		// Night: lit rooms and shops glow.
 		float night_glow = glow_on * night_lights;
-		vec3 night_col = glow_col * (room * 1.6 + 0.15) * night_glow * (shop > 0.5 ? 1.2 : 0.8);
+		vec3 night_col = glow_col * (min(room, vec3(1.0)) * 1.1 + 0.12) * night_glow * (shop > 0.5 ? 0.42 : 0.65);
 
 		vec3 col = mix(wall, frame_col, clamp(frame, 0.0, 1.0));
 		col = mix(col, glass_albedo, glass);
