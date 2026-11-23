@@ -198,7 +198,7 @@ func _on_release(finger: int, _p: Vector2) -> void:
 
 
 ## Labels used while driving (same buttons, different jobs).
-const DRIVE_LABELS := {"fire": "gas", "fire2": "gas", "ads": "brake", "jump": "handbrake", "swap": "radio"}
+const DRIVE_LABELS := {"fire": "gas", "fire2": "gas", "ads": "brake", "jump": "handbrake", "swap": "radio", "crouch": "horn"}
 
 
 func _press_button(id: String, down: bool) -> void:
@@ -226,10 +226,11 @@ func _update_drive_buttons() -> void:
 	for f in _pressed:
 		held[_pressed[f]] = true
 	GameInput.set_touch_drive(held.has("fire") or held.has("fire2"), held.has("ads"), held.has("jump"))
+	GameInput.drive_horn = held.has("crouch")
 
 
 func _hidden_in_mode(id: String) -> bool:
-	return GameInput.vehicle_mode and id == "crouch"
+	return false   # in a vehicle the crouch button is the horn
 
 
 func _release_all() -> void:

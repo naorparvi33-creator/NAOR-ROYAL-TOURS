@@ -13,6 +13,7 @@ var vehicle_mode := false
 var drive_gas := false
 var drive_brake := false
 var drive_handbrake := false
+var drive_horn := false         # held horn (touch: the crouch button while driving)
 
 ## Accumulated look rotation in degrees (x = yaw, y = pitch). Consumed once per frame.
 var _look := Vector2.ZERO
@@ -172,4 +173,5 @@ func reset_touch() -> void:
 	drive_gas = false
 	drive_brake = false
 	drive_handbrake = false
+	drive_horn = false
 	_touch_handbrake = false

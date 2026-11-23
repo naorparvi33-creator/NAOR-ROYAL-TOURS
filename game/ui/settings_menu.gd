@@ -87,6 +87,11 @@ func _build() -> void:
 	_check(c, "auto_fire")
 	_slider(c, "aim_assist", 0.0, 1.0, 0.05)
 	_check(c, "vibration")
+	preload("res://vehicles/vehicle_types.gd").register()
+	_option(c, "veh_cam", [[Loc.t("veh_cam_chase"), 0], [Loc.t("veh_cam_hood"), 1], [Loc.t("veh_cam_cockpit"), 2]])
+	_option(c, "veh_tilt", [[Loc.t("off"), 0], [Loc.t("on"), 1], [Loc.t("veh_tilt_inv"), 2]])
+	_slider(c, "veh_tilt_sens", 0.3, 2.5, 0.1)
+	_slider(c, "veh_steer_assist", 0.0, 1.0, 0.05)
 
 	var gen := _tab(Loc.t("tab_general"))
 	_option(gen, "language", [["עברית", "he"], ["English", "en"]])
