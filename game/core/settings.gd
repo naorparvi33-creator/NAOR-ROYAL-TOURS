@@ -19,6 +19,9 @@ const DEFAULTS := {
 	"music_volume": 0.7,
 	"sfx_volume": 1.0,
 	"blood": true,
+	"quality_preset": "auto",   # auto / low / medium / high / custom (core/quality.gd)
+	"npc_density": 1.0,         # pedestrians and traffic multiplier, 0.3 .. 1.5
+	"vibration": true,          # haptics on hits (Android)
 	# controls
 	"layout_preset": "two_thumbs",   # two_thumbs / four_fingers
 	"sens_look": 1.0,
