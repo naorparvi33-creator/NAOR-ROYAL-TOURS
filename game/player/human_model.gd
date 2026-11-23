@@ -14,11 +14,22 @@ const RIGHT := Vector3(-1, 0, 0)    # character's right side in skeleton space
 var armed := true
 ## 0 = fists / nothing, 1 = pistol, 2 = rifle
 var weapon_kind := 2
+## Idle behaviour for people in the street (unarmed only):
+## IDLE_NONE, IDLE_LOOK (glances around when standing) or IDLE_PHONE (looks at a phone).
+enum { IDLE_NONE, IDLE_LOOK, IDLE_PHONE }
+var idle_style := IDLE_NONE
 
 var skeleton: Skeleton3D
 var rifle: Node3D
 var pistol: Node3D
+var phone: MeshInstance3D
 var _visual: Node3D
+var _t := 0.0            # local clock (desynchronised per person)
+var _still := 0.0        # 0 walking .. 1 standing still
+var _phone_k := 0.0
+var _look_target := Vector2.ZERO
+var _look := Vector2.ZERO
+var _look_timer := 0.0
 var _punch := 0.0
 var _punch_side := "r"
 var _flinch := 0.0
@@ -33,10 +44,39 @@ var _air := 0.0
 
 
 func _ready() -> void:
-	_visual = load(model_path).instantiate()
+	_t = randf() * 100.0
+	rifle = RifleMesh.build()
+	pistol = RifleMesh.build_pistol()
+	phone = _build_phone()
+	_load_visual()
+	set_weapon(weapon_kind if armed else 0)
+
+
+## Swaps the character model at runtime (same 53-bone rig), keeping weapons and state.
+func change_model(path: String) -> void:
+	if path == model_path and _visual != null:
+		return
+	model_path = path
+	if is_inside_tree():
+		_load_visual()
+
+
+func _load_visual() -> void:
+	for n in [rifle, pistol, phone]:
+		if n and n.get_parent():
+			n.get_parent().remove_child(n)
+	if _visual:
+		_visual.queue_free()
+	var res: Resource = load(model_path)
+	if res == null:
+		push_warning("human_model: missing " + model_path)
+		res = load("res://assets/characters/player.glb")
+	_visual = (res as PackedScene).instantiate()
 	_visual.rotation.y = PI          # model faces +Z, the game uses -Z as forward
 	add_child(_visual)
 	skeleton = _visual.find_children("*", "Skeleton3D", true, false)[0]
+	_b.clear()
+	_rest.clear()
 	for i in skeleton.get_bone_count():
 		var n := skeleton.get_bone_name(i)
 		_b[n] = i
@@ -45,13 +85,31 @@ func _ready() -> void:
 	_len["calf"] = _pos("foot_l").distance_to(_pos("calf_l"))
 	_len["upper"] = _pos("lowerarm_l").distance_to(_pos("upperarm_l"))
 	_len["fore"] = _pos("hand_l").distance_to(_pos("lowerarm_l"))
-	rifle = RifleMesh.build()
 	skeleton.add_child(rifle)
-	pistol = RifleMesh.build_pistol()
 	skeleton.add_child(pistol)
-	set_weapon(weapon_kind if armed else 0)
+	skeleton.add_child(phone)
+	phone.visible = false
 	for g in _visual.find_children("*", "GeometryInstance3D", true, false):
 		(g as GeometryInstance3D).visibility_range_end = 120.0
+
+
+func _build_phone() -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.072, 0.15, 0.009)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.05, 0.05, 0.06)
+	m.metallic = 0.4
+	m.roughness = 0.3
+	# The screen glows faintly (emission only, no light).
+	m.emission_enabled = true
+	m.emission = Color(0.25, 0.35, 0.45)
+	m.emission_energy_multiplier = 0.35
+	bm.material = m
+	mi.mesh = bm
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.visibility_range_end = 40.0
+	return mi
 
 
 func set_armed(on: bool) -> void:
@@ -93,21 +151,46 @@ func animate(delta: float, speed: float, on_floor: bool, crouching: bool, aiming
 		_phase = fmod(_phase + delta * (5.2 + speed * 0.9), TAU)
 	_punch = maxf(_punch - delta / 0.32, 0.0)
 	_flinch = maxf(_flinch - delta / 0.3, 0.0)
+	_t += delta
+	_still = lerpf(_still, 1.0 if speed < 0.2 else 0.0, 1.0 - exp(-3.0 * delta))
+	var wants_phone := idle_style == IDLE_PHONE and not armed and speed < 2.2 and _flinch <= 0.0
+	_phone_k = lerpf(_phone_k, 1.0 if wants_phone else 0.0, 1.0 - exp(-5.0 * delta))
+	if idle_style != IDLE_NONE:
+		_look_timer -= delta
+		if _look_timer <= 0.0:
+			# A new thing to glance at: mostly ahead, sometimes to the side.
+			_look_timer = randf_range(1.2, 3.5)
+			var side := randf_range(-0.9, 0.9) if randf() < 0.6 else 0.0
+			_look_target = Vector2(side * (0.35 + 0.65 * _still), randf_range(-0.12, 0.1))
+		_look = _look.lerp(_look_target, 1.0 - exp(-2.5 * delta))
 	pose()
 
 
 func pose() -> void:
 	skeleton.reset_bone_poses()
+	phone.visible = false
 	var run := clampf(_stride, 0.0, 1.0)
 
 	# ---- pelvis: bob, sway, crouch
 	var bob := (absf(sin(_phase)) - 0.5) * 0.05 * run
 	var pelvis_off := Vector3(sin(_phase) * 0.02 * run, bob - _crouch * 0.38 - _air * 0.04, 0)
+	# Standing people slowly shift their weight from one leg to the other.
+	pelvis_off.x += sin(_t * 0.45) * 0.018 * _still * (1.0 - _aim)
 	_offset_bone("pelvis", pelvis_off)
 	_rotate_bone("pelvis", UP, sin(_phase) * 0.12 * run)
 	_rotate_bone("spine_01", RIGHT, -(0.08 * run + _crouch * 0.25) + _flinch * 0.35)
 	_rotate_bone("spine_02", UP, -sin(_phase) * 0.1 * run * (1.0 - _aim))
+	# Breathing.
+	_rotate_bone("spine_03", RIGHT, -sin(_t * 1.7) * 0.016 * (0.4 + _still))
 	_rotate_bone("neck_01", RIGHT, 0.06 * run + _crouch * 0.15)
+	if idle_style != IDLE_NONE and _aim < 0.5:
+		# Glance around (less while busy with the phone, which pulls the head down).
+		var free := 1.0 - _phone_k
+		_rotate_bone("neck_01", UP, _look.x * 0.45 * free)
+		_rotate_bone("head", UP, _look.x * 0.55 * free)
+		# (a negative angle about RIGHT tips the head forward / down)
+		_rotate_bone("head", RIGHT, _look.y * free - _phone_k * 0.42)
+		_rotate_bone("neck_01", RIGHT, -_phone_k * 0.2)
 
 	# ---- legs: feet follow a step cycle, IK places the knees
 	for side in ["l", "r"]:
@@ -160,6 +243,17 @@ func pose() -> void:
 			var dir := (UP * -1.0 + FWD * swing + Vector3(sx, 0, 0) * 0.12).normalized()
 			var elbow: Vector3 = sh + dir * float(_len["upper"])
 			var fore := (dir + FWD * (0.25 + run * 0.5)).normalized()
+			if side == "r" and _phone_k > 0.02:
+				# Phone in the right hand, held in front of the chest at reading distance.
+				var hand: Vector3 = elbow + fore * float(_len["fore"])
+				var hold := chest + FWD * 0.3 + UP * 0.02 + RIGHT * 0.06
+				var target := hand.lerp(hold, _phone_k)
+				_arm_ik("r", target, RIGHT * 1.0 + UP * -1.0 + FWD * -0.4)
+				var eyes := skeleton.get_bone_global_pose(_b["head"]).origin + UP * 0.07 + FWD * 0.06
+				var at := target + FWD * 0.03 + UP * 0.04
+				phone.transform = Transform3D(Basis.looking_at(eyes - at, UP), at)
+				phone.visible = _phone_k > 0.35
+				continue
 			_set_limb("upperarm_" + side, sh, elbow)
 			_set_limb("lowerarm_" + side, elbow, elbow + fore * _len["fore"])
 
