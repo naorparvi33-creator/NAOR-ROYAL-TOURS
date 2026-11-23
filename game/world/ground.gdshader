@@ -17,6 +17,8 @@ uniform sampler2D asphalt_albedo : source_color, filter_linear_mipmap_anisotropi
 uniform sampler2D asphalt_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D asphalt_rough : hint_roughness_gray, filter_linear_mipmap, repeat_enable;
 uniform float tile_m = 2.5;
+// Rain (set by world/env/weather.gd): 0 = dry, 1 = soaked roads with puddles.
+uniform float wetness = 0.0;
 
 varying vec3 world_pos;
 
@@ -108,8 +110,19 @@ void fragment() {
 	road_rough = mix(road_rough, 0.5, disk);
 
 	float park = tn_park(p);
+	vec3 road_n = an;
+	if (wetness > 0.0) {
+		// Wet asphalt: darker and glossy; puddles in dips become mirror-like.
+		float puddle = smoothstep(0.52, 0.62, tn_fbm(p * 0.09 + 3.1)) * smoothstep(0.3, 0.9, wetness);
+		road_albedo *= mix(1.0, 0.55, wetness) * mix(1.0, 0.75, puddle);
+		road_rough = mix(road_rough, 0.22, wetness * 0.85);
+		road_rough = mix(road_rough, 0.03, puddle);
+		road_n = mix(an, vec3(0.5, 0.5, 1.0), max(puddle, wetness * 0.4));
+		park_albedo *= mix(1.0, 0.75, wetness);
+		park_rough = mix(park_rough, 0.55, wetness * 0.5);
+	}
 	ALBEDO = mix(road_albedo, park_albedo, park);
-	NORMAL_MAP = mix(an, park_normal, park);
+	NORMAL_MAP = mix(road_n, park_normal, park);
 	ROUGHNESS = mix(road_rough, park_rough, park);
 	SPECULAR = 0.35;
 }

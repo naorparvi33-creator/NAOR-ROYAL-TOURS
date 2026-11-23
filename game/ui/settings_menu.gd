@@ -90,6 +90,11 @@ func _build() -> void:
 
 	var gen := _tab(Loc.t("tab_general"))
 	_option(gen, "language", [["עברית", "he"], ["English", "en"]])
+	if Settings.values.has("dn_day_minutes"):   # day/night + weather module (world/env)
+		_slider(gen, "dn_start_hour", 0.0, 23.0, 1.0)
+		_slider(gen, "dn_day_minutes", 4.0, 120.0, 1.0)
+		_check(gen, "dn_paused")
+		_check(gen, "weather_on")
 	var row2 := HBoxContainer.new()
 	row2.add_theme_constant_override("separation", 20)
 	row2.add_child(_button(Loc.t("save_now"), func(): save_requested.emit()))

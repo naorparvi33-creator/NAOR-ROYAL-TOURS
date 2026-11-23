@@ -14,6 +14,9 @@ uniform float brightness = 1.0;
 uniform float floor_h = 3.3;
 uniform float win_spacing = 3.0;
 uniform float ground_floor_h = 4.2;
+// Night (set by world/env/day_night.gd): 0 = day, 1 = windows and shops lit.
+uniform float night_lights = 0.0;
+uniform float lit_ratio = 0.4;
 
 varying vec3 wpos;
 varying vec3 wnorm;
@@ -54,6 +57,8 @@ void fragment() {
 		float glass = 0.0;
 		float frame = 0.0;
 		float lit = 0.0;
+		float glow = 0.0;
+		vec3 glow_col = vec3(1.0, 0.8, 0.55);
 		if (vdata.x < 0.5) {
 			if (v < ground_floor_h) {
 				// Shop windows.
@@ -61,6 +66,7 @@ void fragment() {
 				glass = box_mask(c, vec2(0.07, 0.45), vec2(0.93, 3.5));
 				frame = box_mask(c, vec2(0.04, 0.35), vec2(0.96, 3.6)) - glass;
 				lit = 0.4;
+				glow = 0.35;
 			} else if (v < vdata.y - 1.2) {
 				float fv = (v - ground_floor_h) / floor_h;
 				vec2 cell = vec2(floor(u / win_spacing), floor(fv));
@@ -68,6 +74,10 @@ void fragment() {
 				glass = box_mask(c, vec2(0.22, 0.26), vec2(0.78, 0.82));
 				frame = box_mask(c, vec2(0.19, 0.2), vec2(0.81, 0.85)) - glass;
 				lit = tn_hash(cell + vcol.a * 97.0);
+				// Some flats have the lights on at night (warm bulbs or cool screens).
+				float h2 = tn_hash(cell * 1.37 + vcol.a * 31.0 + 5.0);
+				glow = step(h2, lit_ratio) * mix(0.6, 1.4, fract(h2 * 57.3));
+				glow_col = mix(vec3(1.0, 0.72, 0.42), vec3(0.75, 0.85, 1.0), step(0.8, fract(h2 * 13.1)));
 			}
 		}
 		// Glass: dark with strong sky reflection; some windows have light blinds.
@@ -79,5 +89,8 @@ void fragment() {
 		NORMAL_MAP = mix(nm, vec3(0.5, 0.5, 1.0), max(glass, frame));
 		ROUGHNESS = mix(0.9, 0.04, glass);
 		SPECULAR = mix(0.3, 0.9, glass);
+		if (night_lights > 0.0) {
+			EMISSION = glow_col * glow * glass * night_lights * 0.55;
+		}
 	}
 }

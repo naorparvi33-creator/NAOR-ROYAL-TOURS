@@ -50,6 +50,7 @@ func _ready() -> void:
 	#   _add_module("res://police/police.gd")
 	# Modules get main (self) through `main` and find player/world/peds/missions/hud on it.
 	_add_module("res://ui/menus/polish.gd")
+	_add_module("res://world/env/day_night.gd")
 	# (end of modules)
 
 
