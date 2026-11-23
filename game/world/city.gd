@@ -53,6 +53,7 @@ func _ready() -> void:
 			_build_block(Vector3(i * PITCH, 0, j * PITCH), outer)
 	_build_street_props()
 	preload("res://world/street_dressing.gd").new().dress(self, _buildings, _rng)
+	add_child(preload("res://world/street_life.gd").new())   # street trees, hydrants, bus stops
 
 	var park := preload("res://world/park.gd").new()
 	add_child(park)
