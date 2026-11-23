@@ -28,13 +28,15 @@ static func pbr(name: String, world_scale := 1.0, tint := Color.WHITE, roughness
 
 
 ## Same as pbr() but using the mesh's own UVs (for characters and props).
+## albedo_name "none" = normal map only (plain coloured fabric).
 static func pbr_uv(name: String, uv_scale := 1.0, tint := Color.WHITE, roughness := 0.9, albedo_name := "") -> StandardMaterial3D:
 	var key := "uv_%s_%s_%.2f_%s" % [name, albedo_name, uv_scale, tint.to_html()]
 	if _cache.has(key):
 		return _cache[key]
 	var m := StandardMaterial3D.new()
 	var alb := albedo_name if albedo_name != "" else name
-	m.albedo_texture = load("res://assets/textures/%s_albedo.jpg" % alb)
+	if alb != "none":
+		m.albedo_texture = load("res://assets/textures/%s_albedo.jpg" % alb)
 	m.albedo_color = tint
 	m.normal_enabled = true
 	m.normal_texture = load("res://assets/textures/%s_normal.jpg" % name)

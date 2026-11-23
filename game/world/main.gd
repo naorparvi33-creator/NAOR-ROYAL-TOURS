@@ -13,15 +13,16 @@ func _ready() -> void:
 	get_tree().auto_accept_quit = false
 	get_tree().quit_on_go_back = false
 
-	var world = preload("res://world/test_world.gd").new()
+	var world = preload("res://world/city.gd").new()
 	add_child(world)
 
 	player = preload("res://player/player.gd").new()
 	player.name = "Player"
 	add_child(player)
-	player.spawn_point = Vector3(0, 0.2, 6)
+	player.spawn_point = Vector3(2, 0.4, 43)
 	player.position = player.spawn_point
 	world.set_follow(player)
+	player.rig.yaw = 180.0   # face the street
 	_load_game()
 
 	hud = preload("res://ui/hud.gd").new()

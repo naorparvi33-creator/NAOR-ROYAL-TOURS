@@ -1,12 +1,22 @@
 extends Node3D
-## Procedural soldier with realistic proportions (1.8 m): jointed legs and arms,
-## camouflage uniform (fabric normal map), plate carrier, helmet, backpack,
-## leather boots and gloves, and a detailed rifle. Both hands are placed on the
-## rifle with two-bone IK, so the arms always hold the weapon correctly.
+## Procedural city character with realistic proportions (1.8 m): jointed legs and
+## arms, t-shirt (fabric normal map), jeans (denim), sneakers, hair and sunglasses.
+## The look is configurable so pedestrians can reuse the same model.
+## Both hands are placed on the rifle with two-bone IK.
 
 const UPPER_ARM := 0.29
 const FOREARM := 0.28
 const HIP_Y := 0.98
+
+## Appearance. Set before the node enters the tree.
+var look := {
+	"skin": Color(0.76, 0.58, 0.46),
+	"shirt": Color(0.86, 0.86, 0.84),
+	"pants": Color(1, 1, 1),
+	"shoes": Color(0.92, 0.92, 0.9),
+	"hair": Color(0.12, 0.09, 0.07),
+	"armed": true,
+}
 
 var _hips: Node3D
 var _torso: Node3D
@@ -21,62 +31,63 @@ var _stride := 0.0
 
 
 func _ready() -> void:
-	var camo := Mats.pbr_uv("fabric", 3.0, Color(1, 1, 1), 0.95, "camo")
-	var vest_mat := Mats.pbr_uv("fabric", 4.0, Color(0.62, 0.64, 0.5), 0.9, "camo")
-	var helmet_mat := Mats.pbr_uv("fabric", 2.0, Color(0.8, 0.8, 0.68), 0.7, "camo")
-	var leather := Mats.pbr_uv("leather", 2.0, Color(0.32, 0.27, 0.22), 0.7)
-	var skin := Mats.plain(Color(0.76, 0.58, 0.46), 0.55)
-	var dark := Mats.plain(Color(0.09, 0.09, 0.1), 0.45)
+	var shirt := Mats.pbr_uv("fabric", 3.0, look["shirt"], 0.95, "none")
+	var jeans := Mats.pbr_uv("fabric", 2.0, look["pants"], 0.9, "denim")
+	var skin := Mats.plain(look["skin"], 0.55)
+	var hair := Mats.pbr_uv("fabric", 6.0, look["hair"], 0.8, "none")
+	var shoes := Mats.plain(look["shoes"], 0.6)
+	var sole := Mats.plain(Color(0.2, 0.2, 0.2), 0.8)
+	var dark := Mats.plain(Color(0.06, 0.06, 0.07), 0.2, 0.3)
 
 	_hips = _node(self, Vector3(0, HIP_Y, 0))
-	_capsule(_hips, 0.14, 0.4, Vector3(0, 0.02, 0), camo, Vector3(0, 0, PI * 0.5), Vector3(1, 1, 0.8))
-	_capsule(_hips, 0.155, 0.34, Vector3(0, 0.08, 0), dark, Vector3(0, 0, PI * 0.5), Vector3(1, 0.35, 0.82))  # belt
+	_capsule(_hips, 0.14, 0.4, Vector3(0, 0.02, 0), jeans, Vector3(0, 0, PI * 0.5), Vector3(1, 1, 0.8))
+	_capsule(_hips, 0.148, 0.34, Vector3(0, 0.09, 0), Mats.plain(Color(0.15, 0.1, 0.07), 0.5), Vector3(0, 0, PI * 0.5), Vector3(1, 0.25, 0.8))  # belt
 
 	_torso = _node(_hips, Vector3(0, 0.08, 0))
-	_capsule(_torso, 0.17, 0.56, Vector3(0, 0.27, 0), camo, Vector3.ZERO, Vector3(1.15, 1, 0.72))
-	_capsule(_torso, 0.19, 0.4, Vector3(0, 0.29, 0), vest_mat, Vector3.ZERO, Vector3(1.12, 1, 0.8))
-	for x in [-0.09, 0.0, 0.09]:
-		_box(_torso, Vector3(0.075, 0.11, 0.05), Vector3(x, 0.21, -0.165), vest_mat)   # magazine pouches
-	_box(_torso, Vector3(0.3, 0.38, 0.16), Vector3(0, 0.31, 0.2), vest_mat)            # backpack
-	_box(_torso, Vector3(0.26, 0.08, 0.14), Vector3(0, 0.52, 0.2), dark)               # rolled mat
+	_capsule(_torso, 0.17, 0.56, Vector3(0, 0.27, 0), shirt, Vector3.ZERO, Vector3(1.15, 1, 0.7))
 	_cyl(_torso, 0.055, 0.12, Vector3(0, 0.555, 0), skin)
 
 	_head = _node(_torso, Vector3(0, 0.6, 0))
 	_sphere(_head, 0.105, Vector3(0, 0.07, 0), skin, Vector3(0.92, 1.12, 1.0))
-	var helmet := MeshInstance3D.new()
+	_sphere(_head, 0.03, Vector3(0, 0.055, -0.105), skin, Vector3(0.7, 1.0, 1.0))       # nose
+	_sphere(_head, 0.022, Vector3(-0.1, 0.07, 0), skin, Vector3(0.6, 1.2, 1.0))         # ears
+	_sphere(_head, 0.022, Vector3(0.1, 0.07, 0), skin, Vector3(0.6, 1.2, 1.0))
+	var cap := MeshInstance3D.new()       # short hair
 	var hm := SphereMesh.new()
-	hm.radius = 0.135
-	hm.height = 0.135
+	hm.radius = 0.113
+	hm.height = 0.12
 	hm.is_hemisphere = true
 	hm.radial_segments = 16
 	hm.rings = 6
-	helmet.mesh = hm
-	helmet.material_override = helmet_mat
-	helmet.position = Vector3(0, 0.1, 0.005)
-	_head.add_child(helmet)
-	_box(_head, Vector3(0.17, 0.035, 0.03), Vector3(0, 0.085, -0.1), dark)   # glasses
+	cap.mesh = hm
+	cap.material_override = hair
+	cap.position = Vector3(0, 0.105, 0.008)
+	cap.scale = Vector3(0.95, 1.0, 1.05)
+	_head.add_child(cap)
+	_box(_head, Vector3(0.16, 0.035, 0.02), Vector3(0, 0.085, -0.098), dark)   # sunglasses
 
 	for side in ["l", "r"]:
 		var sx := -1.0 if side == "l" else 1.0
 		# Leg: hip -> knee -> ankle.
 		var thigh := _node(_hips, Vector3(sx * 0.1, -0.03, 0))
-		_capsule(thigh, 0.085, 0.47, Vector3(0, -0.21, 0), camo)
+		_capsule(thigh, 0.085, 0.47, Vector3(0, -0.21, 0), jeans)
 		var knee := _node(thigh, Vector3(0, -0.43, 0))
-		_capsule(knee, 0.066, 0.45, Vector3(0, -0.2, 0), camo)
-		_sphere(knee, 0.07, Vector3(0, 0, -0.035), vest_mat, Vector3(1, 1, 0.7))  # knee pad
+		_capsule(knee, 0.068, 0.46, Vector3(0, -0.2, 0), jeans)
 		var ankle := _node(knee, Vector3(0, -0.41, 0))
-		_capsule(ankle, 0.062, 0.28, Vector3(0, -0.06, -0.05), leather, Vector3(PI * 0.5, 0, 0), Vector3(1, 1, 0.75))
-		_capsule(ankle, 0.065, 0.16, Vector3(0, 0.0, 0.0), leather)
+		_capsule(ankle, 0.058, 0.27, Vector3(0, -0.05, -0.05), shoes, Vector3(PI * 0.5, 0, 0), Vector3(1.05, 1, 0.7))
+		_box(ankle, Vector3(0.11, 0.025, 0.28), Vector3(0, -0.085, -0.05), sole)
 		_legs[side] = {"thigh": thigh, "knee": knee, "ankle": ankle}
-		# Arm: shoulder -> elbow (orientation set by IK every frame).
+		# Arm: short sleeve, bare forearm and hand (orientation set by IK every frame).
 		var shoulder := _node(_torso, Vector3(sx * 0.21, 0.47, 0))
-		_capsule(shoulder, 0.056, UPPER_ARM + 0.06, Vector3(0, -UPPER_ARM * 0.5, 0), camo)
+		_capsule(shoulder, 0.062, 0.2, Vector3(0, -0.06, 0), shirt)
+		_capsule(shoulder, 0.05, UPPER_ARM + 0.02, Vector3(0, -UPPER_ARM * 0.55, 0), skin)
 		var elbow := _node(shoulder, Vector3(0, -UPPER_ARM, 0))
-		_capsule(elbow, 0.047, FOREARM + 0.04, Vector3(0, -FOREARM * 0.5, 0), camo)
-		_sphere(elbow, 0.048, Vector3(0, -FOREARM - 0.03, 0), leather, Vector3(0.8, 1.1, 1.0))
+		_capsule(elbow, 0.043, FOREARM + 0.04, Vector3(0, -FOREARM * 0.5, 0), skin)
+		_sphere(elbow, 0.045, Vector3(0, -FOREARM - 0.03, 0), skin, Vector3(0.75, 1.15, 1.0))
 		_arms[side] = {"shoulder": shoulder, "elbow": elbow}
 
 	_rifle = _build_rifle(_torso)
+	_rifle.visible = look["armed"]
 
 
 func _build_rifle(parent: Node3D) -> Node3D:

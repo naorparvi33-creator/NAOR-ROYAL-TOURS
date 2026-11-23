@@ -1,5 +1,15 @@
 // Shared by the ground and the grass so grass never grows on dirt patches.
 
+// City layout (must match world/city.gd): square blocks on a grid, roads between them,
+// and a park in the central block.
+const float CITY_PITCH = 106.0;   // block + road
+const float ROAD_W = 16.0;        // curb to curb
+const float PARK_HALF = 41.0;     // park lawn half-size (inside the sidewalk ring)
+
+float tn_park(vec2 p) {
+	return step(abs(p.x), PARK_HALF) * step(abs(p.y), PARK_HALF);
+}
+
 float tn_hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
 	p += dot(p, p + 45.32);
@@ -34,5 +44,6 @@ float tn_dirt_mask(vec2 world_xz) {
 	// Worn path along the training course (z = -40..20 near x = 0).
 	float path = 1.0 - smoothstep(1.2, 2.6, abs(world_xz.x - 2.0 + sin(world_xz.y * 0.08) * 3.0));
 	path *= step(-45.0, world_xz.y) * step(world_xz.y, 25.0);
+	path *= step(abs(world_xz.x), PARK_HALF);
 	return clamp(smoothstep(0.58, 0.7, n) + path * 0.9, 0.0, 1.0);
 }

@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dj0yrtq4mrm5o"
-path.s3tc="res://.godot/imported/camo_albedo.jpg-1228c4c6f550581d9fe90cff7f50fc2a.s3tc.ctex"
-path.etc2="res://.godot/imported/camo_albedo.jpg-1228c4c6f550581d9fe90cff7f50fc2a.etc2.ctex"
+uid="uid://b18e36s306pn4"
+path.s3tc="res://.godot/imported/stucco_normal.jpg-f4bb7ff986cd025cc201c5ab274c5391.s3tc.ctex"
+path.etc2="res://.godot/imported/stucco_normal.jpg-f4bb7ff986cd025cc201c5ab274c5391.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/camo_albedo.jpg"
-dest_files=["res://.godot/imported/camo_albedo.jpg-1228c4c6f550581d9fe90cff7f50fc2a.s3tc.ctex", "res://.godot/imported/camo_albedo.jpg-1228c4c6f550581d9fe90cff7f50fc2a.etc2.ctex"]
+source_file="res://assets/textures/stucco_normal.jpg"
+dest_files=["res://.godot/imported/stucco_normal.jpg-f4bb7ff986cd025cc201c5ab274c5391.s3tc.ctex", "res://.godot/imported/stucco_normal.jpg-f4bb7ff986cd025cc201c5ab274c5391.etc2.ctex"]
 
 [params]
 
@@ -23,7 +23,7 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=2
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

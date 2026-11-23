@@ -1,124 +1,23 @@
 extends Node3D
-## Stage-1 test ground (400 x 400 m), now with realistic materials:
-## photo sky (Poly Haven HDRI), scanned ground/concrete/plaster/bark textures,
-## grass that sways, pine trees and natural rocks. The streamed world is stage 3.
+## Central park block: lawn (ground shader), training course, small house,
+## practice targets, crates to pick up, pine trees and rocks.
 
-const SIZE := 400.0
-## Direction toward the sun in the sky photo (measured from the HDRI).
-const SUN_DIR := Vector3(0.374, 0.743, -0.555)
+const PARK_HALF := 41.0
+const CURB := 0.0
 
-var sun: DirectionalLight3D
-var grass: MultiMeshInstance3D
 var _static: StaticBody3D
 
 
 func _ready() -> void:
-	_build_environment()
-	_build_ground()
 	_static = StaticBody3D.new()
-	_static.name = "Course"
+	_static.name = "Park"
 	add_child(_static)
 	_build_course()
-	_build_house(Vector3(-14, 0, -18))
+	_build_house(Vector3(-24, 0, -18))
 	_build_targets()
 	_build_pickups()
 	_build_trees()
 	_build_rocks()
-	grass = preload("res://world/grass_field.gd").new()
-	add_child(grass)
-	Settings.changed.connect(_on_setting)
-	_apply_shadows()
-
-
-func set_follow(n: Node3D) -> void:
-	grass.follow = n
-
-
-func _on_setting(key: String) -> void:
-	if key in ["shadows", "battery_saver"]:
-		_apply_shadows()
-
-
-func _apply_shadows() -> void:
-	sun.shadow_enabled = Perf.shadows_enabled()
-
-
-# ------------------------------------------------------------ environment
-
-func _build_environment() -> void:
-	var sky_mat := PanoramaSkyMaterial.new()
-	sky_mat.panorama = preload("res://assets/sky/sky.jpg")
-	sky_mat.energy_multiplier = 1.0
-	var sky := Sky.new()
-	sky.sky_material = sky_mat
-	sky.process_mode = Sky.PROCESS_MODE_QUALITY   # static sky: lighting is computed once
-	sky.radiance_size = Sky.RADIANCE_SIZE_128
-	var env := Environment.new()
-	env.background_mode = Environment.BG_SKY
-	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.75
-	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-	env.tonemap_mode = Environment.TONE_MAPPER_AGX
-	env.tonemap_exposure = 1.0
-	# Atmospheric haze: distant trees fade into the sky colour like real air.
-	env.fog_enabled = true
-	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	env.fog_density = 0.0035
-	env.fog_light_color = Color(0.72, 0.8, 0.9)
-	env.fog_aerial_perspective = 0.7
-	env.fog_sky_affect = 0.0
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.06
-	env.adjustment_saturation = 1.05
-	env.glow_enabled = false
-	env.ssao_enabled = false
-	var we := WorldEnvironment.new()
-	we.environment = env
-	add_child(we)
-
-	sun = DirectionalLight3D.new()
-	sun.basis = Basis.looking_at(-SUN_DIR, Vector3.UP)
-	sun.light_energy = 2.2
-	sun.light_color = Color(1.0, 0.95, 0.86)
-	sun.light_angular_distance = 0.5          # slightly soft shadow edges, like real sunlight
-	# One sun shadow with a limited range (cheap on mobile).
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_max_distance = 55.0
-	sun.directional_shadow_split_1 = 0.25
-	sun.shadow_bias = 0.04
-	sun.shadow_normal_bias = 1.2
-	add_child(sun)
-
-
-func _build_ground() -> void:
-	var mi := MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(SIZE, SIZE)
-	var mat := ShaderMaterial.new()
-	mat.shader = preload("res://world/ground.gdshader")
-	for n in ["grass", "dirt"]:
-		mat.set_shader_parameter(n + "_albedo", load("res://assets/textures/%s_albedo.jpg" % n))
-		mat.set_shader_parameter(n + "_normal", load("res://assets/textures/%s_normal.jpg" % n))
-		mat.set_shader_parameter(n + "_rough", load("res://assets/textures/%s_rough.jpg" % n))
-	pm.material = mat
-	mi.mesh = pm
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-	var body := StaticBody3D.new()
-	var col := CollisionShape3D.new()
-	col.shape = WorldBoundaryShape3D.new()
-	body.add_child(col)
-	add_child(body)
-	# Invisible walls at the edge of the test ground.
-	for i in 4:
-		var wall := CollisionShape3D.new()
-		var bs := BoxShape3D.new()
-		bs.size = Vector3(SIZE, 20, 1)
-		wall.shape = bs
-		wall.rotation.y = i * PI * 0.5
-		wall.position = Vector3(0, 10, -SIZE * 0.5).rotated(Vector3.UP, i * PI * 0.5)
-		body.add_child(wall)
 
 
 func _block(size: Vector3, pos: Vector3, mat: Material, rot_y := 0.0) -> void:
@@ -228,7 +127,7 @@ func _gable_mesh(width: float, height: float) -> ArrayMesh:
 func _build_targets() -> void:
 	var script := preload("res://world/target.gd")
 	var stand := Mats.pbr("planks", 1.0)
-	var dists := [15.0, 30.0, 50.0, 80.0]
+	var dists := [10.0, 20.0, 30.0]
 	for i in dists.size():
 		var body := StaticBody3D.new()
 		body.set_script(script)
@@ -247,7 +146,7 @@ func _build_targets() -> void:
 		bs.size = bm.size
 		col.shape = bs
 		body.add_child(col)
-		body.position = Vector3(-8 + i * 5.0, 1.0, 10 + dists[i])
+		body.position = Vector3(5.0 + dists[i], 1.0, 14.0 + i * 4.0)
 		add_child(body)
 		# Wooden posts holding the target.
 		for sx in [-0.25, 0.25]:
@@ -269,7 +168,7 @@ func _build_targets() -> void:
 
 func _build_pickups() -> void:
 	var crate := Mats.pbr("planks", 0.6, Color(0.9, 0.85, 0.75))
-	var spots := [Vector3(4, 0, 4), Vector3(-6, 0, 8), Vector3(14, 2.0, -9.5), Vector3(-14, 0.25, -18), Vector3(20, 0, 20)]
+	var spots := [Vector3(4, 0, 4), Vector3(-6, 0, 8), Vector3(14, 2.0, -9.5), Vector3(-24, 0.25, -18), Vector3(25, 0, -25)]
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.6, 0.45, 0.45)
 	for p in spots:
@@ -294,14 +193,17 @@ func _build_trees() -> void:
 	var trunk_body := StaticBody3D.new()
 	add_child(trunk_body)
 	var placed := 0
-	while placed < 170:
-		var p := Vector3(rng.randf_range(-190, 190), 0, rng.randf_range(-190, 190))
-		if p.length() < 35.0:
-			continue  # keep the training area clear
-		# Trees grow in clusters: reject spots far from a forest noise peak.
-		if sin(p.x * 0.03) * cos(p.z * 0.025) < -0.2 and rng.randf() < 0.7:
+	var tries := 0
+	while placed < 26 and tries < 2000:
+		tries += 1
+		var p := Vector3(rng.randf_range(-37, 37), 0, rng.randf_range(-37, 37))
+		if absf(p.x) < 18.0 and p.z < 2.0 and p.z > -50.0:
+			continue  # keep the training course clear
+		if p.distance_to(Vector3(-24, 0, -18)) < 8.0 or p.distance_to(Vector3(0, 0, 30)) < 6.0:
 			continue
-		var s := rng.randf_range(0.8, 1.25)
+		if absf(p.x) < 4.0 and p.z > 0.0:
+			continue
+		var s := rng.randf_range(0.8, 1.15)
 		var b := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s))
 		per_variant[placed % 3].append(Transform3D(b, p))
 		var col := CollisionShape3D.new()
@@ -323,11 +225,11 @@ func _build_rocks() -> void:
 	for v in 3:
 		var mesh := RockBuilder.build(v + 1, rock)
 		var xfs: Array = []
-		for i in 45:
-			var p := Vector3(rng.randf_range(-190, 190), -0.1, rng.randf_range(-190, 190))
-			if p.length() < 22.0:
+		for i in 6:
+			var p := Vector3(rng.randf_range(-38, 38), -0.1, rng.randf_range(-38, 38))
+			if absf(p.x) < 18.0 and p.z < 2.0 and p.z > -50.0:
 				continue
-			var s := rng.randf_range(0.35, 1.4)
+			var s := rng.randf_range(0.35, 1.1)
 			xfs.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)), p))
 		_multimesh(mesh, xfs, GeometryInstance3D.SHADOW_CASTING_SETTING_ON)
 

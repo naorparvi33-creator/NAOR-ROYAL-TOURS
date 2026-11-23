@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://4ui5k4n1hjnk"
-path.s3tc="res://.godot/imported/leather_normal.jpg-f9c3c760df398f3103ce64457c4ff6b8.s3tc.ctex"
-path.etc2="res://.godot/imported/leather_normal.jpg-f9c3c760df398f3103ce64457c4ff6b8.etc2.ctex"
+uid="uid://cucquc8ng3ucx"
+path.s3tc="res://.godot/imported/palmbark_normal.jpg-0bfc4e79fda8ed493cbb147574236ea5.s3tc.ctex"
+path.etc2="res://.godot/imported/palmbark_normal.jpg-0bfc4e79fda8ed493cbb147574236ea5.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/leather_normal.jpg"
-dest_files=["res://.godot/imported/leather_normal.jpg-f9c3c760df398f3103ce64457c4ff6b8.s3tc.ctex", "res://.godot/imported/leather_normal.jpg-f9c3c760df398f3103ce64457c4ff6b8.etc2.ctex"]
+source_file="res://assets/textures/palmbark_normal.jpg"
+dest_files=["res://.godot/imported/palmbark_normal.jpg-0bfc4e79fda8ed493cbb147574236ea5.s3tc.ctex", "res://.godot/imported/palmbark_normal.jpg-0bfc4e79fda8ed493cbb147574236ea5.etc2.ctex"]
 
 [params]
 

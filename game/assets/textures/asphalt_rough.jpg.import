@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ba4jo8ayvxfyc"
-path.s3tc="res://.godot/imported/leather_albedo.jpg-805b317f038e981e846d2c56e7c6dd9f.s3tc.ctex"
-path.etc2="res://.godot/imported/leather_albedo.jpg-805b317f038e981e846d2c56e7c6dd9f.etc2.ctex"
+uid="uid://d1pgpqucy0jhf"
+path.s3tc="res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.s3tc.ctex"
+path.etc2="res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/leather_albedo.jpg"
-dest_files=["res://.godot/imported/leather_albedo.jpg-805b317f038e981e846d2c56e7c6dd9f.s3tc.ctex", "res://.godot/imported/leather_albedo.jpg-805b317f038e981e846d2c56e7c6dd9f.etc2.ctex"]
+source_file="res://assets/textures/asphalt_rough.jpg"
+dest_files=["res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.s3tc.ctex", "res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.etc2.ctex"]
 
 [params]
 

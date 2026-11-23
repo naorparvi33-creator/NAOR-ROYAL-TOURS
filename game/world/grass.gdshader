@@ -25,6 +25,7 @@ void vertex() {
 	float dist = distance(wxz, CAMERA_POSITION_WORLD.xz);
 	float s = mix(0.7, 1.25, h3);
 	s *= 1.0 - tn_dirt_mask(wxz);
+	s *= step(abs(wxz.x), PARK_HALF - 0.4) * step(abs(wxz.y), PARK_HALF - 0.4);  // grass only in the park
 	s *= 1.0 - smoothstep(fade_start, fade_end, dist);
 	s *= smoothstep(0.15, 0.35, tn_noise(wxz * 0.3) + 0.25);  // natural gaps
 
