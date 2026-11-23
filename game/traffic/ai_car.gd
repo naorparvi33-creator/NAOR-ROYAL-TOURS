@@ -44,7 +44,7 @@ var steer_vis := 0.0
 var last_yaw := 0.0
 var braking_vis := false
 
-var _paint_mats: Array[StandardMaterial3D] = []
+var _paint_mats: Array[Material] = []
 var _tail_mat: StandardMaterial3D = null
 var _wheel_meshes: Array[Node3D] = []
 var _spin := 0.0
@@ -65,6 +65,11 @@ func _ready() -> void:
 	for ch in get_children():
 		if ch is MeshInstance3D and (ch as MeshInstance3D).mesh is ArrayMesh:
 			var m: ArrayMesh = (ch as MeshInstance3D).mesh
+			# car_mesh.gd tags its materials (the paint is a shader material).
+			if m.has_meta("paint_mat"):
+				_paint_mats.append(m.get_meta("paint_mat") as Material)
+				_tail_mat = m.get_meta("tail_mat") as StandardMaterial3D
+				break
 			for s in m.get_surface_count():
 				var mat := m.surface_get_material(s) as StandardMaterial3D
 				if mat == null:
@@ -83,7 +88,7 @@ func _ready() -> void:
 func set_paint(c: Color) -> void:
 	paint = c
 	for m in _paint_mats:
-		m.albedo_color = c
+		CarMesh.set_paint_color(m, c)
 
 
 ## Places the kinematic body on the lane (called by traffic.gd every physics tick).
