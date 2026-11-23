@@ -7,7 +7,9 @@ extends Node3D
 
 signal ped_killed(ped: Dictionary)
 
-const MODELS := ["ped_01", "ped_02", "ped_03", "ped_04", "ped_05", "ped_06", "ped_07", "ped_08"]
+const MODELS := ["ped_01", "ped_02", "ped_03", "ped_04", "ped_05", "ped_06", "ped_07", "ped_08",
+	"ped_09", "ped_10", "ped_11", "ped_12", "ped_13", "ped_14", "ped_15", "ped_16"]
+const SWAP_CHANCE := 0.45    # chance a recycled person comes back as somebody else
 const COUNT := 10
 const RECYCLE_DIST := 110.0
 const PATH_INSET := 2.6      # metres from the curb
@@ -26,8 +28,10 @@ var _frame := 0
 func _ready() -> void:
 	add_to_group("panic_listeners")
 	_rng.randomize()
+	var order := MODELS.duplicate()
+	order.shuffle()
 	for i in COUNT:
-		var p := _make_ped(MODELS[i % MODELS.size()])
+		var p := _make_ped(order[i % order.size()])
 		_respawn(p)
 
 
@@ -36,6 +40,7 @@ func _make_ped(model: String) -> Dictionary:
 	m.model_path = "res://assets/characters/%s.glb" % model
 	m.armed = false
 	m.weapon_kind = 0
+	m.idle_style = _random_idle()
 	add_child(m)
 	var body := StaticBody3D.new()
 	body.set_script(preload("res://world/ped_hitbox.gd"))
@@ -51,7 +56,7 @@ func _make_ped(model: String) -> Dictionary:
 	add_child(body)
 	var p := {"node": m, "body": body, "block": Vector2i.ZERO, "s": 0.0, "dir": 1.0, "speed": 1.4,
 		"pause": 0.0, "hp": 100.0, "state": "walk", "timer": 0.0, "fall": 0.0, "knock": Vector3.ZERO,
-		"special": false, "free_target": Vector3.ZERO}
+		"special": false, "free_target": Vector3.ZERO, "model": model}
 	body.manager = self
 	body.ped = p
 	_peds.append(p)
@@ -220,7 +225,39 @@ func _update_dead(p: Dictionary, delta: float) -> void:
 			Fx.blood_pool(Vector3(chest.x, n.global_position.y, chest.z))
 
 
+## Idle mannerisms: about half glance around, a quarter look at their phone.
+func _random_idle() -> int:
+	var r := _rng.randf()
+	if r < 0.25:
+		return 2      # IDLE_PHONE
+	if r < 0.75:
+		return 1      # IDLE_LOOK
+	return 0
+
+
+## A recycled (out of sight) person sometimes comes back as a different member of the cast.
+func _maybe_swap_model(p: Dictionary) -> void:
+	if p["special"] or _rng.randf() > SWAP_CHANCE:
+		return
+	var used := {}
+	for q in _peds:
+		used[q.get("model", "")] = true
+	var free: Array = []
+	for mname in MODELS:
+		if not used.has(mname):
+			free.append(mname)
+	if free.is_empty():
+		return
+	var mname: String = free[_rng.randi() % free.size()]
+	p["model"] = mname
+	var n: Node3D = p["node"]
+	n.change_model("res://assets/characters/%s.glb" % mname)
+	n.idle_style = _random_idle()
+
+
 func _respawn(p: Dictionary) -> void:
+	if _frame > 0:        # not on the first spawn
+		_maybe_swap_model(p)
 	var c: Variant = city
 	var pitch: float = c.PITCH
 	var rings: int = c.RINGS
