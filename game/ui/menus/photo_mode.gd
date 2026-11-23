@@ -11,6 +11,8 @@ const MAX_RADIUS := 80.0
 
 var main: Node
 var active := false
+## Depth of field (focus on what is under the centre); used by world/env/cinematic.gd.
+var dof := true
 
 var _cam: Camera3D
 var _yaw := 0.0
@@ -34,6 +36,7 @@ func _ready() -> void:
 	layer = 25
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
+	Loc.register({"he": {"photo_dof": "עומק שדה"}, "en": {"photo_dof": "Depth of field"}})
 	Loc.language_changed.connect(_build)
 	_build()
 
@@ -58,6 +61,10 @@ func _build() -> void:
 	_bar.add_child(_btn(Loc.t("photo_wide"), func(): _zoom(8.0)))
 	_bar.add_child(_btn(Loc.t("photo_tele"), func(): _zoom(-8.0)))
 	_bar.add_child(_btn(Loc.t("photo_take"), take_photo))
+	var dof_btn := _btn(Loc.t("photo_dof"), func(): dof = not dof)
+	dof_btn.toggle_mode = true
+	dof_btn.button_pressed = dof
+	_bar.add_child(dof_btn)
 	_bar.add_child(_btn(Loc.t("photo_hide_ui"), func(): _set_ui_hidden(true)))
 	_fov_label = Label.new()
 	_fov_label.add_theme_font_size_override("font_size", 24)

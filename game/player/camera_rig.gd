@@ -19,6 +19,13 @@ var sprinting := false
 ## Following a vehicle: longer arm, auto-turns behind the car.
 var vehicle: Node3D = null
 var _idle_look := 0.0
+## Camera feel (cinematic pass): smoothed follow, speed FOV kick, handheld sway and
+## rotational shake. add_shake(0..1) is called on explosions and hard crashes.
+var _follow := Vector3.INF
+var _trauma := 0.0
+var _t := 0.0
+var _last_speed := 0.0
+var _fov_kick := 0.0
 
 var camera: Camera3D
 var _pivot: Node3D
@@ -63,7 +70,13 @@ func _process(delta: float) -> void:
 	var follow: Node3D = vehicle if vehicle else target
 	var tp: Vector3 = follow.get_global_transform_interpolated().origin
 	_eye = lerpf(_eye, eye_height, 1.0 - exp(-12.0 * delta))
-	global_position = tp + Vector3(0, _eye, 0)
+	# Slight follow lag (a camera operator, not a rigid stick); snaps on teleports and
+	# stays tight while aiming so the crosshair is exact.
+	if _follow == Vector3.INF or _follow.distance_to(tp) > 6.0:
+		_follow = tp
+	var lag := 40.0 if aiming else (11.0 if vehicle else 18.0)
+	_follow = _follow.lerp(tp, 1.0 - exp(-lag * delta))
+	global_position = _follow + Vector3(0, _eye, 0)
 	rotation_degrees = Vector3(0, yaw, 0)
 	_pivot.rotation_degrees = Vector3(pitch, 0, 0)
 
@@ -77,7 +90,42 @@ func _process(delta: float) -> void:
 	var fov_target: float = mode["fov"]
 	if sprinting and not aiming:
 		fov_target = SPRINT_FOV
-	camera.fov = lerpf(camera.fov, fov_target, k)
+	var speed := 0.0
+	if vehicle and "linear_velocity" in vehicle:
+		var lv: Vector3 = vehicle.get("linear_velocity")
+		speed = lv.length()
+		# Speed FOV kick, eased in (no pumping at city speeds).
+		fov_target += clampf((speed - 8.0) * 0.32, 0.0, 14.0)
+		# A hard stop (crash) shakes the camera.
+		var drop := _last_speed - speed
+		if drop > 6.0:
+			add_shake(clampf((drop - 6.0) / 14.0 + 0.25, 0.0, 0.8))
+	_last_speed = speed
+	camera.fov = lerpf(camera.fov, fov_target, 1.0 - exp(-(5.0 if vehicle else 14.0) * delta))
+	_apply_feel(delta)
+
+
+## Adds camera shake (0..1, saturates).
+func add_shake(amount: float) -> void:
+	_trauma = clampf(maxf(_trauma, amount), 0.0, 1.0)
+
+
+func _apply_feel(delta: float) -> void:
+	_t += delta
+	_trauma = maxf(_trauma - delta * 1.1, 0.0)
+	# Handheld: a slow, small breathing drift on foot; almost none while aiming or driving.
+	var hand := 0.0 if vehicle else (0.05 if aiming else 0.55)
+	if sprinting:
+		hand = 0.9
+	var sx := (sin(_t * 0.9) * 0.6 + sin(_t * 2.3 + 1.3) * 0.25) * hand
+	var sy := (sin(_t * 0.7 + 0.4) * 0.6 + sin(_t * 1.9 + 2.1) * 0.25) * hand
+	var sz := sin(_t * 0.5 + 0.8) * 0.35 * hand
+	# Trauma shake: squared falloff, fast noise.
+	var sh := _trauma * _trauma
+	sx += (sin(_t * 37.0) + sin(_t * 23.0 + 1.7)) * 1.4 * sh
+	sy += (sin(_t * 31.0 + 0.5) + sin(_t * 19.0 + 2.9)) * 1.4 * sh
+	sz += sin(_t * 27.0 + 0.9) * 1.8 * sh
+	camera.rotation_degrees = Vector3(sx * 0.35, sy * 0.35, sz * 0.5)
 
 
 func _follow_vehicle(delta: float) -> void:
