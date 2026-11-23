@@ -92,6 +92,9 @@ func _build() -> void:
 	_option(c, "veh_tilt", [[Loc.t("off"), 0], [Loc.t("on"), 1], [Loc.t("veh_tilt_inv"), 2]])
 	_slider(c, "veh_tilt_sens", 0.3, 2.5, 0.1)
 	_slider(c, "veh_steer_assist", 0.0, 1.0, 0.05)
+	if Settings.values.has("sniper_scope_mode"):     # registered by weapons/sniper/sniper.gd
+		_option(c, "sniper_scope_mode", [[Loc.t("scope_mode_hold"), 0], [Loc.t("scope_mode_sep"), 1]])
+		_check(c, "sniper_bullet_cam")
 
 	var gen := _tab(Loc.t("tab_general"))
 	_option(gen, "language", [["עברית", "he"], ["English", "en"]])
