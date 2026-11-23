@@ -290,6 +290,11 @@ func _do_context() -> void:
 	if _ctx_kind == "vehicle":
 		enter_vehicle(_ctx_target)
 		return
+	if _ctx_target.has_method("interact"):   # reusable spots (shops, beds, doors)
+		var t := _ctx_target
+		_ctx_target = null                    # rescan, so a changed label shows
+		t.interact(self)
+		return
 	if _ctx_target.has_method("collect"):
 		_ctx_target.collect(self)
 	else:
