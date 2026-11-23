@@ -49,6 +49,7 @@ func _ready() -> void:
 	# MODULES: each feature module is created here with one line, e.g.
 	#   _add_module("res://police/police.gd")
 	# Modules get main (self) through `main` and find player/world/peds/missions/hud on it.
+	_add_module("res://police/police.gd")
 	# (end of modules)
 
 
