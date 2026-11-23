@@ -18,6 +18,10 @@ for imp in sorted(glob.glob(os.path.join(GAME, "assets/characters/*.jpg.import")
     new = re.sub(r"compress/mode=\d+", "compress/mode=2", s)
     new = re.sub(r"compress/normal_map=\d+", "compress/normal_map=%d" % (1 if is_normal else 2), new)
     new = re.sub(r"mipmaps/generate=\w+", "mipmaps/generate=true", new)
+    # Pedestrian normal maps are only seen within the LOD distance (12-30 m): 512 px keeps
+    # the APK size down (1.4 MB -> 0.35 MB each as ETC2). The player keeps full size.
+    if is_normal and name.startswith("ped_") and not name.endswith("hair_cards_n"):
+        new = re.sub(r"process/size_limit=\d+", "process/size_limit=512", new)
     if new != s:
         open(imp, "w").write(new)
         # Drop the cached import so Godot rebuilds it with the new settings.
