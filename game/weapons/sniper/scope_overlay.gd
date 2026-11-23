@@ -278,7 +278,7 @@ func _draw_carry_info() -> void:
 	var txt := "%d/%d   %dx" % [sniper.ammo, sniper.mag_size, roundi(float(sniper.zoom))]
 	if sniper.reload_k < 1.0:
 		txt = Loc.t("snp_reloading")
-	var p := Vector2(size.x * 0.5 - 200 * k, size.y - 82.0 * k)
+	var p := Vector2(size.x * 0.5 - 200 * k, size.y - 112.0 * k)   # above the reserve ammo line (world/interiors)
 	draw_string_outline(_font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 400 * k, fs, 6, Color.BLACK)
 	draw_string(_font, p, txt, HORIZONTAL_ALIGNMENT_CENTER, 400 * k, fs, AMBER)
 	_draw_hitmarker(size * 0.5, k)
