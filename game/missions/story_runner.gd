@@ -340,6 +340,7 @@ func _car(pos: Vector3, dir: Vector3, paint: Color, ai: bool) -> VehicleBody3D:
 		c = MissionCar.new()
 	else:
 		c = preload("res://vehicles/car.gd").new()
+		c.set_meta("player_owned", true)   # a car the story gives you is not stolen
 	c.paint = paint
 	c.peds = peds
 	add_child(c)
@@ -410,12 +411,18 @@ func _equip_longest() -> void:
 		return
 	var best: int = w.current
 	var best_r := -1.0
+	# Weapons still locked in the gun shop (world/interiors) are skipped.
+	var shop: Node = get_tree().get_first_node_in_group("interiors")
 	for i in w.WEAPONS.size():
 		var info: Dictionary = w.WEAPONS[i]
+		if shop and shop.has_method("is_owned") and not shop.is_owned(str(info.get("key", ""))):
+			continue
 		var r := float(info.get("range", 0.0))
 		if r > best_r:
 			best_r = r
 			best = i
+	if shop and shop.has_method("give_mission_ammo"):
+		shop.give_mission_ammo(w.WEAPONS[best], 25)
 	if best != w.current:
 		w.current = best
 		var info: Dictionary = w.WEAPONS[best]

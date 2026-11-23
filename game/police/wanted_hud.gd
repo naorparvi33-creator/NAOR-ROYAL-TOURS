@@ -35,7 +35,7 @@ func _draw() -> void:
 	var pulse: float = police.star_flash
 	var r := 17.0
 	var gap := 42.0
-	var y := 50.0
+	var y := 112.0       # below the day/night clock (world/env/env_clock.gd, y 20..75)
 	for i in 5:
 		# Rightmost star is the first one.
 		var c := Vector2(s.x - 48.0 - i * gap, y)

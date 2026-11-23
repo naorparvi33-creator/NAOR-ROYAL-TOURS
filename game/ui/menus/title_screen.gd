@@ -112,6 +112,9 @@ func _reset_progress() -> void:
 	pl.health = 100.0
 	pl.health_changed.emit(100.0)
 	pl.reset_to_spawn()
+	if "START_POINT" in main:
+		pl.global_position = main.START_POINT    # spawn_point may be the hospital
+		pl.reset_physics_interpolation()
 	pl.rig.yaw = 180.0
 	pl.rig.pitch = -8.0
 	get_tree().call_group("new_game_listeners", "on_new_game")

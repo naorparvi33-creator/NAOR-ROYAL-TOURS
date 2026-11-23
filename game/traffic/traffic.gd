@@ -14,6 +14,7 @@ extends Node3D
 ##    jumps out and runs, and the car becomes the player's (traffic/ai_car.gd).
 ## Cars spawn out of sight 60-150 m from the player and are recycled when far / unseen.
 
+const TRAFFIC_TYPES := ["sedan", "sedan", "sedan", "hatch", "hatch", "sports", "pickup", "van"]
 const AiCar := preload("res://traffic/ai_car.gd")
 
 const RED := 0
@@ -76,6 +77,7 @@ func _ready() -> void:
 		"en": {"traffic_carjack": "The driver ran off - the car is yours"},
 	})
 	Settings.register_defaults({"traffic_density": 1.0})
+	add_to_group("panic_listeners")     # gunfire nearby makes drivers flee
 	if main:
 		player = main.player
 		world = main.world
@@ -88,7 +90,7 @@ func _ready() -> void:
 	_n = (int(world.get("RINGS")) + 1) * 2
 	_update_count()
 	Settings.changed.connect(func(k: String):
-		if k in ["traffic_density", "battery_saver"]:
+		if k in ["traffic_density", "battery_saver", "npc_density"]:
 			_update_count())
 
 	_horn_short = _make_horn(0.28, 1.0)
@@ -113,6 +115,10 @@ func _ready() -> void:
 
 func _update_count() -> void:
 	var dens := clampf(float(Settings.get_value("traffic_density")), 0.0, 2.0)
+	# The quality preset's crowd slider (core/quality.gd) scales traffic too.
+	var npc = Settings.get_value("npc_density")
+	if npc != null:
+		dens *= clampf(float(npc), 0.3, 1.5)
 	var base := 9.0 if Settings.get_value("battery_saver") else 13.0
 	_target_count = clampi(roundi(base * dens), 0, 24)
 
@@ -620,6 +626,8 @@ func _in_view(pos: Vector3, d: float) -> bool:
 
 func _new_car():
 	var c = AiCar.new()
+	# Mixed city traffic (vehicles/vehicle_types.gd); no motorbikes in the AI pool.
+	c.vtype = TRAFFIC_TYPES[_rng.randi() % TRAFFIC_TYPES.size()]
 	c.traffic = self
 	c.paint = CAR_COLORS[_rng.randi() % CAR_COLORS.size()]
 	c.cruise = _rng.randf_range(10.0, 13.5)

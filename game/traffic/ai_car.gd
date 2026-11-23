@@ -48,6 +48,8 @@ var _paint_mats: Array[StandardMaterial3D] = []
 var _tail_mat: StandardMaterial3D = null
 var _wheel_meshes: Array[Node3D] = []
 var _spin := 0.0
+var _ride_y := RIDE_Y         # per vehicle type (vehicles/vehicle_types.gd wheel geometry)
+var _wheel_r := 0.34
 
 
 func _ready() -> void:
@@ -56,6 +58,10 @@ func _ready() -> void:
 	add_to_group("traffic_car")
 	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	freeze = true
+	if spec is Dictionary and spec.has("wheel"):
+		var wh: Dictionary = spec["wheel"]
+		_wheel_r = float(wh["r"])
+		_ride_y = float(wh["r"]) + float(wh["rest"]) - float(wh["y"])
 	for ch in get_children():
 		if ch is MeshInstance3D and (ch as MeshInstance3D).mesh is ArrayMesh:
 			var m: ArrayMesh = (ch as MeshInstance3D).mesh
@@ -86,7 +92,7 @@ func ai_pose(pos: Vector3, fwd: Vector3, accel: float, delta: float) -> void:
 	var b := Basis.looking_at(-fwd, Vector3.UP)
 	# A little nose dive under braking and squat when pulling away.
 	b = b * Basis(Vector3.RIGHT, clampf(accel * 0.006, -0.03, 0.02))
-	global_transform = Transform3D(b, Vector3(pos.x, RIDE_Y, pos.z))
+	global_transform = Transform3D(b, Vector3(pos.x, _ride_y, pos.z))
 	# Wheels: roll with the speed and steer with the path curvature.
 	var yaw := atan2(fwd.x, fwd.z)
 	var yaw_rate := wrapf(yaw - last_yaw, -PI, PI) / maxf(delta, 0.001)
@@ -95,7 +101,7 @@ func ai_pose(pos: Vector3, fwd: Vector3, accel: float, delta: float) -> void:
 	if ai_speed > 0.5:
 		target_steer = clampf(atan(2.7 * yaw_rate / ai_speed), -0.6, 0.6)
 	steer_vis = lerpf(steer_vis, target_steer, 1.0 - exp(-10.0 * delta))
-	_spin = fmod(_spin + ai_speed / 0.34 * delta, TAU)
+	_spin = fmod(_spin + ai_speed / _wheel_r * delta, TAU)
 	steering = steer_vis     # VehicleBody3D turns the front wheel nodes
 	for i in _wheels.size():
 		var w := _wheels[i]

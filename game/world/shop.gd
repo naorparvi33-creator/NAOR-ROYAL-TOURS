@@ -166,6 +166,7 @@ class Register extends Node3D:
 	func collect(player: Node) -> void:
 		player.add_money(randi_range(120, 320))
 		get_tree().call_group("panic_listeners", "on_gunshot", global_position)
+		get_tree().call_group("crime_listeners", "report_crime", "rob", global_position)
 		_cooldown = 120.0
 		set_process(true)
 

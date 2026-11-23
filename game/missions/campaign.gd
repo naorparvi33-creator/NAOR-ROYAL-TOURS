@@ -21,6 +21,7 @@ var _leftover_t := 0.0
 
 
 func _ready() -> void:
+	add_to_group("new_game_listeners")
 	Loc.register(Data.STRINGS)
 	var player: Node3D = main.player
 	var missions: Node = main.missions
@@ -140,6 +141,25 @@ func save_state() -> void:
 		cfg.set_value("campaign", "odd_jobs", (main.missions.completions as Dictionary).duplicate())
 	cfg.save(SAVE_PATH)
 	_update_progress()
+
+
+## Title screen "New game": progress back to the start (the save file is already gone).
+func on_new_game() -> void:
+	if story.is_active():
+		story.abort()
+	story.story_index = 0
+	for o in owls._owls:
+		(o[1] as Node).queue_free()
+	owls._owls.clear()
+	owls.found = []
+	owls._place()
+	stunts.done = []
+	events.done_count = 0
+	if "completions" in main.missions:
+		main.missions.completions = {}
+	if story.has_method("_update_marker"):
+		story._update_marker()
+	save_state()
 
 
 func _load_state() -> void:

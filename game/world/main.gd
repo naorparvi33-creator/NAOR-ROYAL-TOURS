@@ -3,6 +3,9 @@ extends Node3D
 ## Also saves the game when Android sends the app to the background.
 
 const SAVE_PATH := "user://save.cfg"
+## Where a new game starts. player.spawn_point (respawn after death) may be moved
+## by modules, e.g. to the hospital (world/interiors).
+const START_POINT := Vector3(2, 0.4, 43)
 
 var player: CharacterBody3D
 var hud: CanvasLayer
@@ -22,7 +25,7 @@ func _ready() -> void:
 	player = preload("res://player/player.gd").new()
 	player.name = "Player"
 	add_child(player)
-	player.spawn_point = Vector3(2, 0.4, 43)
+	player.spawn_point = START_POINT
 	player.position = player.spawn_point
 	world.set_follow(player)
 	player.rig.yaw = 180.0   # face the street

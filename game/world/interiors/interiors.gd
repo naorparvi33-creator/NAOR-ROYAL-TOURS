@@ -88,6 +88,8 @@ var _busy := false
 
 func _ready() -> void:
 	Loc.register(Strings.TABLE)
+	add_to_group("interiors")     # missions ask is_owned() / give_mission_ammo()
+	add_to_group("new_game_listeners")
 	player = main.player
 	_load_state()
 	_build_sites()
@@ -552,6 +554,7 @@ func _restore_garage_car() -> void:
 		paint = cfg.get_value("garage", "paint", paint)
 		hp = cfg.get_value("garage", "health", 100.0)
 	var car: VehicleBody3D = preload("res://vehicles/car.gd").new()
+	car.set_meta("player_owned", true)     # your own garage car is never "stolen"
 	car.paint = paint
 	var info: Dictionary = sites["safehouse"]["info"]
 	var pos := _garage_root.to_global(info["garage_car"])
@@ -588,6 +591,26 @@ func _class_of(wd: Dictionary) -> String:
 		2:
 			return "rifle"
 	return ""
+
+
+## Title screen "New game": purchases, ammo and armour back to the defaults.
+func on_new_game() -> void:
+	armour = 0.0
+	ammo = {"pistol": 60, "rifle": 0, "sniper": 20}
+	owned = {}
+	outfits = ["street"]
+	outfit = "street"
+	player.set_meta("armour", armour)
+	apply_outfit()
+	_fix_weapon()
+	_save_state()
+
+
+## Missions that hand the player a weapon make sure it has some rounds.
+func give_mission_ammo(wd: Dictionary, at_least: int) -> void:
+	var cls := _class_of(wd)
+	if cls != "":
+		ammo[cls] = maxi(int(ammo.get(cls, 0)), at_least)
 
 
 func is_owned(key: String) -> bool:

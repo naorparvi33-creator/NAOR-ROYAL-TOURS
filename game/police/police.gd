@@ -88,6 +88,7 @@ func _ready() -> void:
 	peds = main.peds
 	add_to_group("panic_listeners")
 	add_to_group("crime_listeners")
+	add_to_group("new_game_listeners")
 	if player.weapon and player.weapon.has_signal("fired"):
 		player.weapon.fired.connect(_on_player_fired)
 	if peds and peds.has_signal("ped_killed"):
@@ -158,9 +159,8 @@ func _check_gunshot(pos: Vector3) -> void:
 		return
 	if pos.distance_to(player.global_position + Vector3(0, 1.45, 0)) < 0.05:
 		return       # player's muzzle (a weapon that does not emit `fired`)
-	# A loud event right next to the player that was not a shot: the register alarm.
-	if pos.distance_to(player.global_position) < 4.5:
-		report_crime("rob", pos)
+	# Robbery is reported directly by world/shop.gd (Register.collect -> report_crime "rob"),
+	# so explosions and enemy gunfire next to the player are not mistaken for one.
 
 
 func _on_player_fired() -> void:
@@ -651,6 +651,10 @@ func _clear(lost: bool) -> void:
 	if lost and had:
 		_toast(Loc.t("police_lost"))
 		Sfx.play_ui("mission_done")
+
+
+func on_new_game() -> void:
+	_clear(false)
 
 
 func _toast(text: String) -> void:
