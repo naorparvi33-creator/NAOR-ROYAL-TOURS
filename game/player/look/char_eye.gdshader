@@ -8,8 +8,14 @@ uniform sampler2D albedo_tex : source_color, filter_linear_mipmap, hint_default_
 uniform vec4 albedo_color : source_color = vec4(1.0);
 uniform float catchlight = 0.55;
 
+// The generator's iris covers ~55 % of the eye texture, so it filled nearly the whole eye
+// opening (no white showing: a doll / alien stare). Zooming the texture out around its
+// centre gives a natural iris size with sclera visible on both sides.
+uniform float iris_scale = 1.6;
+
 void fragment() {
-	vec4 a = texture(albedo_tex, UV) * albedo_color;
+	vec2 uv = clamp((UV - 0.5) * iris_scale + 0.5, vec2(0.01), vec2(0.99));
+	vec4 a = texture(albedo_tex, uv) * albedo_color;
 	vec3 c = a.rgb;
 	float lum = dot(c, vec3(0.3, 0.59, 0.11));
 	// Sclera (bright, unsaturated) a touch darker and warmer.
@@ -21,7 +27,7 @@ void fragment() {
 	SPECULAR = 0.6;
 	// Catchlight: a small soft reflection on the cornea at the edge of the pupil (the eye
 	// texture has the iris centred in UV space), plus a view-dependent glint.
-	float dsp = length(UV - vec2(0.44, 0.43));
+	float dsp = length(uv - vec2(0.44, 0.43));
 	float spot = smoothstep(0.04, 0.018, dsp);
 	vec3 r = reflect(-VIEW, NORMAL);
 	float s = max(dot(r, normalize(vec3(-0.2, 0.3, 1.0))), 0.0);

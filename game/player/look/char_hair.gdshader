@@ -29,8 +29,10 @@ void fragment() {
 	ALBEDO = base;
 	NORMAL_MAP = texture(normal_tex, UV).xyz;
 	NORMAL_MAP_DEPTH = normal_depth;
-	ROUGHNESS = 0.5;
-	SPECULAR = 0.3;
+	// Sky reflection on hair is weak and blurry (fibres scatter it); at 0.3 / 0.5 the top
+	// of the head mirrored the bright sky as a grey sheen.
+	ROUGHNESS = 0.65;
+	SPECULAR = 0.12;
 	v_strand = normalize(BINORMAL);
 	v_shift = (t.r - 0.75) * 0.6;
 #ifdef FUZZY
@@ -58,8 +60,10 @@ void light() {
 	vec3 h = normalize(LIGHT + VIEW);
 	vec3 t1 = normalize(v_strand + NORMAL * (v_shift - 0.12));
 	vec3 t2 = normalize(v_strand + NORMAL * (v_shift + 0.18));
-	float s = kk(t1, h, 120.0) * 0.07;
-	vec3 sc = vec3(s) + kk(t2, h, 28.0) * 0.06 * (ALBEDO * 1.5 + 0.1);
+	// Kept low: in the direct low sun a stronger primary lobe turned dark hair into a
+	// silver helmet. The primary takes a little of the hair colour, like real fibres.
+	float s = kk(t1, h, 120.0) * 0.03;
+	vec3 sc = s * mix(vec3(1.0), ALBEDO * 4.0 + 0.2, 0.4) + kk(t2, h, 28.0) * 0.04 * (ALBEDO * 1.5 + 0.1);
 	sc *= smoothstep(-0.2, 0.35, ndl);
 	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * sc * spec_strength;
 }

@@ -48,6 +48,11 @@ void fragment() {
 	ROUGHNESS = clamp(roughness_base + pore * 0.15 - lips * 0.15 + hairy * 0.2, 0.3, 0.9);
 	SPECULAR = mix(0.35, 0.55, lips);
 	METALLIC = 0.0;
+	// Hemispherical occlusion: surfaces facing down (under the brows, nose, chin, jaw)
+	// get less sky light. In shade this is what gives the face its form back.
+	float wy = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
+	AO = mix(0.5, 1.0, smoothstep(-0.75, 0.55, wy));
+	AO_LIGHT_AFFECT = 0.0;
 }
 
 float d_ggx(float ndh, float r) {
