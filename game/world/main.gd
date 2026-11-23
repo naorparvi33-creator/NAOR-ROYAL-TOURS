@@ -49,6 +49,7 @@ func _ready() -> void:
 	# MODULES: each feature module is created here with one line, e.g.
 	#   _add_module("res://police/police.gd")
 	# Modules get main (self) through `main` and find player/world/peds/missions/hud on it.
+	_add_module("res://missions/campaign.gd")
 	# (end of modules)
 
 
@@ -91,6 +92,7 @@ func _save_game() -> void:
 	if player == null:
 		return
 	var cfg := ConfigFile.new()
+	cfg.load(SAVE_PATH)   # keep sections written by modules (campaign progress, ...)
 	cfg.set_value("player", "position", player.global_position)
 	cfg.set_value("player", "yaw", player.rig.yaw)
 	cfg.set_value("player", "money", player.money)
