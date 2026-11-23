@@ -53,6 +53,7 @@ func _ready() -> void:
 	_add_module("res://world/env/day_night.gd")
 	_add_module("res://vehicles/vehicle_fx.gd")
 	_add_module("res://traffic/traffic.gd")
+	_add_module("res://police/police.gd")
 	# (end of modules)
 
 
