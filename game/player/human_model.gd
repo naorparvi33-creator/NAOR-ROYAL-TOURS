@@ -30,6 +30,12 @@ var _stride := 0.0
 var _crouch := 0.0
 var _aim := 0.0
 var _air := 0.0
+## Animation LOD (pedestrians): skip the bone update when off-screen or out of draw range,
+## and pose every second call when far. The player's own model always animates.
+var lod_enabled := true
+var _lod_tick := 0
+static var lod_posed := 0
+static var lod_skipped := 0
 
 
 func _ready() -> void:
@@ -50,6 +56,7 @@ func _ready() -> void:
 	pistol = RifleMesh.build_pistol()
 	skeleton.add_child(pistol)
 	set_weapon(weapon_kind if armed else 0)
+	lod_enabled = not (get_parent() != null and get_parent().is_in_group("player"))
 	for g in _visual.find_children("*", "GeometryInstance3D", true, false):
 		(g as GeometryInstance3D).visibility_range_end = 120.0
 
@@ -93,7 +100,28 @@ func animate(delta: float, speed: float, on_floor: bool, crouching: bool, aiming
 		_phase = fmod(_phase + delta * (5.2 + speed * 0.9), TAU)
 	_punch = maxf(_punch - delta / 0.32, 0.0)
 	_flinch = maxf(_flinch - delta / 0.3, 0.0)
+	if lod_enabled and not _lod_should_pose():
+		lod_skipped += 1
+		return
+	lod_posed += 1
 	pose()
+
+
+func _lod_should_pose() -> bool:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or not is_visible_in_tree():
+		return false
+	var c := global_position + Vector3(0, 0.9, 0)
+	var d := cam.global_position.distance_to(c)
+	if d > 125.0:
+		return false               # beyond the model's visibility range
+	for pl in cam.get_frustum():
+		if (pl as Plane).distance_to(c) > 1.2:
+			return false           # whole body outside the view
+	if d > 60.0:
+		_lod_tick += 1
+		return _lod_tick % 2 == 0
+	return true
 
 
 func pose() -> void:

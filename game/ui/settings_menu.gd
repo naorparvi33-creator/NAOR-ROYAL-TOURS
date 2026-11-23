@@ -55,6 +55,7 @@ func _build() -> void:
 	root.add_child(_tabs)
 
 	var g := _tab(Loc.t("tab_graphics"))
+	_option(g, "quality_preset", [[Loc.t("q_auto"), "auto"], [Loc.t("q_low"), "low"], [Loc.t("q_medium"), "medium"], [Loc.t("q_high"), "high"], [Loc.t("q_custom"), "custom"]])
 	_option(g, "fps_cap", [["60", 60], ["90", 90], ["120", 120]])
 	_check(g, "battery_saver")
 	_check(g, "dynamic_res")
@@ -62,6 +63,7 @@ func _build() -> void:
 	_check(g, "shadows")
 	_check(g, "grass")
 	_slider(g, "draw_distance", 150.0, 1500.0, 50.0)
+	_slider(g, "npc_density", 0.3, 1.5, 0.1)
 	_check(g, "show_perf")
 	_slider(g, "music_volume", 0.0, 1.0, 0.05)
 	_slider(g, "sfx_volume", 0.0, 1.0, 0.05)
@@ -84,6 +86,7 @@ func _build() -> void:
 	_slider(c, "gyro_sens", 0.2, 3.0, 0.1)
 	_check(c, "auto_fire")
 	_slider(c, "aim_assist", 0.0, 1.0, 0.05)
+	_check(c, "vibration")
 
 	var gen := _tab(Loc.t("tab_general"))
 	_option(gen, "language", [["עברית", "he"], ["English", "en"]])
