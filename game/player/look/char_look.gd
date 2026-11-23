@@ -110,7 +110,13 @@ static func _convert(src: Material, tier: String) -> Material:
 		"lash":
 			# Lashes: darker and matte, so the lash strips stop catching the blue sky.
 			var lm := bm.duplicate() as BaseMaterial3D
-			lm.albedo_color = bm.albedo_color.darkened(0.45)
+			# The lash helpers are solid cards (no strand texture): drawn opaque they read as
+			# thick eyeliner. Half-transparent dark brown reads as lashes instead.
+			var lc := bm.albedo_color.lerp(Color(0.09, 0.06, 0.045), 0.5)
+			lc.a = 0.5
+			lm.albedo_color = lc
+			lm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			lm.render_priority = 1
 			lm.roughness = 1.0
 			lm.metallic_specular = 0.1
 			_cache[key] = lm
