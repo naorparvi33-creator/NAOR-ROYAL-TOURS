@@ -12,6 +12,10 @@ const WEAPONS := [
 	{"key": "weapon_fists", "kind": 0, "rate": 2.6, "damage": 34.0, "range": 1.8, "recoil": 0.0, "spread": 0.0, "auto": true, "sound": "punch"},
 	{"key": "weapon_pistol", "kind": 1, "rate": 4.0, "damage": 40.0, "range": 250.0, "recoil": 0.9, "spread": 0.35, "auto": false, "sound": "gun_pistol"},
 	{"key": "weapon_rifle", "kind": 2, "rate": 9.0, "damage": 30.0, "range": 400.0, "recoil": 0.38, "spread": 0.6, "auto": true, "sound": "gun_rifle"},
+	# Sniper rifles: fired by weapons/sniper/sniper.gd with real projectile ballistics.
+	{"key": "weapon_sniper_light", "kind": 2, "sniper": "light", "rate": 1.0, "damage": 90.0, "range": 1500.0, "recoil": 0.0, "spread": 0.0, "auto": false, "sound": "gun_rifle"},
+	{"key": "weapon_sniper_medium", "kind": 2, "sniper": "medium", "rate": 1.0, "damage": 115.0, "range": 1500.0, "recoil": 0.0, "spread": 0.0, "auto": false, "sound": "gun_rifle"},
+	{"key": "weapon_sniper_heavy", "kind": 2, "sniper": "heavy", "rate": 1.0, "damage": 160.0, "range": 1500.0, "recoil": 0.0, "spread": 0.0, "auto": false, "sound": "gun_rifle"},
 ]
 const HIT_MASK := 1 | 4      # world + people
 const POOL := 14
@@ -59,6 +63,9 @@ func _physics_process(delta: float) -> void:
 		player.model.set_weapon(WEAPONS[current]["kind"])
 		weapon_changed.emit(WEAPONS[current]["key"])
 	var w: Dictionary = WEAPONS[current]
+	if w.has("sniper"):
+		_was_firing = GameInput.is_firing()
+		return     # sniper rifles are fired by weapons/sniper/sniper.gd
 	var firing := GameInput.is_firing()
 	var trigger: bool = firing and (w["auto"] or not _was_firing)
 	_was_firing = firing
