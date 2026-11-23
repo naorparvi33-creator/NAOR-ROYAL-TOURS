@@ -16,6 +16,9 @@ const DEFAULTS := {
 	"grass": true,
 	"draw_distance": 400.0,
 	"show_perf": true,
+	"music_volume": 0.7,
+	"sfx_volume": 1.0,
+	"blood": true,
 	# controls
 	"layout_preset": "two_thumbs",   # two_thumbs / four_fingers
 	"sens_look": 1.0,

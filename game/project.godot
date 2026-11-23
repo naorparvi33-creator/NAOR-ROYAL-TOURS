@@ -17,6 +17,8 @@ Loc="*res://core/loc.gd"
 Settings="*res://core/settings.gd"
 GameInput="*res://core/game_input.gd"
 Perf="*res://core/perf.gd"
+Sfx="*res://core/sfx.gd"
+Fx="*res://core/fx.gd"
 
 [display]
 

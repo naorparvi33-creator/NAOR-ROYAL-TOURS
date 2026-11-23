@@ -6,6 +6,7 @@ const SAVE_PATH := "user://save.cfg"
 
 var player: CharacterBody3D
 var hud: CanvasLayer
+var missions: Node3D
 
 
 func _ready() -> void:
@@ -29,8 +30,17 @@ func _ready() -> void:
 	peds.player = player
 	peds.city = world
 	add_child(peds)
+	for v in get_tree().get_nodes_in_group("vehicle"):
+		v.peds = peds
+
+	missions = preload("res://missions/mission_manager.gd").new()
+	missions.player = player
+	missions.city = world
+	missions.peds = peds
+	add_child(missions)
 
 	hud = preload("res://ui/hud.gd").new()
+	hud.missions = missions
 	hud.player = player
 	add_child(hud)
 
@@ -67,6 +77,7 @@ func _save_game() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("player", "position", player.global_position)
 	cfg.set_value("player", "yaw", player.rig.yaw)
+	cfg.set_value("player", "money", player.money)
 	cfg.save(SAVE_PATH)
 
 
@@ -76,3 +87,4 @@ func _load_game() -> void:
 		return
 	player.position = cfg.get_value("player", "position", player.spawn_point)
 	player.rig.yaw = cfg.get_value("player", "yaw", 0.0)
+	player.money = cfg.get_value("player", "money", 0)

@@ -9,6 +9,11 @@ const MODELS := "res://assets/models/%s/%s.gltf"
 const SHOP_CELL := 4.5        # must match building.gdshader shop window spacing
 const PARK_LANE := 46.3       # parking lane centre, measured from the block centre
 
+const MAX_DRIVABLE := 14
+const CAR_COLORS := [Color(0.55, 0.04, 0.05), Color(0.05, 0.08, 0.16), Color(0.85, 0.85, 0.83),
+	Color(0.08, 0.08, 0.09), Color(0.45, 0.47, 0.5), Color(0.12, 0.28, 0.5), Color(0.8, 0.55, 0.1), Color(0.15, 0.3, 0.18)]
+
+var _drivable := 0
 var _city: Node3D
 var _static: StaticBody3D
 var _scenes := {}
@@ -86,14 +91,38 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 					for t in [-22.0, 0.0, 22.0]:
 						var bp: Vector3 = center + out * (half - 4.6) + along * (float(t) + 5.5)
 						_place("painted_wooden_bench", Transform3D(Basis.looking_at(-out, Vector3.UP), bp), 40.0, false, Vector3(1.2, 0.9, 0.5))
-				# Parked covered cars in the curb lane (kept clear of the crossings).
+				# Parked cars in the curb lane (kept clear of the crossings). Drivable cars
+				# get an empty space in front and behind so they can pull out.
+				var slots: Array = []
+				var near_start := absi(i) <= 1 and absi(j) <= 1
 				var t := -32.0
 				while t < 32.0:
-					if rng.randf() < 0.3:
-						var cp := Vector3(center.x, 0.0, center.z) + out * PARK_LANE + along * t
+					var kind := ""
+					if near_start and _drivable < MAX_DRIVABLE and rng.randf() < 0.16:
+						kind = "drive"
+						_drivable += 1
+					elif rng.randf() < 0.3:
+						kind = "covered"
+					slots.append([t, kind])
+					t += 7.0
+				for k in slots.size():
+					if slots[k][1] == "drive":
+						if k > 0 and slots[k - 1][1] == "covered":
+							slots[k - 1][1] = ""
+						if k + 1 < slots.size() and slots[k + 1][1] == "covered":
+							slots[k + 1][1] = ""
+				for sl in slots:
+					var st: float = sl[0]
+					if sl[1] == "drive":
+						var cp := Vector3(center.x, 0.25, center.z) + out * PARK_LANE + along * st
+						var car: VehicleBody3D = preload("res://vehicles/car.gd").new()
+						car.paint = CAR_COLORS[rng.randi() % CAR_COLORS.size()]
+						car.transform = Transform3D(Basis.looking_at(-along, Vector3.UP), cp)
+						_city.add_child(car)
+					elif sl[1] == "covered":
+						var cp := Vector3(center.x, 0.0, center.z) + out * PARK_LANE + along * st
 						var cb := Basis.looking_at(along if rng.randf() < 0.5 else -along, Vector3.UP)
 						_place("covered_car", Transform3D(cb, cp), 90.0, true, Vector3(1.8, 1.4, 4.4))
-					t += 7.0
 
 
 ## Instantiates a model, limits its draw distance and adds a box collider if given.

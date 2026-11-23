@@ -3,6 +3,8 @@ extends CanvasLayer
 ## the button layout editor.
 
 var player: CharacterBody3D
+var missions: Node3D
+var game_hud: Control
 var touch: Control
 var crosshair: Control
 var menu: Control
@@ -24,6 +26,11 @@ func _ready() -> void:
 	crosshair = preload("res://ui/crosshair.gd").new()
 	crosshair.player = player
 	add_child(crosshair)
+
+	game_hud = preload("res://ui/game_hud.gd").new()
+	game_hud.player = player
+	game_hud.missions = missions
+	add_child(game_hud)
 
 	touch = preload("res://ui/touch_controls.gd").new()
 	add_child(touch)
@@ -77,6 +84,11 @@ func _ready() -> void:
 	player.weapon.weapon_changed.connect(func(k):
 		_weapon_key = k
 		_update_info())
+	player.vehicle_changed.connect(func(v):
+		crosshair.visible = v == null
+		_update_info())
+	player.money_changed.connect(func(_m): _update_info())
+	Sfx.station_changed.connect(func(k): toast(Loc.t(k)))
 	player.weapon.hit.connect(crosshair.show_hit)
 	player.weapon.fired.connect(crosshair.kick)
 	Loc.language_changed.connect(_update_info)
@@ -119,7 +131,10 @@ func toast(text: String) -> void:
 
 
 func _update_info() -> void:
-	_info_label.text = "%s   |   %s: %d" % [Loc.t(_weapon_key), Loc.t("collected"), _collected]
+	if player.in_vehicle:
+		_info_label.text = ""
+	else:
+		_info_label.text = Loc.t(_weapon_key)
 
 
 func _update_perf() -> void:

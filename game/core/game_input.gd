@@ -8,6 +8,11 @@ var touch_sprint := false
 var fire_held := false          # main fire button (touch)
 var fire_alt_held := false      # second fire button (touch)
 var menu_open := false
+## Driving (set by the touch HUD or keyboard while in a vehicle).
+var vehicle_mode := false
+var drive_gas := false
+var drive_brake := false
+var drive_handbrake := false
 
 ## Accumulated look rotation in degrees (x = yaw, y = pitch). Consumed once per frame.
 var _look := Vector2.ZERO
@@ -39,6 +44,7 @@ func _setup_actions() -> void:
 	_add_action("context", [_key(KEY_E), _btn(JOY_BUTTON_X)])
 	_add_action("sprint", [_key(KEY_SHIFT), _btn(JOY_BUTTON_LEFT_STICK)])
 	_add_action("menu", [_key(KEY_ESCAPE), _btn(JOY_BUTTON_START)])
+	_add_action("radio", [_key(KEY_T), _btn(JOY_BUTTON_DPAD_UP)])
 
 
 func _add_action(action_name: String, events: Array) -> void:
@@ -69,7 +75,7 @@ func _axis(a: JoyAxis, v: float) -> InputEventJoypadMotion:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Keyboard / gamepad one-shot actions.
-	for a in ["jump", "crouch", "swap", "context", "menu", "ads"]:
+	for a in ["jump", "crouch", "swap", "context", "menu", "ads", "radio"]:
 		if event.is_action_pressed(a):
 			pulse(a)
 
@@ -139,8 +145,31 @@ func consume(action: String) -> bool:
 	return false
 
 
+func _physics_process(_delta: float) -> void:
+	if vehicle_mode and not menu_open:
+		# Keyboard / gamepad driving extras (touch sets the same flags from the HUD).
+		if Input.is_action_pressed("jump"):
+			drive_handbrake = true
+		elif not _touch_handbrake:
+			drive_handbrake = false
+
+
+var _touch_handbrake := false
+
+
+func set_touch_drive(gas: bool, brake: bool, hand: bool) -> void:
+	drive_gas = gas
+	drive_brake = brake
+	_touch_handbrake = hand
+	drive_handbrake = hand
+
+
 func reset_touch() -> void:
 	touch_move = Vector2.ZERO
 	touch_sprint = false
 	fire_held = false
 	fire_alt_held = false
+	drive_gas = false
+	drive_brake = false
+	drive_handbrake = false
+	_touch_handbrake = false

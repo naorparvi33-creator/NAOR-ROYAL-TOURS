@@ -12,7 +12,7 @@ func setup(mat: StandardMaterial3D) -> void:
 	set_process(false)
 
 
-func on_hit(_point: Vector3) -> void:
+func on_hit(_point: Vector3, _damage := 0.0, _dir := Vector3.ZERO, _bullet := true) -> void:
 	_flash = 1.0
 	set_process(true)
 

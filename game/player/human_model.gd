@@ -12,10 +12,16 @@ const RIGHT := Vector3(-1, 0, 0)    # character's right side in skeleton space
 
 @export var model_path := "res://assets/characters/player.glb"
 var armed := true
+## 0 = fists / nothing, 1 = pistol, 2 = rifle
+var weapon_kind := 2
 
 var skeleton: Skeleton3D
 var rifle: Node3D
+var pistol: Node3D
 var _visual: Node3D
+var _punch := 0.0
+var _punch_side := "r"
+var _flinch := 0.0
 var _b := {}            # bone name -> index
 var _rest := {}         # bone name -> global rest Transform3D
 var _len := {}
@@ -41,15 +47,34 @@ func _ready() -> void:
 	_len["fore"] = _pos("hand_l").distance_to(_pos("lowerarm_l"))
 	rifle = RifleMesh.build()
 	skeleton.add_child(rifle)
-	rifle.visible = armed
+	pistol = RifleMesh.build_pistol()
+	skeleton.add_child(pistol)
+	set_weapon(weapon_kind if armed else 0)
 	for g in _visual.find_children("*", "GeometryInstance3D", true, false):
 		(g as GeometryInstance3D).visibility_range_end = 120.0
 
 
 func set_armed(on: bool) -> void:
-	armed = on
+	set_weapon(2 if on else 0)
+
+
+func set_weapon(kind: int) -> void:
+	weapon_kind = kind
+	armed = kind > 0
 	if rifle:
-		rifle.visible = on
+		rifle.visible = kind == 2
+		pistol.visible = kind == 1
+
+
+## Starts a punch (alternating hands).
+func punch() -> void:
+	_punch = 1.0
+	_punch_side = "l" if _punch_side == "r" else "r"
+
+
+## Short recoil of the upper body when hit.
+func flinch() -> void:
+	_flinch = 1.0
 
 
 func _pos(bone: String) -> Vector3:
@@ -66,6 +91,8 @@ func animate(delta: float, speed: float, on_floor: bool, crouching: bool, aiming
 	if on_floor and speed > 0.15:
 		# Cadence rises with speed; stride length does the rest.
 		_phase = fmod(_phase + delta * (5.2 + speed * 0.9), TAU)
+	_punch = maxf(_punch - delta / 0.32, 0.0)
+	_flinch = maxf(_flinch - delta / 0.3, 0.0)
 	pose()
 
 
@@ -78,7 +105,7 @@ func pose() -> void:
 	var pelvis_off := Vector3(sin(_phase) * 0.02 * run, bob - _crouch * 0.38 - _air * 0.04, 0)
 	_offset_bone("pelvis", pelvis_off)
 	_rotate_bone("pelvis", UP, sin(_phase) * 0.12 * run)
-	_rotate_bone("spine_01", RIGHT, -(0.08 * run + _crouch * 0.25))
+	_rotate_bone("spine_01", RIGHT, -(0.08 * run + _crouch * 0.25) + _flinch * 0.35)
 	_rotate_bone("spine_02", UP, -sin(_phase) * 0.1 * run * (1.0 - _aim))
 	_rotate_bone("neck_01", RIGHT, 0.06 * run + _crouch * 0.15)
 
@@ -98,13 +125,32 @@ func pose() -> void:
 		_leg_ik(side, hip, target)
 
 	# ---- arms
-	if armed:
-		var chest := skeleton.get_bone_global_pose(_b["spine_03"]).origin
+	var chest := skeleton.get_bone_global_pose(_b["spine_03"]).origin
+	if weapon_kind == 1:
+		# Pistol: held low in both hands, raised to eye line when aiming.
+		var plow := Transform3D(Basis(RIGHT, 0.7).rotated(UP, PI), chest + RIGHT * 0.05 + FWD * 0.3 + UP * -0.22)
+		var pup := Transform3D(Basis(UP, PI), chest + RIGHT * 0.06 + FWD * 0.5 + UP * 0.2)
+		pistol.transform = plow.interpolate_with(pup, _aim)
+		var grip := pistol.transform * Vector3(0, -0.04, 0.03)
+		_arm_ik("r", grip, RIGHT * 1.0 + UP * -1.0 + FWD * -0.2)
+		_arm_ik("l", grip + RIGHT * -0.03 + UP * -0.02, -RIGHT * 1.0 + UP * -1.0 + FWD * -0.2)
+	elif weapon_kind == 2:
 		var low := Transform3D(Basis(RIGHT, 0.45).rotated(UP, PI), chest + RIGHT * 0.12 + FWD * 0.3 + UP * -0.1)
 		var up := Transform3D(Basis(UP, PI), chest + RIGHT * 0.1 + FWD * 0.4 + UP * 0.16)   # stock on the shoulder
 		rifle.transform = low.interpolate_with(up, _aim)
 		_arm_ik("r", rifle.transform * Vector3(0, -0.03, 0.0), RIGHT * 1.0 + UP * -1.0 + FWD * -0.3)
 		_arm_ik("l", rifle.transform * Vector3(0, 0.0, -0.28), -RIGHT * 0.6 + UP * -1.0 + FWD * -0.2)
+	elif _punch > 0.0:
+		# Punch: one fist shoots forward at chin height, the other guards the face.
+		var reach := sin(_punch * PI)
+		for side in ["l", "r"]:
+			var sx := -1.0 if side == "r" else 1.0
+			var guard := chest + UP * 0.3 + FWD * 0.22 + Vector3(sx * 0.1, 0, 0)
+			var target := guard
+			if side == _punch_side:
+				target = chest + UP * 0.28 + FWD * (0.25 + 0.42 * reach) + Vector3(sx * 0.03, 0, 0)
+			_arm_ik(side, target, Vector3(sx, -1.0, -0.3))
+		_rotate_bone("spine_02", UP, (0.35 if _punch_side == "r" else -0.35) * reach)
 	else:
 		for side in ["l", "r"]:
 			var ph := _phase + (PI if side == "l" else 0.0)

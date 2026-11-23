@@ -63,6 +63,9 @@ func _build() -> void:
 	_check(g, "grass")
 	_slider(g, "draw_distance", 150.0, 1500.0, 50.0)
 	_check(g, "show_perf")
+	_slider(g, "music_volume", 0.0, 1.0, 0.05)
+	_slider(g, "sfx_volume", 0.0, 1.0, 0.05)
+	_check(g, "blood")
 
 	var c := _tab(Loc.t("tab_controls"))
 	_option(c, "layout_preset", [[Loc.t("layout_2"), "two_thumbs"], [Loc.t("layout_4"), "four_fingers"]], "layout")

@@ -4,6 +4,10 @@ extends CharacterBody3D
 
 signal context_changed(visible: bool, label: String)
 signal collected_changed(count: int)
+signal health_changed(hp: float)
+signal money_changed(amount: int)
+signal vehicle_changed(v: Node3D)
+signal died
 
 const WALK := 2.6
 const RUN := 5.0
@@ -28,6 +32,12 @@ var weapon: Node           # weapon_basic.gd
 var crouching := false
 var aiming := false
 var collected := 0
+var health := 100.0
+var money := 0
+var in_vehicle := false
+var vehicle: Node3D = null
+var _ctx_kind := ""
+var _regen_delay := 0.0
 
 var _shape: CapsuleShape3D
 var _col: CollisionShape3D
@@ -44,7 +54,7 @@ var _facing := 0.0
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
-	collision_mask = 1
+	collision_mask = 1 | 4      # world, cars and people
 	floor_snap_length = 0.35
 	floor_max_angle = deg_to_rad(48.0)
 	floor_constant_speed = true
@@ -70,6 +80,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if in_vehicle:
+		_drive_tick(delta)
+		return
+	_regen(delta)
 	if _move_dur > 0.0:
 		_process_vault(delta)
 		return
@@ -242,27 +256,136 @@ func _process_vault(delta: float) -> void:
 		velocity = flat.normalized() * 2.0
 
 
+## One context button for everything: pick up, get into a car.
 func _update_context() -> void:
 	var best: Node3D = null
 	var best_d := CONTEXT_RANGE
+	var kind := ""
 	for n in get_tree().get_nodes_in_group("pickup"):
 		var d := global_position.distance_to((n as Node3D).global_position)
 		if d < best_d:
 			best = n
 			best_d = d
+			kind = "pickup"
+	for v in get_tree().get_nodes_in_group("vehicle"):
+		var d := global_position.distance_to((v as Node3D).global_position)
+		if d < 3.4 and d < best_d + 1.0 and float(v.health) > 0.0:
+			best = v
+			best_d = d
+			kind = "vehicle"
 	if best != _ctx_target:
 		_ctx_target = best
-		context_changed.emit(best != null, "ctx_pickup")
+		_ctx_kind = kind
+		var label := "ctx_pickup"
+		if kind == "vehicle":
+			label = "ctx_enter_car"
+		elif best and best.has_meta("ctx_label"):
+			label = best.get_meta("ctx_label")
+		context_changed.emit(best != null, label)
 
 
 func _do_context() -> void:
-	if _ctx_target and is_instance_valid(_ctx_target):
+	if _ctx_target == null or not is_instance_valid(_ctx_target):
+		return
+	if _ctx_kind == "vehicle":
+		enter_vehicle(_ctx_target)
+		return
+	if _ctx_target.has_method("collect"):
+		_ctx_target.collect(self)
+	else:
 		_ctx_target.queue_free()
-		_ctx_target.remove_from_group("pickup")
-		_ctx_target = null
-		collected += 1
-		collected_changed.emit(collected)
-		context_changed.emit(false, "")
+	_ctx_target.remove_from_group("pickup")
+	_ctx_target = null
+	collected += 1
+	collected_changed.emit(collected)
+	context_changed.emit(false, "")
+
+
+# ------------------------------------------------------------ vehicles
+
+func enter_vehicle(v: Node3D) -> void:
+	in_vehicle = true
+	vehicle = v
+	v.enter(self)
+	model.visible = false
+	_col.disabled = true
+	velocity = Vector3.ZERO
+	aiming = false
+	rig.set_vehicle(v)
+	GameInput.vehicle_mode = true
+	GameInput.reset_touch()
+	Sfx.set_in_car(true)
+	vehicle_changed.emit(v)
+	context_changed.emit(true, "ctx_exit_car")
+
+
+func exit_vehicle() -> void:
+	if vehicle == null:
+		return
+	var out: Vector3 = vehicle.exit()
+	in_vehicle = false
+	global_position = out
+	reset_physics_interpolation()
+	model.visible = true
+	_col.disabled = false
+	rig.vehicle = null
+	GameInput.vehicle_mode = false
+	GameInput.reset_touch()
+	Sfx.set_in_car(false)
+	vehicle = null
+	_ctx_target = null
+	vehicle_changed.emit(null)
+	context_changed.emit(false, "")
+
+
+func _drive_tick(_delta: float) -> void:
+	global_position = vehicle.global_position + Vector3(0, 0.5, 0)
+	if GameInput.consume("context"):
+		exit_vehicle()
+		return
+	if GameInput.consume("swap") or GameInput.consume("radio"):
+		Sfx.next_station()
+	GameInput.consume("jump")
+	GameInput.consume("crouch")
+	GameInput.consume("ads")
+	if float(vehicle.health) <= 0.0:
+		exit_vehicle()
+
+
+# ------------------------------------------------------------ health and money
+
+func take_damage(amount: float) -> void:
+	if health <= 0.0:
+		return
+	health = maxf(health - amount, 0.0)
+	_regen_delay = 5.0
+	health_changed.emit(health)
+	model.flinch()
+	if health <= 0.0:
+		died.emit()
+
+
+func _regen(delta: float) -> void:
+	_regen_delay -= delta
+	if _regen_delay <= 0.0 and health < 100.0:
+		health = minf(health + delta * 4.0, 100.0)
+		health_changed.emit(health)
+
+
+func add_money(amount: int) -> void:
+	money = maxi(money + amount, 0)
+	money_changed.emit(money)
+	if amount > 0:
+		Sfx.play_ui("money")
+
+
+func respawn_after_death() -> void:
+	if in_vehicle:
+		exit_vehicle()
+	add_money(-mini(money, 100))      # hospital bill
+	health = 100.0
+	health_changed.emit(health)
+	reset_to_spawn()
 
 
 var spawn_point := Vector3(0, 1, 0)

@@ -190,13 +190,25 @@ func _on_release(finger: int, _p: Vector2) -> void:
 		return
 
 	if _pressed.has(finger):
-		_press_button(_pressed[finger], false)
+		var released: String = _pressed[finger]
 		_pressed.erase(finger)
+		_press_button(released, false)
 		return
 	_look_fingers.erase(finger)
 
 
+## Labels used while driving (same buttons, different jobs).
+const DRIVE_LABELS := {"fire": "gas", "fire2": "gas", "ads": "brake", "jump": "handbrake", "swap": "radio"}
+
+
 func _press_button(id: String, down: bool) -> void:
+	if GameInput.vehicle_mode:
+		_update_drive_buttons()
+		if down and id in ["swap", "context", "menu"]:
+			GameInput.pulse("radio" if id == "swap" else id)
+			if id == "menu":
+				_release_all()
+		return
 	match id:
 		"fire":
 			GameInput.fire_held = down
@@ -207,6 +219,17 @@ func _press_button(id: String, down: bool) -> void:
 				GameInput.pulse(id)
 				if id == "menu":
 					_release_all()
+
+
+func _update_drive_buttons() -> void:
+	var held := {}
+	for f in _pressed:
+		held[_pressed[f]] = true
+	GameInput.set_touch_drive(held.has("fire") or held.has("fire2"), held.has("ads"), held.has("jump"))
+
+
+func _hidden_in_mode(id: String) -> bool:
+	return GameInput.vehicle_mode and id == "crouch"
 
 
 func _release_all() -> void:
@@ -258,7 +281,7 @@ func _draw() -> void:
 		pressed_ids[_pressed[f]] = true
 
 	for id in _buttons:
-		if id == "context" and not context_visible and not edit_mode:
+		if (id == "context" and not context_visible and not edit_mode) or _hidden_in_mode(id):
 			continue
 		var b: Dictionary = _buttons[id]
 		var c: Vector2 = b["center"]
@@ -272,6 +295,8 @@ func _draw() -> void:
 		if id == "fire" or id == "fire2":
 			_draw_crosshair_icon(c, r * 0.42, ring)
 		var text := Loc.t(b["label"]) if id != "context" else Loc.t(context_label)
+		if GameInput.vehicle_mode and DRIVE_LABELS.has(id):
+			text = Loc.t(DRIVE_LABELS[id])
 		var fs := int(clampf(r * 0.34, 16.0, 30.0))
 		var y_off := r * 0.62 if (id == "fire" or id == "fire2") else fs * 0.35
 		if id == "menu":

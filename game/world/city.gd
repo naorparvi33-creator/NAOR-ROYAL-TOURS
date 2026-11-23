@@ -25,6 +25,7 @@ var _palms: Array = [[], [], []]
 var _lamps: Array = []
 var _signals: Array = []
 var _buildings: Array = []   # {pos, size, material, block_center}
+var _shop_count := 0
 
 
 func _ready() -> void:
@@ -213,7 +214,17 @@ func _build_block(center: Vector3, outer: bool) -> void:
 
 	# Taller buildings toward the "downtown" corner of the map.
 	var downtown := clampf(1.0 - (center - Vector3(PITCH, 0, -PITCH)).length() / (PITCH * 3.0), 0.0, 1.0)
-	for lot in lots:
+	for li in lots.size():
+		var lot: Rect2 = lots[li]
+		# One lot in some blocks is a walk-in corner shop with a small car park.
+		if not outer and pattern == 1 and li == 0:
+			var sm := 1
+			var shop := preload("res://world/shop.gd").new()
+			shop.city = self
+			shop.build(tools[sm], center, lot, _tint_for(sm), _rng.randf(), _shop_count)
+			_shop_count += 1
+			used[sm] = true
+			continue
 		var gap := 1.0 if lots.size() > 1 else 0.0
 		var r := lot.grow(-gap)
 		var floors := _rng.randi_range(2, 5) + int(downtown * _rng.randi_range(0, 14))

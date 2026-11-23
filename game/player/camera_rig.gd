@@ -8,6 +8,7 @@ const SHOULDER := 0.55
 const NORMAL := {"len": 3.1, "fov": 72.0, "shoulder": SHOULDER}
 const ADS := {"len": 1.25, "fov": 52.0, "shoulder": 0.5}
 const SPRINT_FOV := 78.0
+const CAR := {"len": 6.8, "fov": 72.0, "shoulder": 0.0}
 
 var target: Node3D
 var yaw := 0.0        # degrees
@@ -15,6 +16,9 @@ var pitch := -8.0     # degrees
 var eye_height := 1.6
 var aiming := false
 var sprinting := false
+## Following a vehicle: longer arm, auto-turns behind the car.
+var vehicle: Node3D = null
+var _idle_look := 0.0
 
 var camera: Camera3D
 var _pivot: Node3D
@@ -56,13 +60,17 @@ func _process(delta: float) -> void:
 		return
 	_apply_look(delta)
 
-	var tp: Vector3 = target.get_global_transform_interpolated().origin
+	var follow: Node3D = vehicle if vehicle else target
+	var tp: Vector3 = follow.get_global_transform_interpolated().origin
 	_eye = lerpf(_eye, eye_height, 1.0 - exp(-12.0 * delta))
 	global_position = tp + Vector3(0, _eye, 0)
 	rotation_degrees = Vector3(0, yaw, 0)
 	_pivot.rotation_degrees = Vector3(pitch, 0, 0)
 
 	var mode: Dictionary = ADS if aiming else NORMAL
+	if vehicle:
+		mode = CAR
+		_follow_vehicle(delta)
 	var k := 1.0 - exp(-14.0 * delta)
 	_arm.spring_length = lerpf(_arm.spring_length, mode["len"], k)
 	_pivot.position.x = lerpf(_pivot.position.x, mode["shoulder"], k)
@@ -72,8 +80,25 @@ func _process(delta: float) -> void:
 	camera.fov = lerpf(camera.fov, fov_target, k)
 
 
+func _follow_vehicle(delta: float) -> void:
+	var v: Variant = vehicle
+	var vel: Vector3 = v.linear_velocity
+	if _idle_look > 1.0 and Vector2(vel.x, vel.z).length() > 2.0:
+		var d: Vector3 = vehicle.global_basis.z
+		var want := rad_to_deg(atan2(-d.x, -d.z))
+		yaw = rad_to_deg(lerp_angle(deg_to_rad(yaw), deg_to_rad(want), 1.0 - exp(-2.5 * delta)))
+		pitch = lerpf(pitch, -12.0, 1.0 - exp(-2.0 * delta))
+
+
+func set_vehicle(v: Node3D) -> void:
+	vehicle = v
+	if v is CollisionObject3D:
+		_arm.add_excluded_object((v as CollisionObject3D).get_rid())
+
+
 func _apply_look(delta: float) -> void:
 	var look := GameInput.consume_look()
+	_idle_look = 0.0 if look.length() > 0.01 else _idle_look + delta
 	# Optional gyroscope aiming (fine adjustment).
 	var gmode := int(Settings.get_value("gyro_mode"))
 	if gmode == 2 or (gmode == 1 and aiming):
