@@ -35,6 +35,8 @@ var health := 100.0:
 		# A pool (traffic) recycled the car: undo the wreck / dents / broken lamps.
 		if v > 0.0 and (burning or (_scarred and (wrecked or v >= 100.0))):
 			repair.call_deferred()
+		if v >= 100.0 and _rider and driver == null:
+			_rider.set_deferred("visible", _ai_has_driver())
 var paint := Color(0.6, 0.05, 0.05)
 var plate := ""
 var spec: Dictionary = {}
@@ -183,6 +185,7 @@ func _ready() -> void:
 		_lean_node.add_child(_rider)
 	else:
 		add_child(_rider)
+	_rider.visible = _ai_has_driver()      # traffic cars show their driver
 
 
 func _add_plates() -> void:

@@ -101,6 +101,7 @@ func dress(city: Node3D, buildings: Array, rng: RandomNumberGenerator) -> void:
 					var kind := ""
 					if showcase and absf(t) < 27.0:
 						kind = "show"
+						_drivable += 1
 					elif near_start and _drivable < MAX_DRIVABLE and rng.randf() < 0.16:
 						kind = "drive"
 						_drivable += 1
