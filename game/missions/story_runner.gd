@@ -309,7 +309,7 @@ func _on_player_fired() -> void:
 func _hostile(pos: Vector3, opts: Dictionary = {}) -> Hostile:
 	var h: Hostile = Hostile.new()
 	h.player = player
-	h.model_name = opts.get("model", ["ped_02", "ped_04", "ped_06", "ped_08", "ped_07"][_rng.randi() % 5])
+	h.model_name = opts.get("model", ["ped_02", "ped_04", "ped_06", "ped_08", "ped_07", "ped_18", "ped_19"][_rng.randi() % 5])
 	h.weapon_kind = int(opts.get("weapon", 2 if _rng.randf() < 0.6 else 1))
 	h.hp = float(opts.get("hp", 100.0))
 	h.mode = opts.get("mode", "hold")

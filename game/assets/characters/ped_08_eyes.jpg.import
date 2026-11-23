@@ -2,7 +2,7 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ci1a1itmwvv81"
+uid="uid://c3dmo0cs1qpuh"
 path.s3tc="res://.godot/imported/ped_08_eyes.jpg-462b5ea32b210a225dac49674e7a5cec.s3tc.ctex"
 path.etc2="res://.godot/imported/ped_08_eyes.jpg-462b5ea32b210a225dac49674e7a5cec.etc2.ctex"
 metadata={
@@ -10,7 +10,7 @@ metadata={
 "vram_texture": true
 }
 generator_parameters={
-"md5": "20adb0550c8c72865f93d2f47873daf3"
+"md5": "f191904c165766982fffa08578ddf272"
 }
 
 [deps]

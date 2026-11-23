@@ -8,7 +8,7 @@ extends Node3D
 signal ped_killed(ped: Dictionary)
 
 const MODELS := ["ped_01", "ped_02", "ped_03", "ped_04", "ped_05", "ped_06", "ped_07", "ped_08",
-	"ped_09", "ped_10", "ped_11", "ped_12", "ped_13", "ped_14", "ped_15", "ped_16"]
+	"ped_09", "ped_10", "ped_11", "ped_12", "ped_13", "ped_14", "ped_15", "ped_16", "ped_18", "ped_19"]
 const SWAP_CHANCE := 0.45    # chance a recycled person comes back as somebody else
 const COUNT := 10
 const RECYCLE_DIST := 110.0
