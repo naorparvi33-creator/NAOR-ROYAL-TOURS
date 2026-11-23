@@ -54,6 +54,7 @@ func _ready() -> void:
 	_add_module("res://vehicles/vehicle_fx.gd")
 	_add_module("res://traffic/traffic.gd")
 	_add_module("res://police/police.gd")
+	_add_module("res://ui/map/map_module.gd")
 	# (end of modules)
 
 
