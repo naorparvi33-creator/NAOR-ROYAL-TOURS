@@ -25,6 +25,11 @@ func _ready() -> void:
 	player.rig.yaw = 180.0   # face the street
 	_load_game()
 
+	var peds = preload("res://world/pedestrians.gd").new()
+	peds.player = player
+	peds.city = world
+	add_child(peds)
+
 	hud = preload("res://ui/hud.gd").new()
 	hud.player = player
 	add_child(hud)

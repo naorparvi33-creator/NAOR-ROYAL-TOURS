@@ -56,7 +56,8 @@ func _ready() -> void:
 	_col.position.y = STAND_HEIGHT * 0.5
 	add_child(_col)
 
-	model = preload("res://player/player_model.gd").new()
+	model = preload("res://player/human_model.gd").new()
+	model.model_path = "res://assets/characters/player.glb"
 	add_child(model)
 
 	rig = preload("res://player/camera_rig.gd").new()
